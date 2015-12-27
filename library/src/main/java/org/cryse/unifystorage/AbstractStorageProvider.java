@@ -61,7 +61,20 @@ public abstract class AbstractStorageProvider implements StorageProvider {
 
     public abstract RemoteFile getFileById(String id) throws StorageException;
 
-    public abstract RemoteFile updateFile(RemoteFile remote, LocalFile local, FileUpdater updater) throws StorageException;
+    public abstract RemoteFile updateFile(RemoteFile remote, InputStream input, FileUpdater updater) throws StorageException;
+
+    public RemoteFile updateFile(RemoteFile remote, InputStream input) throws StorageException {
+        return updateFile(remote, input, null);
+    }
+
+    public RemoteFile updateFile(RemoteFile remote, LocalFile local, FileUpdater updater) throws StorageException {
+        try {
+            InputStream inputStream = new FileInputStream(local.getFile());
+            return updateFile(remote, inputStream, updater);
+        } catch (FileNotFoundException fileNotFoundException) {
+            throw new StorageException(fileNotFoundException);
+        }
+    }
 
     public RemoteFile updateFile(RemoteFile remote, LocalFile local) throws StorageException {
         return updateFile(remote, local, null);
@@ -75,9 +88,13 @@ public abstract class AbstractStorageProvider implements StorageProvider {
 
     public abstract RemoteFile updateFilePermission(RemoteFile file) throws StorageException;
 
-    public abstract StorageUserInfo getUserInfo() throws StorageException;
+    public abstract StorageUserInfo getUserInfo(boolean forceRefresh) throws StorageException;
 
-    public abstract HashAlgorithm getHashAlgorithm() throws StorageException;
+    public StorageUserInfo getUserInfo() throws StorageException {
+        return getUserInfo(false);
+    }
+
+    public abstract HashAlgorithm getHashAlgorithm();
 
     public ConflictBehavior getDefaultConflictBehavior() {
         return ConflictBehavior.FAIL;

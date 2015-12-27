@@ -1,16 +1,21 @@
 package org.cryse.unifystorage.credential;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 public abstract class OAuth2Credential extends Credential {
-
-    protected String applicationKey;
-    protected String applicationSecret;
+    protected String tokenType;
+    protected String authenticationToken;
     protected String accessToken;
     protected String refreshToken;
     protected Date expiresIn;
     protected Set<String> scopes;
+
+    protected OAuth2Credential() {
+
+    }
 
     public OAuth2Credential(String savedCredential) {
         super(savedCredential);
@@ -23,36 +28,36 @@ public abstract class OAuth2Credential extends Credential {
     public OAuth2Credential(
             String accountName,
             String accountType,
-            String applicationKey,
-            String applicationSecret,
+            String tokenType,
+            String authenticationToken,
             String accessToken,
             String refreshToken,
             Date expiresIn,
             Set<String> scopes
     ) {
         super(accountName, accountType);
-        this.applicationKey = applicationKey;
-        this.applicationSecret = applicationSecret;
+        this.tokenType = tokenType;
+        this.authenticationToken = authenticationToken;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.expiresIn = expiresIn;
         this.scopes = scopes;
     }
 
-    public String getApplicationKey() {
-        return applicationKey;
+    public String getTokenType() {
+        return tokenType;
     }
 
-    public void setApplicationKey(String applicationKey) {
-        this.applicationKey = applicationKey;
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
     }
 
-    public String getApplicationSecret() {
-        return applicationSecret;
+    public String getAuthenticationToken() {
+        return authenticationToken;
     }
 
-    public void setApplicationSecret(String applicationSecret) {
-        this.applicationSecret = applicationSecret;
+    public void setAuthenticationToken(String authenticationToken) {
+        this.authenticationToken = authenticationToken;
     }
 
     public String getAccessToken() {
@@ -79,11 +84,25 @@ public abstract class OAuth2Credential extends Credential {
         this.expiresIn = expiresIn;
     }
 
-    public Set<String> getScopes() {
-        return scopes;
+    public void setScopes(Iterable<String> scopes) {
+        final Iterable<String> oldValue = this.scopes;
+
+        // Defensive copy
+        this.scopes = new HashSet<String>();
+        if (scopes != null) {
+            for (String scope : scopes) {
+                this.scopes.add(scope);
+            }
+        }
+
+        this.scopes = Collections.unmodifiableSet(this.scopes);
     }
 
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
+    public Iterable<String> getScopes() {
+        return this.scopes;
+    }
+
+    public String[] getScopesArray() {
+        return scopes.toArray(new String[scopes.size()]);
     }
 }

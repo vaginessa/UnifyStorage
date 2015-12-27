@@ -36,6 +36,10 @@ public interface StorageProvider {
 
     RemoteFile getFileById(String id) throws StorageException;
 
+    RemoteFile updateFile(RemoteFile remote, InputStream input, FileUpdater updater) throws StorageException;
+
+    RemoteFile updateFile(RemoteFile remote, InputStream input) throws StorageException;
+
     RemoteFile updateFile(RemoteFile remote, LocalFile local, FileUpdater updater) throws StorageException;
 
     RemoteFile updateFile(RemoteFile remote, LocalFile local) throws StorageException;
@@ -49,6 +53,8 @@ public interface StorageProvider {
     RemoteFile updateFilePermission(RemoteFile file) throws StorageException;
 
     StorageUserInfo getUserInfo() throws StorageException;
+
+    StorageUserInfo getUserInfo(boolean forceRefresh) throws StorageException;
 
     HashAlgorithm getHashAlgorithm() throws StorageException;
 }

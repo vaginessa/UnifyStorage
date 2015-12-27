@@ -1,8 +1,15 @@
 package org.cryse.unifystorage.credential;
 
-public abstract class Credential {
+import android.os.Parcelable;
+
+public abstract class Credential implements Parcelable {
+    public static final String RESULT_KEY = "unify_storage_credential";
     protected String accountName;
     protected String accountType;
+
+    protected Credential() {
+
+    }
 
     public Credential(String savedCredential) {
         this.restore(savedCredential);
