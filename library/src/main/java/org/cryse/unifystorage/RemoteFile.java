@@ -5,7 +5,7 @@ import java.util.Date;
 public interface RemoteFile {
     String getId();
 
-    String getFullPath();
+    String getAbsolutePath();
 
     boolean isDirectory();
 

@@ -57,7 +57,7 @@ public class OneDriveFile implements RemoteFile {
     }
 
     @Override
-    public String getFullPath() {
+    public String getAbsolutePath() {
         return null;
     }
 

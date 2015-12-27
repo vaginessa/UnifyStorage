@@ -19,7 +19,6 @@ import org.cryse.unifystorage.AbstractStorageProvider;
 import org.cryse.unifystorage.ConflictBehavior;
 import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
-import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
 import org.cryse.unifystorage.utils.IOUtils;
@@ -31,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class OneDriveStorageProvider extends AbstractStorageProvider {
+public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFile> {
     private String mClientId;
     private IOneDriveClient mOneDriveClient;
     private OneDriveFile mRootFile;
@@ -64,7 +63,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFile getRootDirectory() throws StorageException {
+    public OneDriveFile getRootDirectory() throws StorageException {
         if(mRootFile == null) {
             mRootFile = new OneDriveFile(mOneDriveClient.getDrive().getRoot().buildRequest().get());
         }
@@ -72,7 +71,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public List<RemoteFile> list(RemoteFile parent) throws StorageException {
+    public List<OneDriveFile> list(OneDriveFile parent) throws StorageException {
         List<Item> children = mOneDriveClient
                 .getDrive()
                 .getRoot()
@@ -80,7 +79,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
                 .buildRequest()
                 .get()
                 .getCurrentPage();
-        List<RemoteFile> list = new ArrayList<RemoteFile>();
+        List<OneDriveFile> list = new ArrayList<OneDriveFile>();
         for (final Item childItem : children) {
             list.add(new OneDriveFile(childItem));
         }
@@ -88,7 +87,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFile createDirectory(RemoteFile parent, String name) throws StorageException {
+    public OneDriveFile createDirectory(OneDriveFile parent, String name) throws StorageException {
         try {
             if(TextUtils.isEmpty(name)) throw new NullPointerException("name");
             final Item newItem = new Item();
@@ -107,7 +106,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFile createFile(RemoteFile parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException {
+    public OneDriveFile createFile(OneDriveFile parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException {
         try {
             final Option option = new QueryOption("@name.conflictBehavior", conflictBehaviorToString(behavior));
             Item newItem = mOneDriveClient
@@ -125,7 +124,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public boolean exists(RemoteFile parent, String name) throws StorageException {
+    public boolean exists(OneDriveFile parent, String name) throws StorageException {
         try {
             Item item = mOneDriveClient
                     .getDrive()
@@ -141,7 +140,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFile getFile(RemoteFile parent, String name) throws StorageException {
+    public OneDriveFile getFile(OneDriveFile parent, String name) throws StorageException {
         try {
             Item item = mOneDriveClient
                     .getDrive()
@@ -156,7 +155,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFile getFileById(String id) throws StorageException {
+    public OneDriveFile getFileById(String id) throws StorageException {
         try {
             Item item = mOneDriveClient
                     .getDrive()
@@ -170,7 +169,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFile updateFile(RemoteFile remote, InputStream input, FileUpdater updater) throws StorageException {
+    public OneDriveFile updateFile(OneDriveFile remote, InputStream input, FileUpdater updater) throws StorageException {
         try {
             final Option option = new QueryOption("@name.conflictBehavior", conflictBehaviorToString(ConflictBehavior.REPLACE));
             Item newItem = mOneDriveClient
@@ -188,7 +187,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public boolean deleteFile(RemoteFile file) throws StorageException {
+    public boolean deleteFile(OneDriveFile file) throws StorageException {
         try {
             mOneDriveClient
                     .getDrive()
@@ -202,17 +201,17 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFile getFileDetail(RemoteFile file) throws StorageException {
+    public OneDriveFile getFileDetail(OneDriveFile file) throws StorageException {
         return null;
     }
 
     @Override
-    public RemoteFile getFilePermission(RemoteFile file) throws StorageException {
+    public OneDriveFile getFilePermission(OneDriveFile file) throws StorageException {
         return null;
     }
 
     @Override
-    public RemoteFile updateFilePermission(RemoteFile file) throws StorageException {
+    public OneDriveFile updateFilePermission(OneDriveFile file) throws StorageException {
         return null;
     }
 
