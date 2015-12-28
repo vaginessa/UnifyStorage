@@ -26,6 +26,13 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.android.support:design:23.1.1'
+    compile project(':library')
+    compile project(':providers:OneDrive')
+    compile project(':providers:LocalStorage')
+
+    compile "com.android.support:appcompat-v7:$depSupportLibraryVersion"
+    compile "com.android.support:design:$depSupportLibraryVersion"
+    compile('com.mikepenz:materialdrawer:4.6.1@aar') {
+        transitive = true
+    }
 }
