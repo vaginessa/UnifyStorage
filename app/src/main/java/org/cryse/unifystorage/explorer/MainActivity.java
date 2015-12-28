@@ -1,4 +1,4 @@
-package org.cryse.unifystorage.demo;
+package org.cryse.unifystorage.explorer;
 
 import android.os.Bundle;
 import android.support.v4.view.GravityCompat;
@@ -13,7 +13,6 @@ import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
-import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 public class MainActivity extends AbstractActivity {
