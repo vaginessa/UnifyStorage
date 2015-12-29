@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+        <variable name="viewModel" type="org.cryse.unifystorage.explorer.viewmodel.RemoteFileViewModel" />
+        <variable name="clickListener" type="org.cryse.unifystorage.explorer.ui.adapter.FileAdapter" />
+        <variable name="adapterPosition" type="int" />
+    </data>
+    <RelativeLayout
+        android:id="@+id/item_file_root_container"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?selectableItemBackground"
+        android:onClick="@{clickListener.onItemClick}"
+        android:onLongClick="@{clickListener.onItemLongClick}"
+        android:tag="@{adapterPosition}">
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:src="@{viewModel.icon}">
+        </ImageView>
+        <TextView
+            android:layout_marginLeft="72dp"
+            android:layout_marginStart="72dp"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="@{viewModel.fileName}"
+            android:textSize="@dimen/text_size_body2"
+            android:textColor="@color/text_color_primary"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="72dp"
+            android:layout_marginStart="72dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:text="@{viewModel.detail}"
+            android:textSize="@dimen/text_size_tiny"
+            android:textColor="@color/text_color_secondary"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="72dp"
+            android:layout_marginStart="72dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:text="@{viewModel.detail2}"
+            android:textSize="@dimen/text_size_tiny"
+            android:textColor="@color/text_color_secondary"/>
+    </RelativeLayout>
+
+</layout>

@@ -15,6 +15,7 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+        maven { url "https://jitpack.io" }
     }
     ext.appVersionCode = 1
     ext.appVersionName = '0.1.0.0'

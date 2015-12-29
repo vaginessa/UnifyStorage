@@ -5,11 +5,15 @@ android {
     buildToolsVersion appBuildToolsVersion
 
     defaultConfig {
-        applicationId "org.cryse.unifystorage.demo"
+        applicationId "org.cryse.unifystorage.explorer"
         minSdkVersion appMinSdkVersion
         targetSdkVersion appTargetSdkVersion
         versionCode appVersionCode
         versionName appVersionName
+    }
+
+    dataBinding {
+        enabled = true
     }
 
     signingConfigs {
@@ -50,7 +54,17 @@ dependencies {
 
     compile "com.android.support:appcompat-v7:$depSupportLibraryVersion"
     compile "com.android.support:design:$depSupportLibraryVersion"
+    compile "com.android.support:recyclerview-v7:$depSupportLibraryVersion"
+    compile "com.android.support:cardview-v7:$depSupportLibraryVersion"
+
+    compile 'io.reactivex:rxjava:1.1.0'
+    compile 'com.jakewharton:butterknife:7.0.1'
+
     compile('com.mikepenz:materialdrawer:4.6.1@aar') {
+        transitive = true
+    }
+
+    compile('com.github.afollestad.material-dialogs:core:0.8.5.3@aar') {
         transitive = true
     }
 }

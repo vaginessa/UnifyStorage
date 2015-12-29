@@ -17,9 +17,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFile> {
+    private String mStartPath;
+    private LocalStorageFile mStartFile;
+    public LocalStorageProvider(String startPath) {
+        this.mStartPath = startPath;
+    }
+
     @Override
     public LocalStorageFile getRootDirectory() throws StorageException {
-        return null;
+        File file = new File(mStartPath);
+        if(mStartFile == null) {
+            mStartFile = new LocalStorageFile(file);
+        }
+        return mStartFile;
     }
 
     @Override

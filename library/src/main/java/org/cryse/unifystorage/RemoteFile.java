@@ -2,7 +2,7 @@ package org.cryse.unifystorage;
 
 import java.util.Date;
 
-public interface RemoteFile {
+public interface RemoteFile extends AbstractFile{
     String getId();
 
     String getAbsolutePath();

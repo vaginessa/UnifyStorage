@@ -1,4 +1,4 @@
-package org.cryse.unifystorage.explorer;
+package org.cryse.unifystorage.explorer.ui.common;
 
 import android.support.v7.app.AppCompatActivity;
 
