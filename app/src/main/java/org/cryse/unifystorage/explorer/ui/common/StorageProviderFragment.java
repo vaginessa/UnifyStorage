@@ -1,6 +1,7 @@
 package org.cryse.unifystorage.explorer.ui.common;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -24,8 +25,10 @@ import org.cryse.unifystorage.utils.sort.FileSorter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -34,6 +37,16 @@ public abstract class StorageProviderFragment<
         RF extends RemoteFile,
         SP extends StorageProvider<RF>
         > extends AbstractFragment implements  FileAdapter.OnFileClickListener<RF> {
+    private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
+    private Handler mHandler = new Handler();
+
+    private final Runnable mBackPressdRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mDoubleBackPressedOnce.set(false);
+        }
+    };
+
     protected SP mStorageProvider;
     protected FileAdapter<RF> mCollectionAdapter;
     protected Credential mCredential;
@@ -82,15 +95,18 @@ public abstract class StorageProviderFragment<
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (keyCode == KeyEvent.KEYCODE_BACK) {
                         if(!mBackStack.empty()) {
-                            BrowserState<RF> currentState = mBackStack.pop();
-                            mCurrentDirectory = currentState.currentDirectory;
-                            //loadDirectory(mCurrentDirectory);
-                            mCollectionAdapter.replaceWith(currentState.files);
-                            LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getLayoutManager();
-                            manager.scrollToPositionWithOffset(currentState.scrollPosition, (int) currentState.scrollOffset);
+                            if (!StorageProviderFragment.this.mDoubleBackPressedOnce.get()) {
+                                BrowserState<RF> currentState = mBackStack.pop();
+                                mCurrentDirectory = currentState.currentDirectory;
+                                //loadDirectory(mCurrentDirectory);
+                                mCollectionAdapter.replaceWith(currentState.files);
+                                LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getLayoutManager();
+                                manager.scrollToPositionWithOffset(currentState.scrollPosition, (int) currentState.scrollOffset);
+                                StorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
+                                mHandler.postDelayed(mBackPressdRunnable, 400);
+
+                            }
                             return true;
-                        } else {
-                            return false;
                         }
                     }
                     return false;
@@ -123,6 +139,13 @@ public abstract class StorageProviderFragment<
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onDestroy()
+    {
+        super.onDestroy();
+        if (mHandler != null) { mHandler.removeCallbacks(mBackPressdRunnable); }
+    }
+
     private void setupRecyclerView() {
         mCollectionView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mCollectionView.setHasFixedSize(true);
@@ -134,11 +157,6 @@ public abstract class StorageProviderFragment<
         mCurrentDirectory = mStorageProvider.getRootDirectory();
         loadDirectory(mCurrentDirectory, false);
     }
-
-    /*protected void addToCollection(List<RF> files) {
-        Collections.sort(files, mFileComparator);
-        mCollectionAdapter.addAll(files);
-    }*/
 
     protected abstract SP buildStorageProvider(Credential credential);
 
@@ -167,8 +185,21 @@ public abstract class StorageProviderFragment<
         mCurrentDirectory = file;
 
         List<RF> files = mStorageProvider.list(file);
-        Collections.sort(files, mFileComparator);
+        handleFileSort(files);
+        handleHiddenFile(files);
         mCollectionAdapter.replaceWith(files);
+    }
+
+    protected void handleFileSort(List<RF> files) {
+        Collections.sort(files, mFileComparator);
+    }
+
+    protected void handleHiddenFile(List<RF> files) {
+        for(Iterator<RF> iterator = files.iterator(); iterator.hasNext(); ) {
+            RF file = iterator.next();
+            if(file.getName().startsWith("."))
+                iterator.remove();
+        }
     }
 
     private BrowserState<RF> saveBrowserState() {
