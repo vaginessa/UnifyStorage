@@ -1,7 +1,10 @@
 package org.cryse.unifystorage.explorer.ui.common;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -11,6 +14,9 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
+import com.afollestad.impression.widget.breadcrumbs.Crumb;
 
 import org.cryse.unifystorage.AbstractFile;
 import org.cryse.unifystorage.RemoteFile;
@@ -22,6 +28,7 @@ import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.utils.sort.FileSorter;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -55,6 +62,9 @@ public abstract class StorageProviderFragment<
 
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
+    @Bind(R.id.breadCrumbs)
+    BreadCrumbLayout mBreadCrumbLayout;
+
     List<RF> mFiles = new ArrayList<RF>();
     Comparator<AbstractFile> mFileComparator;
 
@@ -79,6 +89,7 @@ public abstract class StorageProviderFragment<
         ButterKnife.bind(this, fragmentView);
         setupToolbar();
         setupRecyclerView();
+        setupBreadCrumb();
         loadDefaultDirectory();
         return fragmentView;
     }
@@ -104,7 +115,9 @@ public abstract class StorageProviderFragment<
                                 manager.scrollToPositionWithOffset(currentState.scrollPosition, (int) currentState.scrollOffset);
                                 StorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
                                 mHandler.postDelayed(mBackPressdRunnable, 400);
-
+                                if(mBreadCrumbLayout.popHistory()) {
+                                    switchAlbum(mBreadCrumbLayout.lastHistory(), false, false);
+                                }
                             }
                             return true;
                         }
@@ -123,6 +136,29 @@ public abstract class StorageProviderFragment<
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setHomeAsUpIndicator(R.drawable.ic_action_drawer_menu);
         }
+    }
+
+    private void setupBreadCrumb() {
+        mBreadCrumbLayout.setCallback(new BreadCrumbLayout.SelectionCallback() {
+            @Override
+            public void onCrumbSelection(Crumb crumb, int index) {
+                if (index == -1) {
+                    //onBackPressed();
+                } else {
+                    String activeFile = null;
+                    if (mBreadCrumbLayout.getActiveIndex() > -1) {
+                        activeFile = mBreadCrumbLayout.getCrumb(mBreadCrumbLayout.getActiveIndex()).getPath();
+                    }
+                    if (crumb.getPath() != null && activeFile != null &&
+                            crumb.getPath().equals(activeFile)) {
+                        /*Fragment frag = getFragmentManager().findFragmentById(R.id.content_frame);
+                        ((MediaFragment) frag).jumpToTop(true);*/
+                    } else {
+                        switchAlbum(crumb, crumb.getPath() == null, true);
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -155,6 +191,7 @@ public abstract class StorageProviderFragment<
 
     protected void loadDefaultDirectory() {
         mCurrentDirectory = mStorageProvider.getRootDirectory();
+        mBreadCrumbLayout.setTopPath(mCurrentDirectory.getAbsolutePath());
         loadDirectory(mCurrentDirectory, false);
     }
 
@@ -183,11 +220,48 @@ public abstract class StorageProviderFragment<
             mBackStack.push(saveBrowserState());
         }
         mCurrentDirectory = file;
+        switchAlbum(file.getAbsolutePath());
 
         List<RF> files = mStorageProvider.list(file);
         handleFileSort(files);
         handleHiddenFile(files);
         mCollectionAdapter.replaceWith(files);
+    }
+
+    public void switchAlbum(String path) {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        boolean initialCreate = (path == null);
+        if (initialCreate) {
+            // Initial directory
+            path = mCurrentDirectory.getAbsolutePath();
+            mBreadCrumbLayout.setTopPath(path);
+        }
+
+        Crumb crumb = new Crumb(getContext(), path);
+        switchAlbum(crumb, initialCreate, true);
+    }
+
+    public void switchAlbum(Crumb crumb, boolean forceRecreate, boolean addToHistory) {
+        if (forceRecreate) {
+            // Rebuild artificial history, most likely first time load
+            mBreadCrumbLayout.clearHistory();
+            String path = crumb.getPath();
+            while (path != null) {
+                mBreadCrumbLayout.addHistory(new Crumb(getContext(), path));
+                if (mBreadCrumbLayout.isTopPath(path)) {
+                    break;
+                }
+                path = new File(path).getParent();
+            }
+            mBreadCrumbLayout.reverseHistory();
+        } else if (addToHistory) {
+            mBreadCrumbLayout.addHistory(crumb);
+        }
+        mBreadCrumbLayout.setActiveOrAdd(crumb, forceRecreate);
     }
 
     protected void handleFileSort(List<RF> files) {

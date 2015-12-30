@@ -7,17 +7,28 @@
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbarlayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary">
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
+            android:background="@android:color/transparent"
             android:elevation="4dp"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
             app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             tools:ignore="UnusedAttribute"
             app:layout_scrollFlags="enterAlways"/>
+        <com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout
+            android:id="@+id/breadCrumbs"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/breadcrumb_height"
+            android:overScrollMode="never"
+            android:paddingEnd="@dimen/breadcrumb_arrow_margin"
+            android:paddingLeft="@dimen/breadcrumb_layout_margin"
+            android:paddingRight="@dimen/breadcrumb_arrow_margin"
+            android:paddingStart="@dimen/breadcrumb_layout_margin"
+            tools:ignore="NewApi,RtlSymmetry" />
     </android.support.design.widget.AppBarLayout>
 
     <android.support.v7.widget.RecyclerView

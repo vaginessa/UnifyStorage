@@ -4,6 +4,9 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
 
+    <color name="crumb_active">#fff</color>
+    <color name="crumb_inactive">#73ffffff</color>
+
 
 
     <color name="black_54_percent">#8A000000</color>

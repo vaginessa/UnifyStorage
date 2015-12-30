@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/breadcrumb_height"
+    android:background="?selectableItemBackground"
+    android:gravity="center_vertical|start"
+    android:orientation="horizontal"
+    android:paddingEnd="@dimen/breadcrumb_padding_side"
+    android:paddingLeft="12dp"
+    android:paddingRight="@dimen/breadcrumb_padding_side"
+    android:paddingStart="12dp"
+    tools:ignore="UseCompoundDrawables">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingEnd="@dimen/breadcrumb_arrow_margin"
+        android:paddingRight="@dimen/breadcrumb_arrow_margin"
+        android:textAlignment="viewStart"
+        android:textAllCaps="true"
+        android:textColor="#fff"
+        android:textSize="@dimen/breadcrumb_fontsize"
+        tools:ignore="RtlCompat,RtlSymmetry,UnusedAttribute"
+        tools:text="Storage"
+        tools:textColor="#000" />
+
+    <ImageView
+        android:layout_width="@dimen/breadcrumb_arrow_size"
+        android:layout_height="@dimen/breadcrumb_arrow_size"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_right_arrow"
+        android:visibility="gone"
+        tools:ignore="ContentDescription"
+        tools:visibility="visible" />
+
+</LinearLayout>
