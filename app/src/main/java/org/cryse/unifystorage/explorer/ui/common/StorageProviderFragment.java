@@ -26,14 +26,17 @@ import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
+import org.cryse.unifystorage.utils.Path;
 import org.cryse.unifystorage.utils.sort.FileSorter;
 
 import java.io.File;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -58,7 +61,8 @@ public abstract class StorageProviderFragment<
     protected FileAdapter<RF> mCollectionAdapter;
     protected Credential mCredential;
     protected RF mCurrentDirectory;
-    protected Stack<BrowserState<RF>> mBackStack = new Stack<>();
+    protected Stack<BrowserState<RF>> mBackwardStack = new Stack<>();
+    protected Queue<BrowserState<RF>> mForwardQueue = new ArrayDeque<>();
 
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
@@ -105,9 +109,9 @@ public abstract class StorageProviderFragment<
                 @Override
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (keyCode == KeyEvent.KEYCODE_BACK) {
-                        if(!mBackStack.empty()) {
+                        if(!mBackwardStack.empty()) {
                             if (!StorageProviderFragment.this.mDoubleBackPressedOnce.get()) {
-                                BrowserState<RF> currentState = mBackStack.pop();
+                                BrowserState<RF> currentState = mBackwardStack.pop();
                                 mCurrentDirectory = currentState.currentDirectory;
                                 //loadDirectory(mCurrentDirectory);
                                 mCollectionAdapter.replaceWith(currentState.files);
@@ -116,7 +120,7 @@ public abstract class StorageProviderFragment<
                                 StorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
                                 mHandler.postDelayed(mBackPressdRunnable, 400);
                                 if(mBreadCrumbLayout.popHistory()) {
-                                    switchAlbum(mBreadCrumbLayout.lastHistory(), false, false);
+                                    switchDirectory(mBreadCrumbLayout.lastHistory(), true, false);
                                 }
                             }
                             return true;
@@ -154,7 +158,13 @@ public abstract class StorageProviderFragment<
                         /*Fragment frag = getFragmentManager().findFragmentById(R.id.content_frame);
                         ((MediaFragment) frag).jumpToTop(true);*/
                     } else {
-                        switchAlbum(crumb, crumb.getPath() == null, true);
+                        for(int i = 0; i < mBackwardStack.size(); i++) {
+                            if(mBackwardStack.get(i).currentDirectory.getAbsolutePath().equals(crumb.getPath())) {
+                                loadDirectory(mBackwardStack.get(i).currentDirectory, true);
+                                switchDirectory(crumb, crumb.getPath() == null, false);
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -217,10 +227,10 @@ public abstract class StorageProviderFragment<
 
     protected void loadDirectory(RF file, boolean saveStack) {
         if(saveStack) {
-            mBackStack.push(saveBrowserState());
+            mBackwardStack.push(saveBrowserState());
         }
         mCurrentDirectory = file;
-        switchAlbum(file.getAbsolutePath());
+        switchDirectory(file.getAbsolutePath());
 
         List<RF> files = mStorageProvider.list(file);
         handleFileSort(files);
@@ -228,7 +238,7 @@ public abstract class StorageProviderFragment<
         mCollectionAdapter.replaceWith(files);
     }
 
-    public void switchAlbum(String path) {
+    public void switchDirectory(String path) {
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
                 PackageManager.PERMISSION_GRANTED) {
             return;
@@ -242,10 +252,10 @@ public abstract class StorageProviderFragment<
         }
 
         Crumb crumb = new Crumb(getContext(), path);
-        switchAlbum(crumb, initialCreate, true);
+        switchDirectory(crumb, initialCreate, true);
     }
 
-    public void switchAlbum(Crumb crumb, boolean forceRecreate, boolean addToHistory) {
+    public void switchDirectory(Crumb crumb, boolean forceRecreate, boolean addToHistory) {
         if (forceRecreate) {
             // Rebuild artificial history, most likely first time load
             mBreadCrumbLayout.clearHistory();
