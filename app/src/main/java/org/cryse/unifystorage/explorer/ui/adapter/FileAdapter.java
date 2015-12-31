@@ -10,8 +10,9 @@ import android.view.ViewGroup;
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.databinding.ItemFileBinding;
-import org.cryse.unifystorage.explorer.viewmodel.RemoteFileViewModel;
+import org.cryse.unifystorage.explorer.viewmodel.ItemRemoteFileViewModel;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,9 +21,9 @@ public class FileAdapter<RF extends RemoteFile> extends RecyclerView.Adapter<Fil
     private Context mContext;
     private OnFileClickListener mOnFileClickListener;
 
-    public FileAdapter(Context context,List<RF> files) {
-        this.mFiles = files;
+    public FileAdapter(Context context) {
         this.mContext = context;
+        this.mFiles = new ArrayList<>();
     }
 
     @Override
@@ -38,7 +39,7 @@ public class FileAdapter<RF extends RemoteFile> extends RecyclerView.Adapter<Fil
     @Override
     public void onBindViewHolder(BindingHolder holder, int position) {
         ItemFileBinding fileBinding = holder.binding;
-        fileBinding.setViewModel(new RemoteFileViewModel<>(mContext, mFiles.get(position)));
+        fileBinding.setViewModel(new ItemRemoteFileViewModel<>(mContext, mFiles.get(position)));
         fileBinding.setClickListener(this);
         fileBinding.setAdapterPosition(position);
     }
@@ -53,6 +54,7 @@ public class FileAdapter<RF extends RemoteFile> extends RecyclerView.Adapter<Fil
     }
 
     public void replaceWith(Collection<RF> items, boolean cleanToReplace) {
+        if(items == null) return;
         if(cleanToReplace) {
             clear();
             addAll(items);
@@ -75,6 +77,7 @@ public class FileAdapter<RF extends RemoteFile> extends RecyclerView.Adapter<Fil
     }
 
     public void addItem(RF remoteFile) {
+        if(remoteFile == null) return;
         if (!mFiles.contains(remoteFile)) {
             mFiles.add(remoteFile);
             notifyItemInserted(mFiles.size() - 1);
@@ -85,6 +88,7 @@ public class FileAdapter<RF extends RemoteFile> extends RecyclerView.Adapter<Fil
     }
 
     public void addAll(Collection<RF> files) {
+        if(files == null) return;
         int currentCount = mFiles.size();
         int newFilesCount = files.size();
         mFiles.addAll(files);

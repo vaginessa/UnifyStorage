@@ -10,12 +10,12 @@ import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.utils.FileSizeUtils;
 
-public class RemoteFileViewModel<RF extends RemoteFile> extends BaseObservable {
+public class ItemRemoteFileViewModel<RF extends RemoteFile> extends BaseObservable implements ViewModel {
 
     protected Context mContext;
     protected RF mRemoteFile;
 
-    public RemoteFileViewModel(Context context, RF remoteFile) {
+    public ItemRemoteFileViewModel(Context context, RF remoteFile) {
         this.mContext = context;
         this.mRemoteFile = remoteFile;
     }
@@ -49,7 +49,7 @@ public class RemoteFileViewModel<RF extends RemoteFile> extends BaseObservable {
     }
 
     public String getDetail2() {
-        return DateUtils.formatDateTime(mContext, mRemoteFile.getLastModifiedTime(), DateUtils.FORMAT_SHOW_DATE);
+        return DateUtils.formatDateTime(mContext, mRemoteFile.getLastModifiedTime(), DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME);
     }
 
     public Drawable getIcon() {
@@ -58,5 +58,10 @@ public class RemoteFileViewModel<RF extends RemoteFile> extends BaseObservable {
         else {
             return ResourcesCompat.getDrawable(mContext.getResources(), R.drawable.ic_file_type_file, null);
         }
+    }
+
+    @Override
+    public void destroy() {
+        //In this case destroy doesn't need to do anything because there is not async calls
     }
 }

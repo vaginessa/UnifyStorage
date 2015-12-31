@@ -14,10 +14,11 @@ public class FileSorter {
 
         @Override
         public int compare(AbstractFile lhs, AbstractFile rhs) {
-            if(this == AESC)
+            if(this == AESC) {
                 return lhs.getName().compareTo(rhs.getName());
-            else
+            } else {
                 return rhs.getName().compareTo(lhs.getName());
+            }
         }
     }
 
@@ -34,10 +35,11 @@ public class FileSorter {
 
         @Override
         public int compare(AbstractFile lhs, AbstractFile rhs) {
-            if(this == AESC)
+            if(this == AESC) {
                 return longCompare(lhs.size(), rhs.size());
-            else
+            } else {
                 return longCompare(rhs.size(), lhs.size());
+            }
         }
     }
 
@@ -50,10 +52,11 @@ public class FileSorter {
 
         @Override
         public int compare(AbstractFile lhs, AbstractFile rhs) {
-            if(this == AESC)
+            if(this == AESC) {
                 return longCompare(lhs.getLastModifiedTime(), rhs.getLastModifiedTime());
-            else
+            } else {
                 return longCompare(rhs.getLastModifiedTime(), lhs.getLastModifiedTime());
+            }
         }
     }
 }

@@ -2,7 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
 
     <data>
-        <variable name="viewModel" type="org.cryse.unifystorage.explorer.viewmodel.RemoteFileViewModel" />
+        <variable name="viewModel" type="org.cryse.unifystorage.explorer.viewmodel.ItemRemoteFileViewModel" />
         <variable name="clickListener" type="org.cryse.unifystorage.explorer.ui.adapter.FileAdapter" />
         <variable name="adapterPosition" type="int" />
     </data>
