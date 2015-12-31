@@ -2,6 +2,7 @@ package org.cryse.unifystorage.providers.localstorage.utils;
 
 import android.content.Context;
 import android.os.storage.StorageManager;
+import android.util.Log;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocalStorageUtils {
+
 
     public static String[] getStorageDirectories(Context context) {
         StorageManager storageManager = (StorageManager)context
@@ -25,11 +27,10 @@ public class LocalStorageUtils {
                 if(file.exists() && file.isDirectory() && file.canRead())
                     directories.add(path);
             }
-        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            Log.e("LocalStorageUtils", e.getMessage(), e);
+        } finally {
             return directories.toArray(new String[directories.size()]);
-        } catch (NoSuchMethodException e) {
-
         }
-        return directories.toArray(new String[directories.size()]);
     }
 }

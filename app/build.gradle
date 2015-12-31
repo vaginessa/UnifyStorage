@@ -61,6 +61,8 @@ dependencies {
     compile libDependencies.cardview
     compile libDependencies.recyclerview
 
+    compile libDependencies.easypermission
+
     compile libDependencies.rxjava
     compile libDependencies.rxandroid
 

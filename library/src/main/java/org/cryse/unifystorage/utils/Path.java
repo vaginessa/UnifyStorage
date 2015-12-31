@@ -45,7 +45,7 @@ public final class Path {
         return SEPARATOR;
     }
 
-    public static String getFilename(String path){
+    public static String getFileName(String path){
         if(path == null) return null;
 
         path = path.trim();

@@ -188,8 +188,11 @@ public abstract class StorageProviderFragment<
         LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getLayoutManager();
         int position = manager.findFirstVisibleItemPosition();
         View firstItemView = manager.findViewByPosition(position);
-        float offset = firstItemView.getTop();
-        return new CollectionViewState(position, offset);
+        if(firstItemView != null) {
+            float offset = firstItemView.getTop();
+            return new CollectionViewState(position, offset);
+        } else
+            return CollectionViewState.EMPTY;
     }
 
     @Override

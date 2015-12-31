@@ -9,6 +9,7 @@ ext {
     msaAuthVersion = '0.8.4'
     materialDrawerVersion = '4.6.1'
     materialDialogVersion = '0.8.5.3'
+    easyPermissionVersion = '0.1.0'
 
     libDependencies = [
             // Test
@@ -20,6 +21,9 @@ ext {
             cardview: "com.android.support:cardview-v7:$supportLibraryVersion",
             recyclerview: "com.android.support:recyclerview-v7:$supportLibraryVersion",
             design: "com.android.support:design:$supportLibraryVersion",
+
+            // Permissions
+            easypermission: "pub.devrel:easypermissions:$easyPermissionVersion",
 
             // Serialize and Deserialize
             gson: "com.google.code.gson:gson:$gsonVersion",

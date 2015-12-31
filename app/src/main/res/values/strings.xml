@@ -23,6 +23,8 @@
 
     <string name="info_message_empty_directory">This directory is empty.</string>
 
+    <string name="dialog_title_permission_storage">Unify Storage needs Storage permission to access your device storage.</string>
+
     <array name="array_storage_providers">
         <item>@string/storage_provider_name_local_path</item>
         <item>@string/storage_provider_name_onedrive</item>
