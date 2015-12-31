@@ -23,13 +23,9 @@ allprojects {
     ext.appTargetSdkVersion = 23
     ext.appCompileSdkVersion = 23
     ext.appBuildToolsVersion = '23.0.2'
-
-
-    ext.depSupportLibraryVersion = '23.1.1'
-    ext.depGsonVersion = '2.4'
-    ext.depRxVersion = '1.1.0'
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+apply from: 'dependencies.gradle'

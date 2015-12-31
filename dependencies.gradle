@@ -1,0 +1,45 @@
+ext {
+    junitVersion = '4.12'
+    supportLibraryVersion = '23.1.1'
+    gsonVersion = '2.4'
+    rxVersion = '1.1.0'
+    realmVersion = '0.87.0'
+    butterknifeVersion = '7.0.1'
+    oneDriveSdkVersion = '1.0.2'
+    msaAuthVersion = '0.8.4'
+    materialDrawerVersion = '4.6.1'
+    materialDialogVersion = '0.8.5.3'
+
+    libDependencies = [
+            // Test
+            junit: "junit:junit:$junitVersion",
+
+            // Support Library
+            support_v13: "com.android.support:support-v13:$supportLibraryVersion",
+            appcompat: "com.android.support:appcompat-v7:$supportLibraryVersion",
+            cardview: "com.android.support:cardview-v7:$supportLibraryVersion",
+            recyclerview: "com.android.support:recyclerview-v7:$supportLibraryVersion",
+            design: "com.android.support:design:$supportLibraryVersion",
+
+            // Serialize and Deserialize
+            gson: "com.google.code.gson:gson:$gsonVersion",
+
+            // RX
+            rxjava: "io.reactivex:rxjava:$rxVersion",
+            rxandroid: "io.reactivex:rxandroid:$rxVersion",
+
+            // Database
+            realm: "io.realm:realm-android:$realmVersion",
+
+            // Injection
+            butterknife: "com.jakewharton:butterknife:$butterknifeVersion",
+
+            // Cloud Drive dependencies
+            onedrive: "com.onedrive.sdk:onedrive-sdk-android:$oneDriveSdkVersion",
+            msa_auth: "com.microsoft.services.msa:msa-auth:$msaAuthVersion",
+
+            // UI Elements
+            materialdrawer: "com.mikepenz:materialdrawer:$materialDrawerVersion@aar",
+            materialdialog: "com.github.afollestad.material-dialogs:core:$materialDialogVersion@aar"
+    ]
+}
