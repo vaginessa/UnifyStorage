@@ -10,6 +10,7 @@ public class DrawerItemUtils {
     public static final int DRAWER_ITEM_HELP_FEEDBACK = 6001;
     public static final int DRAWER_ITEM_GITHUB_REPO = 6002;
     public static final int DRAWER_ITEM_SETTINGS = 6003;
+    public static final int STORAGE_PROVIDER_START = 30000;
 
     public static int[] getStorageDirectoryTypes(Context context, String[] directories) {
         int[] directoryTypes = new int[directories.length];

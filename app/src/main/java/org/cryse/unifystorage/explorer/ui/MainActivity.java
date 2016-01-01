@@ -26,6 +26,7 @@ import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.AppPermissions;
 import org.cryse.unifystorage.explorer.databinding.ActivityMainBinding;
+import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.explorer.viewmodel.MainViewModel;
@@ -169,6 +170,15 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        if (which == 0) {
+                            mMainViewModel.addNewProvider(
+                                    "Pictures",
+                                    "Cryse Hillmes",
+                                    StorageProviderRecord.PROVIDER_LOCAL_STORAGE,
+                                    "",
+                                    "/storage/emulated/0/Pictures"
+                            );
+                        }
                         Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -279,8 +289,22 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 //showAddProviderDialog();
                 break;
             default:
-                if(drawerItem.getIdentifier() > DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
+                if(drawerItem.getIdentifier() >= DrawerItemUtils.STORAGE_PROVIDER_START) {
+                    StorageProviderRecord record = (StorageProviderRecord) drawerItem.getTag();
+                    switch (record.getProviderType()) {
+                        case StorageProviderRecord.PROVIDER_LOCAL_STORAGE:
+                            navigateToOtherLocalStorage(record.getExtraData());
+                            break;
+                        case StorageProviderRecord.PROVIDER_ONE_DRIVE:
+                            break;
+                    }
+                } else if(drawerItem.getIdentifier() > DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
                     navigateToOtherLocalStorage((String) drawerItem.getTag());
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }
