@@ -25,6 +25,7 @@ import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import org.cryse.unifystorage.credential.Credential;
+import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.AppPermissions;
 import org.cryse.unifystorage.explorer.databinding.ActivityMainBinding;
@@ -187,8 +188,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                                 break;
                             case 1:
                                 OneDriveAuthenticator oneDriveAuthenticator = new OneDriveAuthenticator(
-                                        "000000004C146A60",
-                                        new String[] {"onedrive.readwrite", "onedrive.appfolder", "wl.offline_access"}
+                                        DataContract.CONST_ONEDRIVE_CLIENT_ID,
+                                        DataContract.CONST_ONEDRIVE_SCOPES
                                 );
                                 oneDriveAuthenticator.startAuthenticate(MainActivity.this, RC_AUTHENTICATE_ONEDRIVE);
                                 break;
@@ -227,6 +228,11 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
 
     public void navigateToOtherLocalStorage(String path) {
         LocalStorageFragment fragment = LocalStorageFragment.newInstance(path);
+        switchContentFragment(fragment, null);
+    }
+
+    public void navigateToOneDriveStorage(OneDriveCredential credential) {
+        OneDriveStorageFragment fragment = OneDriveStorageFragment.newInstance(credential);
         switchContentFragment(fragment, null);
     }
 
@@ -310,6 +316,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                             navigateToOtherLocalStorage(record.getExtraData());
                             break;
                         case StorageProviderRecord.PROVIDER_ONE_DRIVE:
+                            navigateToOneDriveStorage(new OneDriveCredential(record.getCredentialData()));
                             break;
                     }
                 } else if(drawerItem.getIdentifier() > DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
@@ -333,6 +340,13 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         .content(credentialString)
                         .positiveText(android.R.string.ok)
                         .show();
+                mMainViewModel.addNewProvider(
+                        credential.getAccountName(),
+                        credential.getAccountName(),
+                        StorageProviderRecord.PROVIDER_ONE_DRIVE,
+                        credential.persist(),
+                        ""
+                );
             } else {
                 String errorMessage = data.getParcelableExtra(Credential.RESULT_KEY);
                 new MaterialDialog.Builder(this)

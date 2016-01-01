@@ -13,7 +13,8 @@ import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 
 public class LocalStorageFragment extends StorageProviderFragment<
         LocalStorageFile,
-        LocalStorageProvider
+        LocalStorageProvider,
+        Credential
         > {
     protected String mStartPath;
 
@@ -39,11 +40,11 @@ public class LocalStorageFragment extends StorageProviderFragment<
     }
 
     @Override
-    protected FileListViewModel<LocalStorageFile, LocalStorageProvider> buildViewModel(Credential credential) {
+    protected FileListViewModel<LocalStorageFile, LocalStorageProvider, Credential> buildViewModel(Credential credential) {
         return new FileListViewModel<>(
                 getContext(),
-                null,
-                new StorageProviderBuilder<LocalStorageFile, LocalStorageProvider>() {
+                credential,
+                new StorageProviderBuilder<LocalStorageFile, LocalStorageProvider, Credential>() {
                     @Override
                     public LocalStorageProvider buildStorageProvider(Credential credential) {
                         return new LocalStorageProvider(mStartPath);

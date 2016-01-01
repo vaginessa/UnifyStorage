@@ -106,6 +106,7 @@ public abstract class InternalOneDriveAuthenticator extends MSAAuthenticator {
      * The live authentication client.
      */
     private OneDriveAuthClient mAuthClient;
+    private OAuthSuccessfulResponse mSessionObject;
 
     /**
      * Initializes the authenticator.
@@ -128,6 +129,8 @@ public abstract class InternalOneDriveAuthenticator extends MSAAuthenticator {
         mLogger = logger;
         mInitialized = true;
         mAuthClient = new OneDriveAuthClient(activity, getClientId(), Arrays.asList(getScopes()));
+        if(mSessionObject != null)
+            mAuthClient.getSession().loadFromOAuthResponse(mSessionObject);
     }
 
     public void applyCredential(OneDriveCredential credential) {
@@ -159,8 +162,7 @@ public abstract class InternalOneDriveAuthenticator extends MSAAuthenticator {
             e.printStackTrace();
         }
 
-
-        mAuthClient.getSession().loadFromOAuthResponse(OAuthSuccessfulResponse.createFromJson(sessionObject));
+        mSessionObject = OAuthSuccessfulResponse.createFromJson(sessionObject);
     }
 
     public OneDriveAuthClient getAuthClient() {

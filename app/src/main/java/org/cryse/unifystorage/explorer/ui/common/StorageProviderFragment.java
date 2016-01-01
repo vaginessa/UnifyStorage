@@ -37,7 +37,8 @@ import butterknife.ButterKnife;
 
 public abstract class StorageProviderFragment<
         RF extends RemoteFile,
-        SP extends StorageProvider<RF>
+        SP extends StorageProvider<RF>,
+        CR extends Credential
         > extends AbstractFragment implements  FileAdapter.OnFileClickListener<RF>, FileListViewModel.DataListener<RF>  {
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
     private Handler mHandler = new Handler();
@@ -50,7 +51,7 @@ public abstract class StorageProviderFragment<
     };
 
     protected FragmentStorageProviderBinding mBinding;
-    protected FileListViewModel<RF, SP> mViewModel;
+    protected FileListViewModel<RF, SP, CR> mViewModel;
     protected FileAdapter<RF> mCollectionAdapter;
 
     @Bind(R.id.toolbar)
@@ -176,7 +177,7 @@ public abstract class StorageProviderFragment<
         mCollectionView.setAdapter(mCollectionAdapter);
     }
 
-    protected abstract FileListViewModel<RF, SP> buildViewModel(Credential credential);
+    protected abstract FileListViewModel<RF, SP, CR> buildViewModel(CR credential);
 
     @Override
     public void onFileClick(View view, int position, RF file) {

@@ -34,7 +34,8 @@ import rx.android.schedulers.AndroidSchedulers;
 
 public class FileListViewModel<
         RF extends RemoteFile,
-        SP extends StorageProvider<RF>
+        SP extends StorageProvider<RF>,
+        CR extends Credential
         > implements ViewModel {
     private static final String TAG = FileListViewModel.class.getCanonicalName();
 
@@ -55,8 +56,8 @@ public class FileListViewModel<
 
     public FileListViewModel(
             Context context,
-            Credential credential,
-            StorageProviderBuilder<RF, SP> providerBuilder,
+            CR credential,
+            StorageProviderBuilder<RF, SP, CR> providerBuilder,
             DataListener<RF> dataListener) {
         this.mContext = context;
         this.mDataListener = dataListener;

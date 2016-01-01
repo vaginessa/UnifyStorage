@@ -6,6 +6,9 @@ import android.text.TextUtils;
 import com.microsoft.services.msa.LiveConnectSession;
 
 import org.cryse.unifystorage.credential.OAuth2Credential;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -69,12 +72,58 @@ public class OneDriveCredential extends OAuth2Credential {
 
     @Override
     public String persist() {
-        return null;
+        JSONObject object = new JSONObject();
+        try {
+            object.put("accountName", accountName);
+            object.put("accountType", accountType);
+            object.put("tokenType", tokenType);
+            object.put("authenticationToken", authenticationToken);
+            object.put("accessToken", accessToken);
+            object.put("refreshToken", refreshToken);
+            object.put("userId", userId);
+            object.put("expiresIn", expiresIn.getTime());
+            JSONArray array = new JSONArray();
+            for (String scope : scopes) {
+                array.put(scope);
+            }
+            object.put("scopes", array);
+        } catch (JSONException ex) {
+
+        }
+        return object.toString();
     }
 
     @Override
     public void restore(String stored) {
-
+        try {
+            JSONObject object = new JSONObject(stored);
+            if (object.has("accountName"))
+                accountName = object.getString("accountName");
+            if (object.has("accountType"))
+                accountType = object.getString("accountType");
+            if (object.has("tokenType"))
+                tokenType = object.getString("tokenType");
+            if (object.has("authenticationToken"))
+                authenticationToken = object.getString("authenticationToken");
+            if (object.has("accessToken"))
+                accessToken = object.getString("accessToken");
+            if (object.has("refreshToken"))
+                refreshToken = object.getString("refreshToken");
+            if (object.has("userId"))
+                userId = object.getString("userId");
+            if (object.has("expiresIn"))
+                expiresIn = new Date(object.getLong("expiresIn"));
+            if (object.has("scopes")) {
+                JSONArray array = object.getJSONArray("scopes");
+                for (int i = 0; i < array.length(); i++) {
+                    if (scopes == null)
+                        scopes = new HashSet<String>();
+                    this.scopes.add(array.getString(i));
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -86,6 +135,7 @@ public class OneDriveCredential extends OAuth2Credential {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(this.accountName);
         dest.writeString(this.accountType);
+        dest.writeString(this.tokenType);
         dest.writeString(this.authenticationToken);
         dest.writeString(this.accessToken);
         dest.writeString(this.refreshToken);
@@ -97,6 +147,7 @@ public class OneDriveCredential extends OAuth2Credential {
     protected OneDriveCredential(Parcel in) {
         this.accountName = in.readString();
         this.accountType = in.readString();
+        this.tokenType = in.readString();
         this.authenticationToken = in.readString();
         this.accessToken = in.readString();
         this.refreshToken = in.readString();

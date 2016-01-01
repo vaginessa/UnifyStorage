@@ -76,7 +76,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     public DirectoryPair<OneDriveFile, List<OneDriveFile>> list(OneDriveFile parent) throws StorageException {
         List<Item> children = mOneDriveClient
                 .getDrive()
-                .getRoot()
+                .getItems(parent.getId())
                 .getChildren()
                 .buildRequest()
                 .get()

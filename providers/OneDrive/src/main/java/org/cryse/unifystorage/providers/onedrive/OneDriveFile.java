@@ -2,6 +2,7 @@ package org.cryse.unifystorage.providers.onedrive;
 
 import android.text.TextUtils;
 
+import com.google.gson.JsonObject;
 import com.onedrive.sdk.extensions.Item;
 
 import org.cryse.unifystorage.FileDetail;
@@ -16,6 +17,7 @@ public class OneDriveFile implements RemoteFile {
     public static final String ROOT_PATH = "/drive/root:";
     private String id;
     private String name;
+    private String path;
     private long size;
     private String downloadUrl;
     private String type;
@@ -38,7 +40,23 @@ public class OneDriveFile implements RemoteFile {
         this.model = oneDriveItem;
         this.id = oneDriveItem.id;
         this.name = oneDriveItem.name;
-        this.downloadUrl = oneDriveItem.getRawObject().get("@content.downloadUrl").getAsString();
+        if(this.name.equalsIgnoreCase("root") && !oneDriveItem.getRawObject().has("parentReference"))
+            this.path = "/";
+        else if(oneDriveItem.getRawObject().has("parentReference") ) {
+            JsonObject parentReference = oneDriveItem.getRawObject().getAsJsonObject("parentReference");
+            if (parentReference.has("path")) {
+                this.path = parentReference.get("path").getAsString();
+                if(!this.path.endsWith("/"))
+                    this.path = this.path + "/" + this.name;
+                if (path.startsWith("/drive/root:"))
+                    this.path = this.path.substring("/drive/root:".length());
+                if(!this.path.startsWith("/"))
+                    this.path = "/" + this.path;
+            }
+        }
+        if(TextUtils.isEmpty(this.path)) this.path = "name";
+        if(oneDriveItem.getRawObject().has("@content.downloadUrl"))
+            this.downloadUrl = oneDriveItem.getRawObject().get("@content.downloadUrl").getAsString();
         if(oneDriveItem.file != null) {
             if(!TextUtils.isEmpty(oneDriveItem.file.mimeType))
                 this.type = oneDriveItem.file.mimeType;
@@ -58,7 +76,7 @@ public class OneDriveFile implements RemoteFile {
 
     @Override
     public String getPath() {
-        return null;
+        return path;
     }
 
     @Override
