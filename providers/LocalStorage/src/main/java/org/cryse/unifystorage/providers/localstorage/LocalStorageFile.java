@@ -25,7 +25,7 @@ public class LocalStorageFile implements RemoteFile {
     }
 
     @Override
-    public String getAbsolutePath() {
+    public String getPath() {
         return mFile.getAbsolutePath();
     }
 
@@ -55,7 +55,7 @@ public class LocalStorageFile implements RemoteFile {
     }
 
     @Override
-    public long getLastModifiedTime() {
+    public long lastModified() {
         return mFile.lastModified();
     }
 

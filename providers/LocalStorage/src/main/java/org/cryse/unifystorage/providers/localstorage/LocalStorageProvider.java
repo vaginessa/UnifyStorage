@@ -37,7 +37,7 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     public DirectoryPair<LocalStorageFile, List<LocalStorageFile>> list(LocalStorageFile parent) throws StorageException {
         if(parent == null) return list();
 
-        File file = new File(parent.getAbsolutePath());
+        File file = new File(parent.getPath());
         List<LocalStorageFile> list = new ArrayList<LocalStorageFile>();
         File[] children = file.listFiles();
         if(children != null) {

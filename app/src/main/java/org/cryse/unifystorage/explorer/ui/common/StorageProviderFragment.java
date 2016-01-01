@@ -203,7 +203,7 @@ public abstract class StorageProviderFragment<
     @Override
     public void onDirectoryChanged(DirectoryPair<RF, List<RF>> directory) {
         mCollectionAdapter.replaceWith(directory.files);
-        updateBreadcrumb(directory.directory.getAbsolutePath());
+        updateBreadcrumb(directory.directory.getPath());
     }
 
     @Override
@@ -215,7 +215,7 @@ public abstract class StorageProviderFragment<
     public void updateBreadcrumb(String path) {
         if (path == null || TextUtils.isEmpty(mBreadCrumbLayout.getTopPath())) {
             // Initial directory
-            // path = mCurrentDirectory.getAbsolutePath();
+            // path = mCurrentDirectory.getPath();
             mBreadCrumbLayout.setTopPath(path);
         }
 

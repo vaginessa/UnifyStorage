@@ -57,7 +57,7 @@ public class OneDriveFile implements RemoteFile {
     }
 
     @Override
-    public String getAbsolutePath() {
+    public String getPath() {
         return null;
     }
 
@@ -87,7 +87,7 @@ public class OneDriveFile implements RemoteFile {
     }
 
     @Override
-    public long getLastModifiedTime() {
+    public long lastModified() {
         return lastModified.getTime();
     }
 

@@ -1,7 +1,10 @@
 package org.cryse.unifystorage;
 
 public interface AbstractFile {
+    String getPath();
+    String getFileType();
+    boolean isDirectory();
     String getName();
-    long getLastModifiedTime();
+    long lastModified();
     long size();
 }

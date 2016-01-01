@@ -10,7 +10,7 @@ public final class Path {
 
     public static String combine(RemoteFile remoteFile, String title){
         if(remoteFile != null)
-            return combine(remoteFile.getAbsolutePath(), title);
+            return combine(remoteFile.getPath(), title);
         else
             return combine(EMPTY, title);
     }

@@ -16,8 +16,8 @@ import org.cryse.unifystorage.explorer.application.UnifyStorageApplication;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
+import org.cryse.unifystorage.io.comparator.NameFileComparator;
 import org.cryse.unifystorage.utils.DirectoryPair;
-import org.cryse.unifystorage.utils.sort.FileSorter;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -59,7 +59,7 @@ public class FileListViewModel<
         this.mProgressVisibility = new ObservableInt(View.INVISIBLE);
         this.mRecyclerViewVisibility = new ObservableInt(View.INVISIBLE);
         this.mInfoMessage = new ObservableField<>(context.getString(R.string.info_message_empty_directory));
-        this.mFileComparator = FileSorter.FileNameComparator.getInstance(true);
+        this.mFileComparator = NameFileComparator.NAME_INSENSITIVE_COMPARATOR;
         this.mStorageProvider = new RxStorageProvider<>(providerBuilder.buildStorageProvider(credential));
     }
 
@@ -143,7 +143,7 @@ public class FileListViewModel<
 
     public void jumpBack(String targetPath, CollectionViewState collectionViewState) {
         for(int i = 0; i < mBackwardStack.size(); i++) {
-            if(mBackwardStack.get(i).directory.directory.getAbsolutePath().equals(targetPath)) {
+            if(mBackwardStack.get(i).directory.directory.getPath().equals(targetPath)) {
                 this.mDirectory = mBackwardStack.get(i).directory;
                 mBackwardStack.push(new BrowserState<RF>(mDirectory, collectionViewState));
                 mDataListener.onDirectoryChanged(mBackwardStack.get(i).directory);

@@ -2,22 +2,28 @@ package org.cryse.unifystorage;
 
 import java.util.Date;
 
-public interface RemoteFile extends AbstractFile{
+public interface RemoteFile extends AbstractFile {
     String getId();
 
-    String getAbsolutePath();
+    @Override
+    String getPath();
 
+    @Override
     boolean isDirectory();
 
+    @Override
     String getName();
 
     String getHash();
 
+    @Override
     long size();
 
+    @Override
     String getFileType();
 
-    long getLastModifiedTime();
+    @Override
+    long lastModified();
 
     Date getLastModifiedTimeDate();
 
