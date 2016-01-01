@@ -12,6 +12,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.text.format.DateUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +24,7 @@ import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
+import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.AppPermissions;
 import org.cryse.unifystorage.explorer.databinding.ActivityMainBinding;
@@ -30,12 +32,15 @@ import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.explorer.viewmodel.MainViewModel;
+import org.cryse.unifystorage.providers.onedrive.OneDriveAuthenticator;
+import org.cryse.unifystorage.providers.onedrive.OneDriveCredential;
 
 import java.util.List;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AbstractActivity implements EasyPermissions.PermissionCallbacks, MainViewModel.DataListener {
+    private static final int RC_AUTHENTICATE_ONEDRIVE = 101;
     private ActivityMainBinding mBinding;
     private MainViewModel mMainViewModel;
 
@@ -170,7 +175,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
-                        if (which == 0) {
+                        switch (which) {
+                            case 0:
                             mMainViewModel.addNewProvider(
                                     "Pictures",
                                     "Cryse Hillmes",
@@ -178,6 +184,14 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                                     "",
                                     "/storage/emulated/0/Pictures"
                             );
+                                break;
+                            case 1:
+                                OneDriveAuthenticator oneDriveAuthenticator = new OneDriveAuthenticator(
+                                        "000000004C146A60",
+                                        new String[] {"onedrive.readwrite", "onedrive.appfolder", "wl.offline_access"}
+                                );
+                                oneDriveAuthenticator.startAuthenticate(MainActivity.this, RC_AUTHENTICATE_ONEDRIVE);
+                                break;
                         }
                         Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show();
                     }
@@ -306,5 +320,27 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == RC_AUTHENTICATE_ONEDRIVE && data != null &&
+                data.hasExtra(Credential.RESULT_KEY)) {
+            if(resultCode == RESULT_OK) {
+                OneDriveCredential credential = data.getParcelableExtra(Credential.RESULT_KEY);
+                String credentialString = String.format("AccessToken: %s, ExpiresIn: %s",
+                        credential.getAccessToken(),
+                        DateUtils.formatDateTime(this, credential.getExpiresIn().getTime(), DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME)
+                );
+                new MaterialDialog.Builder(this)
+                        .title(R.string.storage_provider_name_onedrive)
+                        .content(credentialString)
+                        .positiveText(android.R.string.ok)
+                        .show();
+            } else {
+                String errorMessage = data.getParcelableExtra(Credential.RESULT_KEY);
+                new MaterialDialog.Builder(this)
+                        .title(R.string.storage_provider_name_onedrive)
+                        .content(errorMessage)
+                        .positiveText(android.R.string.ok)
+                        .show();
+            }
+        }
     }
 }
