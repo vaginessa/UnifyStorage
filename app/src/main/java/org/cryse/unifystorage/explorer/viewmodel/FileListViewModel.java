@@ -165,10 +165,10 @@ public class FileListViewModel<
     }
 
     public void jumpBack(String targetPath, CollectionViewState collectionViewState) {
+        mBackwardStack.push(new BrowserState<RF>(mDirectory, collectionViewState));
         for(int i = 0; i < mBackwardStack.size(); i++) {
             if(mBackwardStack.get(i).directory.directory.getPath().equals(targetPath)) {
                 this.mDirectory = mBackwardStack.get(i).directory;
-                mBackwardStack.push(new BrowserState<RF>(mDirectory, collectionViewState));
                 mDataListener.onDirectoryChanged(mBackwardStack.get(i).directory);
                 mDataListener.onCollectionViewStateRestore(mBackwardStack.get(i).collectionViewState);
                 break;
