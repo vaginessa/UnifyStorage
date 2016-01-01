@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -19,27 +20,23 @@ import android.widget.Toast;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
-import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.AppPermissions;
+import org.cryse.unifystorage.explorer.databinding.ActivityMainBinding;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
-import org.cryse.unifystorage.explorer.utils.StorageDirectoryUtils;
-import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
-import org.cryse.unifystorage.utils.Path;
+import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
+import org.cryse.unifystorage.explorer.viewmodel.MainViewModel;
 
 import java.util.List;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
-public class MainActivity extends AbstractActivity implements EasyPermissions.PermissionCallbacks {
-    private static final int DRAWER_ITEM_NONE = 15;
-    private static final int DRAWER_ITEM_ADD_PROVIDER = 2000;
-    private static final int DRAWER_ITEM_HELP_FEEDBACK = 6001;
-    private static final int DRAWER_ITEM_GITHUB_REPO = 6002;
-    private static final int DRAWER_ITEM_SETTINGS = 6003;
+public class MainActivity extends AbstractActivity implements EasyPermissions.PermissionCallbacks, MainViewModel.DataListener {
+    private ActivityMainBinding mBinding;
+    private MainViewModel mMainViewModel;
 
     private Drawer mDrawer;
     int mCurrentSelection = 0;
@@ -50,13 +47,16 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        // setContentView(R.layout.activity_main);
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        mMainViewModel = new MainViewModel(this, this);
+        mBinding.setViewModel(mMainViewModel);
 
         if (savedInstanceState != null && savedInstanceState.containsKey("selection_item_position")) {
             mCurrentSelection = savedInstanceState.getInt("selection_item_position");
             mIsRestorePosition = true;
         } else {
-            mCurrentSelection = DRAWER_ITEM_NONE;
+            mCurrentSelection = DrawerItemUtils.DRAWER_ITEM_NONE;
             mIsRestorePosition = false;
         }
 
@@ -96,7 +96,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 mPendingRunnable = new Runnable() {
                     @Override
                     public void run() {
-                        onNavigationSelected(drawerItem);
+                        mMainViewModel.onNavigationSelected(drawerItem);
                         mPendingRunnable = null;
                     }
                 };
@@ -145,9 +145,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     private void addStorageProviderItemsAndLoad() {
-        mDrawer.addItemsAtPosition(0, getStorageProviderDrawerItems());
-        mDrawer.addItems(getConstDrawerItems());
-        //int identifier = mDrawer.getDrawerItems().get(0).getIdentifier();
+        mMainViewModel.updateDrawerItems();
         if (mIsRestorePosition) {
             mDrawer.setSelection(mCurrentSelection, false);
         } else {
@@ -158,79 +156,10 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         }
     }
 
-    private IDrawerItem[] getStorageProviderDrawerItems() {
-        String[] externalStoragePaths = LocalStorageUtils.getStorageDirectories(this);
-        int[] externalStorageTypes = StorageDirectoryUtils.getStorageDirectoryTypes(this, externalStoragePaths);
-        IDrawerItem[] items = new IDrawerItem[externalStoragePaths.length];
-        for (int i = 0; i < externalStoragePaths.length; i++) {
-            String path = externalStoragePaths[i];
-            int type = externalStorageTypes[i];
-            switch (type) {
-                case StorageDirectoryUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE:
-                    items[i] = new PrimaryDrawerItem().withName(getString(R.string.drawer_local_internal_storage))
-                            .withTag(path)
-                            .withIcon(R.drawable.ic_drawer_internal_storage)
-                            .withIdentifier(type)
-                            .withSelectable(true);
-                    break;
-                default:
-                    items[i] = new PrimaryDrawerItem().withName(Path.getFileName(path))
-                            .withTag(path)
-                            .withIcon(R.drawable.ic_drawer_sdcard)
-                            .withIdentifier(type)
-                            .withSelectable(true);
-                    break;
-            }
-        }
-        return items;
-    }
-
-    private IDrawerItem[] getConstDrawerItems() {
-        return new IDrawerItem[]{
-                new PrimaryDrawerItem().withName(R.string.drawer_add_storage_provider)
-                        .withIcon(R.drawable.ic_drawer_add_storage_provider)
-                        .withIdentifier(DRAWER_ITEM_ADD_PROVIDER)
-                        .withSelectable(false),
-                new DividerDrawerItem(),
-                new PrimaryDrawerItem().withName(R.string.drawer_help_and_feedback)
-                        .withIdentifier(DRAWER_ITEM_HELP_FEEDBACK)
-                        .withSelectable(false),
-                new PrimaryDrawerItem().withName(R.string.drawer_github_repo)
-                        .withIdentifier(DRAWER_ITEM_GITHUB_REPO)
-                        .withSelectable(false),
-                new PrimaryDrawerItem().withName(R.string.drawer_settings)
-                        .withIdentifier(DRAWER_ITEM_SETTINGS)
-                        .withSelectable(false)
-        };
-    }
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt("selection_item_position", mCurrentSelection);
-    }
-
-    private void onNavigationSelected(IDrawerItem drawerItem) {
-        switch (drawerItem.getIdentifier()) {
-            case StorageDirectoryUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE:
-                navigateToInternalStorage();
-                break;
-            case DRAWER_ITEM_ADD_PROVIDER:
-                showAddProviderDialog();
-                break;
-            case DRAWER_ITEM_HELP_FEEDBACK:
-                //showAddProviderDialog();
-                break;
-            case DRAWER_ITEM_GITHUB_REPO:
-                //showAddProviderDialog();
-                break;
-            case DRAWER_ITEM_SETTINGS:
-                //showAddProviderDialog();
-                break;
-            default:
-                if(drawerItem.getIdentifier() > StorageDirectoryUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
-                    navigateToOtherLocalStorage((String) drawerItem.getTag());
-        }
     }
 
     public void showAddProviderDialog() {
@@ -313,6 +242,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
             am.set(AlarmManager.RTC, System.currentTimeMillis() + 100, pi);
 
             // Stop now
+            finish();
             System.exit(0);
         } else {
             finish();
@@ -322,5 +252,35 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     public void onPermissionsDenied(List<String> perms) {
         finish();
+    }
+
+    @Override
+    public void onDrawerItemsChanged(IDrawerItem[] drawerItems) {
+        mDrawer.removeAllItems();
+        mDrawer.addItems(drawerItems);
+    }
+
+    @Override
+    public void onNavigateTo(IDrawerItem drawerItem) {
+        switch (drawerItem.getIdentifier()) {
+            case DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE:
+                navigateToInternalStorage();
+                break;
+            case DrawerItemUtils.DRAWER_ITEM_ADD_PROVIDER:
+                showAddProviderDialog();
+                break;
+            case DrawerItemUtils.DRAWER_ITEM_HELP_FEEDBACK:
+                //showAddProviderDialog();
+                break;
+            case DrawerItemUtils.DRAWER_ITEM_GITHUB_REPO:
+                //showAddProviderDialog();
+                break;
+            case DrawerItemUtils.DRAWER_ITEM_SETTINGS:
+                //showAddProviderDialog();
+                break;
+            default:
+                if(drawerItem.getIdentifier() > DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
+                    navigateToOtherLocalStorage((String) drawerItem.getTag());
+        }
     }
 }
