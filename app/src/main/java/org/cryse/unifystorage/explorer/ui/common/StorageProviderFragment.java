@@ -173,7 +173,6 @@ public abstract class StorageProviderFragment<
 
     private void setupRecyclerView() {
         mCollectionView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mCollectionView.setHasFixedSize(true);
         mCollectionView.setAdapter(mCollectionAdapter);
     }
 

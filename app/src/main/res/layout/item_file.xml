@@ -27,6 +27,8 @@
             android:layout_marginLeft="72dp"
             android:layout_marginStart="72dp"
             android:layout_marginTop="8dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginEnd="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:maxLines="1"
@@ -46,7 +48,7 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:text="@{viewModel.detail}"
-            android:textSize="@dimen/text_size_tiny"
+            android:textSize="@dimen/text_size_super_tiny"
             android:textColor="@color/text_color_secondary"/>
         <TextView
             android:layout_width="wrap_content"
@@ -60,7 +62,7 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             android:text="@{viewModel.detail2}"
-            android:textSize="@dimen/text_size_tiny"
+            android:textSize="@dimen/text_size_super_tiny"
             android:textColor="@color/text_color_secondary"/>
     </RelativeLayout>
 

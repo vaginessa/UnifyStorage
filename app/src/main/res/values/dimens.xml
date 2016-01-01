@@ -25,6 +25,7 @@
     <dimen name="text_size_body1">17sp</dimen>
     <dimen name="text_size_caption">13sp</dimen>
     <dimen name="text_size_tiny">11sp</dimen>
+    <dimen name="text_size_super_tiny">9sp</dimen>
     <dimen name="text_size_button">15sp</dimen>
     <!-- Font Size End-->
 </resources>
