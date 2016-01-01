@@ -15,10 +15,12 @@ import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.UnifyStorageApplication;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
+import org.cryse.unifystorage.explorer.utils.OpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
 import org.cryse.unifystorage.io.comparator.NameFileComparator;
 import org.cryse.unifystorage.utils.DirectoryPair;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -35,6 +37,7 @@ public class FileListViewModel<
         SP extends StorageProvider<RF>
         > implements ViewModel {
     private static final String TAG = FileListViewModel.class.getCanonicalName();
+
     public ObservableInt mInfoMessageVisibility;
     public ObservableInt mProgressVisibility;
     public ObservableInt mRecyclerViewVisibility;
@@ -42,17 +45,19 @@ public class FileListViewModel<
 
     private Context mContext;
     private DirectoryPair<RF, List<RF>> mDirectory;
+    private List<RF> mHiddenFiles;
     private DataListener<RF> mDataListener;
     private Subscription mSubscription;
     private RxStorageProvider<RF,SP> mStorageProvider;
     private Comparator<AbstractFile> mFileComparator;
     protected Stack<BrowserState<RF>> mBackwardStack = new Stack<>();
+    private boolean mShowHiddenFile = false;
 
     public FileListViewModel(
             Context context,
             Credential credential,
             StorageProviderBuilder<RF, SP> providerBuilder,
-            DataListener dataListener) {
+            DataListener<RF> dataListener) {
         this.mContext = context;
         this.mDataListener = dataListener;
         this.mInfoMessageVisibility = new ObservableInt(View.VISIBLE);
@@ -61,6 +66,7 @@ public class FileListViewModel<
         this.mInfoMessage = new ObservableField<>(context.getString(R.string.info_message_empty_directory));
         this.mFileComparator = NameFileComparator.NAME_INSENSITIVE_COMPARATOR;
         this.mStorageProvider = new RxStorageProvider<>(providerBuilder.buildStorageProvider(credential));
+        this.mHiddenFiles = new ArrayList<>();
     }
 
     public void setDataListener(DataListener<RF> dataListener) {
@@ -105,6 +111,7 @@ public class FileListViewModel<
                     @Override
                     public void onNext(DirectoryPair<RF, List<RF>> files) {
                         Log.i(TAG, "Files loaded " + files);
+                        mHiddenFiles.clear();
                         handleFileSort(files);
                         handleHiddenFile(files);
                         FileListViewModel.this.mDirectory = files;
@@ -117,11 +124,27 @@ public class FileListViewModel<
     }
 
     protected void handleHiddenFile(DirectoryPair<RF, List<RF>> directory) {
-        for(Iterator<RF> iterator = directory.files.iterator(); iterator.hasNext(); ) {
-            RF file = iterator.next();
-            if(file.getName().startsWith("."))
-                iterator.remove();
+        if(!mShowHiddenFile) {
+            for(Iterator<RF> iterator = directory.files.iterator(); iterator.hasNext(); ) {
+                RF file = iterator.next();
+                if(file.getName().startsWith(".")) {
+                    mHiddenFiles.add(file);
+                    iterator.remove();
+                }
+            }
+        } else {
+            if(!mHiddenFiles.isEmpty()) {
+                mDirectory.files.addAll(mHiddenFiles);
+                mHiddenFiles.clear();
+            }
         }
+    }
+
+    public void setShowHiddenFiles(boolean show) {
+        this.mShowHiddenFile = show;
+        handleHiddenFile(mDirectory);
+        handleFileSort(mDirectory);
+        if (mDataListener != null) mDataListener.onDirectoryChanged(mDirectory);
     }
 
     public void onFileClick(RF file, CollectionViewState collectionViewState) {
@@ -166,7 +189,7 @@ public class FileListViewModel<
     }
 
     private void openFile(RF file) {
-
+        OpenFileUtils.openFile(mContext, file.getPath(), true);
     }
 
     @Override
