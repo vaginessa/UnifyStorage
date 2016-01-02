@@ -37,9 +37,9 @@ import butterknife.ButterKnife;
 
 public abstract class StorageProviderFragment<
         RF extends RemoteFile,
-        SP extends StorageProvider<RF>,
-        CR extends Credential
-        > extends AbstractFragment implements  FileAdapter.OnFileClickListener<RF>, FileListViewModel.DataListener<RF>  {
+        CR extends Credential,
+        SP extends StorageProvider<RF, CR>
+        > extends AbstractFragment implements  FileAdapter.OnFileClickListener<RF>, FileListViewModel.DataListener<RF, CR>  {
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
     private Handler mHandler = new Handler();
 
@@ -49,9 +49,11 @@ public abstract class StorageProviderFragment<
             mDoubleBackPressedOnce.set(false);
         }
     };
+    protected int mStorageProviderRecordId;
+    protected CR mCredential;
 
     protected FragmentStorageProviderBinding mBinding;
-    protected FileListViewModel<RF, SP, CR> mViewModel;
+    protected FileListViewModel<RF, CR, SP> mViewModel;
     protected FileAdapter<RF> mCollectionAdapter;
 
     @Bind(R.id.toolbar)
@@ -66,14 +68,15 @@ public abstract class StorageProviderFragment<
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        /*
-        Bundle bundle = getArguments();
-
-        if (bundle != null)
-            mCredential = bundle.getParcelable(DataContract.ARG_CREDENTIAL);
-            */
+        readArguments();
         mCollectionAdapter = new FileAdapter<>(getActivity());
         mCollectionAdapter.setOnFileClickListener(this);
+        mViewModel = buildViewModel(mCredential);
+        mViewModel.setStorageProviderRecordId(mStorageProviderRecordId);
+    }
+
+    protected void readArguments() {
+
     }
 
     @Override
@@ -86,7 +89,6 @@ public abstract class StorageProviderFragment<
         setupToolbar();
         setupRecyclerView();
         setupBreadCrumb();
-        // mViewModel.loadFiles(null);
         return fragmentView;
     }
 
@@ -177,7 +179,7 @@ public abstract class StorageProviderFragment<
         mCollectionView.setAdapter(mCollectionAdapter);
     }
 
-    protected abstract FileListViewModel<RF, SP, CR> buildViewModel(CR credential);
+    protected abstract FileListViewModel<RF, CR, SP> buildViewModel(CR credential);
 
     @Override
     public void onFileClick(View view, int position, RF file) {
@@ -210,6 +212,11 @@ public abstract class StorageProviderFragment<
     public void onCollectionViewStateRestore(CollectionViewState collectionViewState) {
         LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getLayoutManager();
         manager.scrollToPositionWithOffset(collectionViewState.position, (int) collectionViewState.offset);
+    }
+
+    @Override
+    public void onCredentialRefreshed(CR credential) {
+        this.mCredential = credential;
     }
 
     public void updateBreadcrumb(String path) {

@@ -8,45 +8,46 @@ import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.ui.common.StorageProviderFragment;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
+import org.cryse.unifystorage.providers.localstorage.LocalCredential;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageFile;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 
 public class LocalStorageFragment extends StorageProviderFragment<
         LocalStorageFile,
-        LocalStorageProvider,
-        Credential
+        LocalCredential,
+        LocalStorageProvider
         > {
     protected String mStartPath;
 
-    public static LocalStorageFragment newInstance(String startPath) {
+    public static LocalStorageFragment newInstance(String startPath, int storageProviderRecordId) {
         LocalStorageFragment fragment = new LocalStorageFragment();
         Bundle args = new Bundle();
         args.putString(DataContract.ARG_LOCAL_PATH, startPath);
+        args.putInt(DataContract.ARG_STORAGE_PROVIDER_RECORD_ID, storageProviderRecordId);
         fragment.setArguments(args);
         return fragment;
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void readArguments() {
         Bundle args = getArguments();
         if (args.containsKey(DataContract.ARG_LOCAL_PATH)) {
             mStartPath = args.getString(DataContract.ARG_LOCAL_PATH);
         } else {
-            mStartPath = "/sdcard";
+            throw new RuntimeException("Invalid path.");
         }
-        // LocalStorageProvider do not need credential.
-        mViewModel = buildViewModel(null);
+        if(args.containsKey(DataContract.ARG_STORAGE_PROVIDER_RECORD_ID))
+            mStorageProviderRecordId = args.getInt(DataContract.ARG_STORAGE_PROVIDER_RECORD_ID);
     }
 
     @Override
-    protected FileListViewModel<LocalStorageFile, LocalStorageProvider, Credential> buildViewModel(Credential credential) {
+    protected FileListViewModel<LocalStorageFile, LocalCredential, LocalStorageProvider> buildViewModel(LocalCredential credential) {
         return new FileListViewModel<>(
                 getContext(),
                 credential,
-                new StorageProviderBuilder<LocalStorageFile, LocalStorageProvider, Credential>() {
+                new StorageProviderBuilder<LocalStorageFile, LocalCredential, LocalStorageProvider>() {
                     @Override
-                    public LocalStorageProvider buildStorageProvider(Credential credential) {
+                    public LocalStorageProvider buildStorageProvider(LocalCredential credential) {
                         return new LocalStorageProvider(mStartPath);
                     }
                 },

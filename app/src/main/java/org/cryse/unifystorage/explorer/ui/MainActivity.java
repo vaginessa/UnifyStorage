@@ -222,17 +222,17 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     public void navigateToInternalStorage() {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(Environment.getExternalStorageDirectory().getAbsolutePath());
+        LocalStorageFragment fragment = LocalStorageFragment.newInstance(Environment.getExternalStorageDirectory().getAbsolutePath(), DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID);
         switchContentFragment(fragment, null);
     }
 
-    public void navigateToOtherLocalStorage(String path) {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(path);
+    public void navigateToOtherLocalStorage(String path, int storageProviderRecordId) {
+        LocalStorageFragment fragment = LocalStorageFragment.newInstance(path, storageProviderRecordId);
         switchContentFragment(fragment, null);
     }
 
-    public void navigateToOneDriveStorage(OneDriveCredential credential) {
-        OneDriveStorageFragment fragment = OneDriveStorageFragment.newInstance(credential);
+    public void navigateToOneDriveStorage(OneDriveCredential credential, int storageProviderRecordId) {
+        OneDriveStorageFragment fragment = OneDriveStorageFragment.newInstance(credential, storageProviderRecordId);
         switchContentFragment(fragment, null);
     }
 
@@ -313,14 +313,14 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                     StorageProviderRecord record = (StorageProviderRecord) drawerItem.getTag();
                     switch (record.getProviderType()) {
                         case StorageProviderRecord.PROVIDER_LOCAL_STORAGE:
-                            navigateToOtherLocalStorage(record.getExtraData());
+                            navigateToOtherLocalStorage(record.getExtraData(), record.getId());
                             break;
                         case StorageProviderRecord.PROVIDER_ONE_DRIVE:
-                            navigateToOneDriveStorage(new OneDriveCredential(record.getCredentialData()));
+                            navigateToOneDriveStorage(new OneDriveCredential(record.getCredentialData()), record.getId());
                             break;
                     }
                 } else if(drawerItem.getIdentifier() > DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
-                    navigateToOtherLocalStorage((String) drawerItem.getTag());
+                    navigateToOtherLocalStorage((String) drawerItem.getTag(), DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID);
         }
     }
 
@@ -348,7 +348,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         ""
                 );
             } else {
-                String errorMessage = data.getParcelableExtra(Credential.RESULT_KEY);
+                String errorMessage = data.getStringExtra(Credential.RESULT_KEY);
                 new MaterialDialog.Builder(this)
                         .title(R.string.storage_provider_name_onedrive)
                         .content(errorMessage)

@@ -11,8 +11,11 @@ import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RxStorageProvider;
 import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
+import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.UnifyStorageApplication;
+import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
+import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.OpenFileUtils;
@@ -35,8 +38,8 @@ import rx.android.schedulers.AndroidSchedulers;
 
 public class FileListViewModel<
         RF extends RemoteFile,
-        SP extends StorageProvider<RF>,
-        CR extends Credential
+        CR extends Credential,
+        SP extends StorageProvider<RF, CR>
         > implements ViewModel {
     private static final String TAG = FileListViewModel.class.getCanonicalName();
 
@@ -48,22 +51,24 @@ public class FileListViewModel<
     private Context mContext;
     private DirectoryPair<RF, List<RF>> mDirectory;
     private List<RF> mHiddenFiles;
-    private DataListener<RF> mDataListener;
+    private DataListener<RF, CR> mDataListener;
     private Subscription mLoadFilesSubscription;
     private Subscription mBuildStorageProviderSubscription;
 
-    private RxStorageProvider<RF, SP> mStorageProvider;
+    private RxStorageProvider<RF, CR, SP> mStorageProvider;
     private Comparator<AbstractFile> mFileComparator;
     protected Stack<BrowserState<RF>> mBackwardStack = new Stack<>();
     private boolean mShowHiddenFile = false;
-    private StorageProviderBuilder<RF, SP, CR> mProviderBuilder;
+    private StorageProviderBuilder<RF, CR, SP> mProviderBuilder;
+    protected StorageProviderDatabase mStorageProviderDatabase;
     private CR mCredential;
+    private int mStorageProviderRecordId = DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID;
 
     public FileListViewModel(
             Context context,
             CR credential,
-            StorageProviderBuilder<RF, SP, CR> providerBuilder,
-            DataListener<RF> dataListener) {
+            StorageProviderBuilder<RF, CR, SP> providerBuilder,
+            DataListener<RF, CR> dataListener) {
         this.mContext = context;
         this.mDataListener = dataListener;
         this.mInfoMessageVisibility = new ObservableInt(View.VISIBLE);
@@ -75,10 +80,11 @@ public class FileListViewModel<
         this.mProviderBuilder = providerBuilder;
         // this.mStorageProvider = new RxStorageProvider<>(providerBuilder.buildStorageProvider(credential));
         this.mHiddenFiles = new ArrayList<>();
+        this.mStorageProviderDatabase = new StorageProviderDatabase(mContext);
         buildStorageProvider();
     }
 
-    public void setDataListener(DataListener<RF> dataListener) {
+    public void setDataListener(DataListener<RF, CR> dataListener) {
         this.mDataListener = dataListener;
     }
 
@@ -115,8 +121,25 @@ public class FileListViewModel<
                     @Override
                     public void onNext(SP sp) {
                         mStorageProvider = new RxStorageProvider<>(sp);
+                        if(mStorageProvider.shouldRefreshCredential()) {
+                            updateCredential(mStorageProvider.getRefreshedCredential());
+                        }
                     }
                 });
+    }
+
+    public void setStorageProviderRecordId(int id) {
+        this.mStorageProviderRecordId = id;
+    }
+
+    public void updateCredential(CR newCredential) {
+        if(mDataListener != null)
+            mDataListener.onCredentialRefreshed(newCredential);
+        if(mStorageProviderDatabase != null && mStorageProviderRecordId != DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID) {
+            StorageProviderRecord record = mStorageProviderDatabase.getSavedStorageProvider(mStorageProviderRecordId);
+            record.setCredentialData(newCredential.persist());
+            mStorageProviderDatabase.updateStorageProviderRecord(record);
+        }
     }
 
     public void loadFiles(RF parent) {
@@ -248,13 +271,14 @@ public class FileListViewModel<
     public void destroy() {
         RxSubscriptionUtils.checkAndUnsubscribe(mLoadFilesSubscription);
         RxSubscriptionUtils.checkAndUnsubscribe(mBuildStorageProviderSubscription);
+        mStorageProviderDatabase.destroy();
         mContext = null;
         mDataListener = null;
     }
 
-    public interface DataListener<RF extends RemoteFile> {
+    public interface DataListener<RF extends RemoteFile, CR extends Credential> {
         void onDirectoryChanged(DirectoryPair<RF, List<RF>> directory);
-
         void onCollectionViewStateRestore(CollectionViewState collectionViewState);
+        void onCredentialRefreshed(CR credential);
     }
 }

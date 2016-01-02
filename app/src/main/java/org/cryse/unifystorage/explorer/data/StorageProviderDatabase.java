@@ -9,6 +9,8 @@ import java.util.Date;
 import java.util.List;
 
 import io.realm.Realm;
+import io.realm.RealmQuery;
+import io.realm.RealmResults;
 import io.realm.Sort;
 
 public class StorageProviderDatabase {
@@ -20,9 +22,25 @@ public class StorageProviderDatabase {
         this.mRealm = Realm.getInstance(context);
     }
 
+    public void updateStorageProviderRecord(StorageProviderRecord record) {
+        mRealm.beginTransaction();
+        mRealm.copyToRealmOrUpdate(record);
+        mRealm.commitTransaction();
+    }
+
+    public StorageProviderRecord getSavedStorageProvider(int id) {
+        RealmQuery<StorageProviderRecord> query = mRealm.where(StorageProviderRecord.class);
+        query.equalTo("id", id);
+        RealmResults<StorageProviderRecord> results = query.findAll();
+        if(results.size() > 0) {
+            return mRealm.copyFromRealm(results.get(0));
+        } else {
+            return null;
+        }
+    }
+
     public List<StorageProviderRecord> getSavedStorageProviders() {
-        List<StorageProviderRecord> records = mRealm.copyFromRealm(mRealm.allObjectsSorted(StorageProviderRecord.class, "sortKey", Sort.ASCENDING));
-        return records;
+        return mRealm.copyFromRealm(mRealm.allObjectsSorted(StorageProviderRecord.class, "sortKey", Sort.ASCENDING));
     }
 
     public void addNewProvider(String displayName, String userName, int providerType, String credentialData, String extraData) {

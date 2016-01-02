@@ -1,5 +1,6 @@
 package org.cryse.unifystorage;
 
+import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.utils.DirectoryPair;
 
 import java.io.InputStream;
@@ -11,7 +12,7 @@ import rx.Observable;
 import rx.Subscriber;
 
 
-public class RxStorageProvider<RF extends RemoteFile, SP extends StorageProvider<RF>> {
+public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>> {
     private SP mStorageProvider;
 
     public RxStorageProvider(SP storageProvider) {
@@ -405,6 +406,14 @@ public class RxStorageProvider<RF extends RemoteFile, SP extends StorageProvider
             }
         });
 
+    }
+
+    public CR getRefreshedCredential() {
+        return mStorageProvider.getRefreshedCredential();
+    }
+
+    public boolean shouldRefreshCredential() {
+        return mStorageProvider.shouldRefreshCredential();
     }
 
     SP getStorageProvider() {

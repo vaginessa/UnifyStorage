@@ -1,11 +1,12 @@
 package org.cryse.unifystorage;
 
+import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.utils.DirectoryPair;
 
 import java.io.InputStream;
 import java.util.List;
 
-public interface StorageProvider<RF extends RemoteFile> {
+public interface StorageProvider<RF extends RemoteFile, CR extends Credential> {
     RF getRootDirectory() throws StorageException;
 
     DirectoryPair<RF, List<RF>> list(RF parent) throws StorageException;
@@ -57,6 +58,10 @@ public interface StorageProvider<RF extends RemoteFile> {
     StorageUserInfo getUserInfo() throws StorageException;
 
     StorageUserInfo getUserInfo(boolean forceRefresh) throws StorageException;
+
+    CR getRefreshedCredential();
+
+    boolean shouldRefreshCredential();
 
     HashAlgorithm getHashAlgorithm() throws StorageException;
 }

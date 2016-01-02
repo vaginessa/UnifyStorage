@@ -6,8 +6,8 @@ import org.cryse.unifystorage.credential.Credential;
 
 public abstract class StorageProviderBuilder<
         RF extends RemoteFile,
-        SP extends StorageProvider<RF>,
-        CR extends Credential
+        CR extends Credential,
+        SP extends StorageProvider<RF, CR>
         > {
     public abstract SP buildStorageProvider(CR credential);
 }

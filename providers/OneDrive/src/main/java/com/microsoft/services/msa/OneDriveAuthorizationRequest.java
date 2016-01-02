@@ -51,7 +51,6 @@ public class OneDriveAuthorizationRequest implements ObservableOAuthRequest, OAu
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                clearCookies(view);
                 mProgressBar.setVisibility(View.VISIBLE);
             }
 
@@ -77,27 +76,9 @@ public class OneDriveAuthorizationRequest implements ObservableOAuthRequest, OAu
                 }
 
                 OneDriveAuthorizationRequest.this.onEndUri(uri);
-                clearCookies(view);
-                OAuthDialog.this.dismiss();
-            }
-
-            public void clearCookies(WebView view) {
                 view.clearCache(true);
                 view.clearHistory();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                    //Log.d(C.TAG, "Using ClearCookies code for API >=" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
-                    CookieManager.getInstance().removeAllCookies(null);
-                    CookieManager.getInstance().flush();
-                } else {
-                    //Log.d(C.TAG, "Using ClearCookies code for API <" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
-                    CookieSyncManager cookieSyncMngr=CookieSyncManager.createInstance(view.getContext());
-                    cookieSyncMngr.startSync();
-                    CookieManager cookieManager=CookieManager.getInstance();
-                    cookieManager.removeAllCookie();
-                    cookieManager.removeSessionCookie();
-                    cookieSyncMngr.stopSync();
-                    cookieSyncMngr.sync();
-                }
+                OAuthDialog.this.dismiss();
             }
 
             /**
@@ -157,6 +138,7 @@ public class OneDriveAuthorizationRequest implements ObservableOAuthRequest, OAu
             mProgressBar = (ProgressBar) layout.findViewById(R.id.progressbar_auth);
 
             webView.setWebViewClient(new AuthorizationWebViewClient());
+            clearCookies(webView);
 
             WebSettings webSettings = webView.getSettings();
             webSettings.setJavaScriptEnabled(true);
@@ -166,6 +148,25 @@ public class OneDriveAuthorizationRequest implements ObservableOAuthRequest, OAu
             this.addContentView(layout,
                     new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+    }
+
+    public void clearCookies(WebView view) {
+        view.clearCache(true);
+        view.clearHistory();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            //Log.d(C.TAG, "Using ClearCookies code for API >=" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
+            CookieManager.getInstance().removeAllCookies(null);
+            CookieManager.getInstance().flush();
+        } else {
+            //Log.d(C.TAG, "Using ClearCookies code for API <" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
+            CookieSyncManager cookieSyncMngr=CookieSyncManager.createInstance(view.getContext());
+            cookieSyncMngr.startSync();
+            CookieManager cookieManager=CookieManager.getInstance();
+            cookieManager.removeAllCookie();
+            cookieManager.removeSessionCookie();
+            cookieSyncMngr.stopSync();
+            cookieSyncMngr.sync();
         }
     }
 

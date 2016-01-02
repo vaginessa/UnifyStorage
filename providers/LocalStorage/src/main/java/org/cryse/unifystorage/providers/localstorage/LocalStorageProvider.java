@@ -6,6 +6,7 @@ import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
+import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.utils.DirectoryPair;
 import org.cryse.unifystorage.utils.IOUtils;
 import org.cryse.unifystorage.utils.Path;
@@ -17,7 +18,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFile> {
+public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFile, LocalCredential> {
     private String mStartPath;
     private LocalStorageFile mStartFile;
     public LocalStorageProvider(String startPath) {
@@ -122,6 +123,16 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     @Override
     public StorageUserInfo getUserInfo(boolean forceRefresh) throws StorageException {
         return null;
+    }
+
+    @Override
+    public LocalCredential getRefreshedCredential() {
+        return null;
+    }
+
+    @Override
+    public boolean shouldRefreshCredential() {
+        return false;
     }
 
     @Override

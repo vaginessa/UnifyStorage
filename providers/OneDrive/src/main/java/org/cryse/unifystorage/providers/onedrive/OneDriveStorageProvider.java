@@ -32,11 +32,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFile> {
+public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFile, OneDriveCredential> {
     private String mClientId;
     private IOneDriveClient mOneDriveClient;
     private OneDriveFile mRootFile;
     private OneDriveUserInfo mOwnerUserInfo;
+    private OneDriveCredential mRefreshedCredential;
 
     public OneDriveStorageProvider(Activity activity, String clientId, final OneDriveCredential credential) {
         this.mClientId = clientId;
@@ -58,6 +59,12 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
                 .Builder()
                 .fromConfig(config)
                 .loginAndBuildClient(activity);
+        if(mOneDriveClient != null) {
+            mRefreshedCredential = new OneDriveCredential(
+                    credential.getAccountName(),
+                    credential.getAccountType(),
+                    internalOneDriveAuthenticator.getSession());
+        }
     }
 
     public OneDriveStorageProvider(IOneDriveClient client) {
@@ -245,5 +252,15 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
             default:
                 return "fail";
         }
+    }
+
+    @Override
+    public OneDriveCredential getRefreshedCredential() {
+        return mRefreshedCredential;
+    }
+
+    @Override
+    public boolean shouldRefreshCredential() {
+        return true;
     }
 }

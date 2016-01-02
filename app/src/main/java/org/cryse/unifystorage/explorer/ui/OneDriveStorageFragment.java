@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.DataContract;
+import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.ui.common.StorageProviderFragment;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
@@ -16,38 +17,36 @@ import org.cryse.unifystorage.providers.onedrive.OneDriveStorageProvider;
 
 public class OneDriveStorageFragment extends StorageProviderFragment<
         OneDriveFile,
-        OneDriveStorageProvider,
-        OneDriveCredential
+        OneDriveCredential,
+        OneDriveStorageProvider
         > {
-    private OneDriveCredential mCredential;
 
-    public static OneDriveStorageFragment newInstance(OneDriveCredential credential) {
+    public static OneDriveStorageFragment newInstance(OneDriveCredential credential, int storageProviderRecordId) {
         OneDriveStorageFragment fragment = new OneDriveStorageFragment();
         Bundle args = new Bundle();
         args.putParcelable(DataContract.ARG_CREDENTIAL, credential);
+        args.putInt(DataContract.ARG_STORAGE_PROVIDER_RECORD_ID, storageProviderRecordId);
         fragment.setArguments(args);
         return fragment;
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void readArguments() {
         Bundle args = getArguments();
-        if (args.containsKey(DataContract.ARG_CREDENTIAL)) {
+        if (args.containsKey(DataContract.ARG_CREDENTIAL) && args.containsKey(DataContract.ARG_STORAGE_PROVIDER_RECORD_ID)) {
             mCredential = args.getParcelable(DataContract.ARG_CREDENTIAL);
+            mStorageProviderRecordId = args.getInt(DataContract.ARG_STORAGE_PROVIDER_RECORD_ID);
         } else {
             throw new RuntimeException("Invalid credential.");
         }
-        // LocalStorageProvider do not need credential.
-        mViewModel = buildViewModel(mCredential);
     }
 
     @Override
-    protected FileListViewModel<OneDriveFile, OneDriveStorageProvider, OneDriveCredential> buildViewModel(OneDriveCredential credential) {
+    protected FileListViewModel<OneDriveFile, OneDriveCredential, OneDriveStorageProvider> buildViewModel(OneDriveCredential credential) {
         return new FileListViewModel<>(
                 getContext(),
                 credential,
-                new StorageProviderBuilder<OneDriveFile, OneDriveStorageProvider, OneDriveCredential>() {
+                new StorageProviderBuilder<OneDriveFile, OneDriveCredential, OneDriveStorageProvider>() {
                     @Override
                     public OneDriveStorageProvider buildStorageProvider(OneDriveCredential credential) {
                         return new OneDriveStorageProvider(getActivity(), DataContract.CONST_ONEDRIVE_CLIENT_ID, credential);
