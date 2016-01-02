@@ -86,7 +86,7 @@ public abstract class StorageProviderFragment<
         setupToolbar();
         setupRecyclerView();
         setupBreadCrumb();
-        mViewModel.loadFiles(null);
+        // mViewModel.loadFiles(null);
         return fragmentView;
     }
 

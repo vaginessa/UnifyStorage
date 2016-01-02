@@ -16,6 +16,7 @@ import org.cryse.unifystorage.explorer.application.UnifyStorageApplication;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.OpenFileUtils;
+import org.cryse.unifystorage.explorer.utils.RxSubscriptionUtils;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
 import org.cryse.unifystorage.io.comparator.NameFileComparator;
 import org.cryse.unifystorage.utils.DirectoryPair;
@@ -48,11 +49,15 @@ public class FileListViewModel<
     private DirectoryPair<RF, List<RF>> mDirectory;
     private List<RF> mHiddenFiles;
     private DataListener<RF> mDataListener;
-    private Subscription mSubscription;
-    private RxStorageProvider<RF,SP> mStorageProvider;
+    private Subscription mLoadFilesSubscription;
+    private Subscription mBuildStorageProviderSubscription;
+
+    private RxStorageProvider<RF, SP> mStorageProvider;
     private Comparator<AbstractFile> mFileComparator;
     protected Stack<BrowserState<RF>> mBackwardStack = new Stack<>();
     private boolean mShowHiddenFile = false;
+    private StorageProviderBuilder<RF, SP, CR> mProviderBuilder;
+    private CR mCredential;
 
     public FileListViewModel(
             Context context,
@@ -66,22 +71,63 @@ public class FileListViewModel<
         this.mRecyclerViewVisibility = new ObservableInt(View.INVISIBLE);
         this.mInfoMessage = new ObservableField<>(context.getString(R.string.info_message_empty_directory));
         this.mFileComparator = NameFileComparator.NAME_INSENSITIVE_COMPARATOR;
-        this.mStorageProvider = new RxStorageProvider<>(providerBuilder.buildStorageProvider(credential));
+        this.mCredential = credential;
+        this.mProviderBuilder = providerBuilder;
+        // this.mStorageProvider = new RxStorageProvider<>(providerBuilder.buildStorageProvider(credential));
         this.mHiddenFiles = new ArrayList<>();
+        buildStorageProvider();
     }
 
     public void setDataListener(DataListener<RF> dataListener) {
         this.mDataListener = dataListener;
     }
 
+    public void buildStorageProvider() {
+        mProgressVisibility.set(View.VISIBLE);
+        mRecyclerViewVisibility.set(View.INVISIBLE);
+        mInfoMessageVisibility.set(View.INVISIBLE);
+        RxSubscriptionUtils.checkAndUnsubscribe(mBuildStorageProviderSubscription);
+        UnifyStorageApplication application = UnifyStorageApplication.get(mContext);
+        mBuildStorageProviderSubscription = Observable.create(new Observable.OnSubscribe<SP>() {
+            @Override
+            public void call(Subscriber<? super SP> subscriber) {
+                try {
+                    subscriber.onNext(mProviderBuilder.buildStorageProvider(mCredential));
+                    subscriber.onCompleted();
+                } catch (Throwable throwable) {
+                    subscriber.onError(throwable);
+                }
+            }
+        })
+                .subscribeOn(application.defaultSubscribeScheduler())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<SP>() {
+                    @Override
+                    public void onCompleted() {
+                        loadFiles(null);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(SP sp) {
+                        mStorageProvider = new RxStorageProvider<>(sp);
+                    }
+                });
+    }
+
     public void loadFiles(RF parent) {
         mProgressVisibility.set(View.VISIBLE);
         mRecyclerViewVisibility.set(View.INVISIBLE);
         mInfoMessageVisibility.set(View.INVISIBLE);
-        if (mSubscription != null && !mSubscription.isUnsubscribed()) mSubscription.unsubscribe();
+        // mStorageProviderLatch.await();
+        RxSubscriptionUtils.checkAndUnsubscribe(mLoadFilesSubscription);
         UnifyStorageApplication application = UnifyStorageApplication.get(mContext);
         Observable<DirectoryPair<RF, List<RF>>> listObservable = parent == null ? mStorageProvider.list() : mStorageProvider.list(parent);
-        mSubscription = listObservable
+        mLoadFilesSubscription = listObservable
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(application.defaultSubscribeScheduler())
                 .subscribe(new Subscriber<DirectoryPair<RF, List<RF>>>() {
@@ -89,24 +135,13 @@ public class FileListViewModel<
                     public void onCompleted() {
                         if (mDataListener != null) mDataListener.onDirectoryChanged(mDirectory);
                         mProgressVisibility.set(View.INVISIBLE);
-                        if (mDirectory != null && !mDirectory.files.isEmpty()) {
-                            mRecyclerViewVisibility.set(View.VISIBLE);
-                        } else {
-                            mInfoMessage.set(mContext.getString(R.string.info_message_empty_directory));
-                            mInfoMessageVisibility.set(View.VISIBLE);
-                        }
+                        toggleRecyclerViewsSuccessState();
                     }
 
                     @Override
                     public void onError(Throwable error) {
-                        Log.e(TAG, "Error loading GitHub files ", error);
-                        mProgressVisibility.set(View.INVISIBLE);
-                        /*if (isHttp404(error)) {
-                            mInfoMessage.set(mContext.getString(R.string.error_username_not_found));
-                        } else {
-                            mInfoMessage.set(mContext.getString(R.string.error_loading_repos));
-                        }*/
-                        mInfoMessageVisibility.set(View.VISIBLE);
+                        Log.e(TAG, "Error loading files.", error);
+                        toggleRecyclerViewsErrorState(error);
                     }
 
                     @Override
@@ -120,21 +155,35 @@ public class FileListViewModel<
                 });
     }
 
+    protected void toggleRecyclerViewsSuccessState() {
+        if (mDirectory != null && !mDirectory.files.isEmpty()) {
+            mRecyclerViewVisibility.set(View.VISIBLE);
+        } else {
+            mInfoMessage.set(mContext.getString(R.string.info_message_empty_directory));
+            mInfoMessageVisibility.set(View.VISIBLE);
+        }
+    }
+
+    protected void toggleRecyclerViewsErrorState(Throwable throwable) {
+        mProgressVisibility.set(View.INVISIBLE);
+        mInfoMessageVisibility.set(View.VISIBLE);
+    }
+
     protected void handleFileSort(DirectoryPair<RF, List<RF>> directory) {
         Collections.sort(directory.files, mFileComparator);
     }
 
     protected void handleHiddenFile(DirectoryPair<RF, List<RF>> directory) {
-        if(!mShowHiddenFile) {
-            for(Iterator<RF> iterator = directory.files.iterator(); iterator.hasNext(); ) {
+        if (!mShowHiddenFile) {
+            for (Iterator<RF> iterator = directory.files.iterator(); iterator.hasNext(); ) {
                 RF file = iterator.next();
-                if(file.getName().startsWith(".")) {
+                if (file.getName().startsWith(".")) {
                     mHiddenFiles.add(file);
                     iterator.remove();
                 }
             }
         } else {
-            if(!mHiddenFiles.isEmpty()) {
+            if (!mHiddenFiles.isEmpty()) {
                 mDirectory.files.addAll(mHiddenFiles);
                 mHiddenFiles.clear();
             }
@@ -149,7 +198,7 @@ public class FileListViewModel<
     }
 
     public void onFileClick(RF file, CollectionViewState collectionViewState) {
-        if(file.isDirectory()) {
+        if (file.isDirectory()) {
             mBackwardStack.push(new BrowserState<RF>(mDirectory, collectionViewState));
             loadFiles(file);
         } else {
@@ -167,10 +216,11 @@ public class FileListViewModel<
 
     public void jumpBack(String targetPath, CollectionViewState collectionViewState) {
         mBackwardStack.push(new BrowserState<RF>(mDirectory, collectionViewState));
-        for(int i = 0; i < mBackwardStack.size(); i++) {
-            if(mBackwardStack.get(i).directory.directory.getPath().equals(targetPath)) {
+        for (int i = 0; i < mBackwardStack.size(); i++) {
+            if (mBackwardStack.get(i).directory.directory.getPath().equals(targetPath)) {
                 this.mDirectory = mBackwardStack.get(i).directory;
                 mDataListener.onDirectoryChanged(mBackwardStack.get(i).directory);
+                toggleRecyclerViewsSuccessState();
                 mDataListener.onCollectionViewStateRestore(mBackwardStack.get(i).collectionViewState);
                 break;
             }
@@ -182,6 +232,7 @@ public class FileListViewModel<
             BrowserState<RF> currentState = mBackwardStack.pop();
             mDirectory = currentState.directory;
             this.mDataListener.onDirectoryChanged(mDirectory);
+            toggleRecyclerViewsSuccessState();
             this.mDataListener.onCollectionViewStateRestore(currentState.collectionViewState);
             return true;
         } else {
@@ -195,14 +246,15 @@ public class FileListViewModel<
 
     @Override
     public void destroy() {
-        if (mSubscription != null && !mSubscription.isUnsubscribed()) mSubscription.unsubscribe();
-        mSubscription = null;
+        RxSubscriptionUtils.checkAndUnsubscribe(mLoadFilesSubscription);
+        RxSubscriptionUtils.checkAndUnsubscribe(mBuildStorageProviderSubscription);
         mContext = null;
         mDataListener = null;
     }
 
     public interface DataListener<RF extends RemoteFile> {
         void onDirectoryChanged(DirectoryPair<RF, List<RF>> directory);
+
         void onCollectionViewStateRestore(CollectionViewState collectionViewState);
     }
 }

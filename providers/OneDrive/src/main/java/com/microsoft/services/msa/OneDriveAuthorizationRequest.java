@@ -51,6 +51,7 @@ public class OneDriveAuthorizationRequest implements ObservableOAuthRequest, OAu
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
+                clearCookies(view);
                 mProgressBar.setVisibility(View.VISIBLE);
             }
 
@@ -67,8 +68,6 @@ public class OneDriveAuthorizationRequest implements ObservableOAuthRequest, OAu
             @Override
             public void onPageFinished(WebView view, String url) {
                 mProgressBar.setVisibility(View.INVISIBLE);
-                view.clearCache(true);
-                view.clearHistory();
                 Uri uri = Uri.parse(url);
 
                 Uri endUri = mOAuthConfig.getDesktopUri();
@@ -78,18 +77,20 @@ public class OneDriveAuthorizationRequest implements ObservableOAuthRequest, OAu
                 }
 
                 OneDriveAuthorizationRequest.this.onEndUri(uri);
-                clearCookies(view.getContext());
+                clearCookies(view);
                 OAuthDialog.this.dismiss();
             }
 
-            public void clearCookies(Context context) {
+            public void clearCookies(WebView view) {
+                view.clearCache(true);
+                view.clearHistory();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     //Log.d(C.TAG, "Using ClearCookies code for API >=" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
                     CookieManager.getInstance().removeAllCookies(null);
                     CookieManager.getInstance().flush();
                 } else {
                     //Log.d(C.TAG, "Using ClearCookies code for API <" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
-                    CookieSyncManager cookieSyncMngr=CookieSyncManager.createInstance(context);
+                    CookieSyncManager cookieSyncMngr=CookieSyncManager.createInstance(view.getContext());
                     cookieSyncMngr.startSync();
                     CookieManager cookieManager=CookieManager.getInstance();
                     cookieManager.removeAllCookie();
