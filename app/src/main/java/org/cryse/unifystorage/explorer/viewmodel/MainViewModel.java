@@ -6,34 +6,32 @@ import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
-import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.explorer.R;
+import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
 import org.cryse.unifystorage.utils.Path;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-
-import io.realm.Realm;
-import io.realm.Sort;
 
 public class MainViewModel implements ViewModel {
     private IDrawerItem[] mDrawerItems;
     private Context mContext;
     private DataListener mDataListener;
+    private StorageProviderDatabase mStorageProviderDatabase;
     private int mCurrentSelectionIdentifier;
 
     public MainViewModel(DataListener mDataListener, Context mContext) {
         this.mDataListener = mDataListener;
         this.mContext = mContext;
+        this.mStorageProviderDatabase = new StorageProviderDatabase(mContext);
     }
 
     @Override
     public void destroy() {
-
+        mStorageProviderDatabase.destroy();
     }
 
     public void updateDrawerItems() {
@@ -50,7 +48,7 @@ public class MainViewModel implements ViewModel {
         int[] externalStorageTypes = DrawerItemUtils.getStorageDirectoryTypes(mContext, externalStoragePaths);
 
         // Secondly get all saved storage providers
-        List<StorageProviderRecord> savedStorageProviders = readSavedStorageProviders();
+        List<StorageProviderRecord> savedStorageProviders = mStorageProviderDatabase.getSavedStorageProviders();
         int otherStorageProvidersCount = savedStorageProviders.size();
 
         // Finally the const items count
@@ -110,39 +108,8 @@ public class MainViewModel implements ViewModel {
             mDataListener.onNavigateTo(drawerItem);
     }
 
-    private List<StorageProviderRecord> readSavedStorageProviders() {
-        Realm realm = Realm.getInstance(mContext);
-        List<StorageProviderRecord> records = realm.copyFromRealm(realm.allObjectsSorted(StorageProviderRecord.class, "sortKey", Sort.ASCENDING));
-        realm.close();
-        return records;
-    }
-
     public void addNewProvider(String displayName, String userName, int providerType, String credentialData, String extraData) {
-        Realm realm = Realm.getInstance(mContext);
-        int id = getNextKey(realm);
-        StorageProviderRecord newRecord = new StorageProviderRecord();
-        newRecord.setId(id);
-        newRecord.setDisplayName(displayName);
-        newRecord.setUserName(userName);
-        newRecord.setCredentialData(credentialData);
-        newRecord.setProviderType(providerType);
-        newRecord.setExtraData(extraData);
-        newRecord.setSortKey(new Date().getTime());
-        realm.beginTransaction();
-        realm.copyToRealm(newRecord);
-        realm.commitTransaction();
-        realm.close();
-        updateDrawerItems();
-    }
-
-    public int getNextKey(Realm realm) {
-        int maxId;
-        if(realm.where(StorageProviderRecord.class).max("id") == null) {
-            maxId = DrawerItemUtils.STORAGE_PROVIDER_START;
-        } else {
-            maxId = realm.where(StorageProviderRecord.class).max("id").intValue() + 1;
-        }
-        return maxId;
+        mStorageProviderDatabase.addNewProvider(displayName, userName, providerType, credentialData, extraData);
     }
 
     public interface DataListener {
