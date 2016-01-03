@@ -10,6 +10,8 @@ ext {
     materialDrawerVersion = '4.6.1'
     materialDialogVersion = '0.8.5.3'
     easyPermissionVersion = '0.1.0'
+    okhttpVersion = '2.4.0'
+    dropboxVersion = '2.0-beta-4'
 
     libDependencies = [
             // Test
@@ -32,6 +34,9 @@ ext {
             rxjava: "io.reactivex:rxjava:$rxVersion",
             rxandroid: "io.reactivex:rxandroid:$rxVersion",
 
+            // Network
+            okhttp: "com.squareup.okhttp:okhttp:$okhttpVersion",
+
             // Database
             realm: "io.realm:realm-android:$realmVersion",
 
@@ -41,6 +46,7 @@ ext {
             // Cloud Drive dependencies
             onedrive: "com.onedrive.sdk:onedrive-sdk-android:$oneDriveSdkVersion",
             msa_auth: "com.microsoft.services.msa:msa-auth:$msaAuthVersion",
+            dropbox: "com.dropbox.core:dropbox-core-sdk:$dropboxVersion",
 
             // UI Elements
             materialdrawer: "com.mikepenz:materialdrawer:$materialDrawerVersion@aar",

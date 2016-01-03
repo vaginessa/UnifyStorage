@@ -1,5 +1,8 @@
 package org.cryse.unifystorage.providers.dropbox;
 
+import android.util.Log;
+
+import com.dropbox.core.DbxDownloader;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxHost;
 import com.dropbox.core.DbxRequestConfig;
@@ -9,11 +12,13 @@ import com.dropbox.core.v2.DbxFiles;
 
 import org.cryse.unifystorage.AbstractStorageProvider;
 import org.cryse.unifystorage.ConflictBehavior;
+import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
 import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.unifystorage.utils.Path;
 
 import java.io.InputStream;
@@ -143,6 +148,17 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     @Override
     public DropboxCredential getRefreshedCredential() {
         return null;
+    }
+
+    @Override
+    public RemoteFileDownloader<DropboxFile> download(DropboxFile file) throws StorageException {
+        try {
+            DbxDownloader<DbxFiles.FileMetadata> downloader = mDropboxClient.files.downloadBuilder(file.getPath()).start();
+            long time2 = System.currentTimeMillis();
+            return new RemoteFileDownloader<>(new DropboxFile(downloader.result), downloader.body);
+        } catch (DbxException e) {
+            throw new StorageException(e);
+        }
     }
 
     @Override

@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 
 import org.cryse.unifystorage.AbstractFile;
+import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RxStorageProvider;
 import org.cryse.unifystorage.StorageProvider;
@@ -18,11 +19,13 @@ import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
+import org.cryse.unifystorage.explorer.utils.DebugUtils;
 import org.cryse.unifystorage.explorer.utils.OpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.RxSubscriptionUtils;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
 import org.cryse.unifystorage.io.comparator.NameFileComparator;
 import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.FileSizeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -225,12 +228,49 @@ public class FileListViewModel<
             mBackwardStack.push(new BrowserState<RF>(mDirectory, collectionViewState));
             loadFiles(file);
         } else {
-            openFile(file);
+            if(file.needsDownload()) {
+                downloadFile(file);
+            } else {
+                openFile(file);
+            }
         }
     }
 
     public void onFileLongClick(RF file) {
 
+    }
+
+    private void downloadFile(RF file) {
+        final long time1 = System.currentTimeMillis();
+        UnifyStorageApplication application = UnifyStorageApplication.get(mContext);
+        mStorageProvider.download(file).observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(application.defaultSubscribeScheduler())
+                .subscribe(new Subscriber<RemoteFileDownloader>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        Log.e(TAG, "Error loading files.", error);
+                        toggleRecyclerViewsErrorState(error);
+                    }
+
+                    @Override
+                    public void onNext(RemoteFileDownloader remoteFileDownloader) {
+                        long time2 = System.currentTimeMillis();
+
+                        String downloadInfo =
+                                String.format(
+                                        "File: %s\nSize: %s\nUseTime: %d",
+                                        remoteFileDownloader.getFile().getName(),
+                                        FileSizeUtils.humanReadableByteCount(remoteFileDownloader.getFile().size(), true),
+                                        time2 - time1
+                                );
+                        DebugUtils.showDialog(mContext, "Download", downloadInfo);
+                    }
+                });
     }
 
     public boolean isAtTopPaht() {

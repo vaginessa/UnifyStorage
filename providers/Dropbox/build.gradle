@@ -24,6 +24,6 @@ dependencies {
     testCompile libDependencies.junit
 
     compile project(':library')
-    compile 'com.dropbox.core:dropbox-core-sdk:2.0-beta-4'
-    compile 'com.squareup.okhttp:okhttp:2.4.0'
+    compile libDependencies.dropbox
+    compile libDependencies.okhttp
 }

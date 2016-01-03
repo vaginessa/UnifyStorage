@@ -2,11 +2,11 @@ package org.cryse.unifystorage.providers.localstorage;
 
 import org.cryse.unifystorage.AbstractStorageProvider;
 import org.cryse.unifystorage.ConflictBehavior;
+import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
-import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.utils.DirectoryPair;
 import org.cryse.unifystorage.utils.IOUtils;
 import org.cryse.unifystorage.utils.Path;
@@ -127,6 +127,11 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
 
     @Override
     public LocalCredential getRefreshedCredential() {
+        return null;
+    }
+
+    @Override
+    public RemoteFileDownloader<LocalStorageFile> download(LocalStorageFile file) throws StorageException {
         return null;
     }
 

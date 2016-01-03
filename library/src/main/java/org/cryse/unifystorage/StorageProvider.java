@@ -61,6 +61,8 @@ public interface StorageProvider<RF extends RemoteFile, CR extends Credential> {
 
     CR getRefreshedCredential();
 
+    RemoteFileDownloader<RF> download(RF file) throws StorageException;
+
     boolean shouldRefreshCredential();
 
     HashAlgorithm getHashAlgorithm() throws StorageException;

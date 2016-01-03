@@ -28,4 +28,5 @@ dependencies {
     compile libDependencies.support_v13
     compile libDependencies.appcompat
     compile libDependencies.rxjava
+    compile libDependencies.okhttp
 }

@@ -1,8 +1,8 @@
 package org.cryse.unifystorage.providers.onedrive;
 
 import android.app.Activity;
-import android.support.v4.util.Pair;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.microsoft.services.msa.InternalOneDriveAuthenticator;
 import com.onedrive.sdk.core.DefaultClientConfig;
@@ -15,9 +15,13 @@ import com.onedrive.sdk.extensions.OneDriveClient;
 import com.onedrive.sdk.logger.LoggerLevel;
 import com.onedrive.sdk.options.Option;
 import com.onedrive.sdk.options.QueryOption;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 import org.cryse.unifystorage.AbstractStorageProvider;
 import org.cryse.unifystorage.ConflictBehavior;
+import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
@@ -27,6 +31,7 @@ import org.cryse.unifystorage.utils.IOUtils;
 import org.cryse.unifystorage.utils.Path;
 import org.cryse.unifystorage.utils.hash.Sha1HashAlgorithm;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -257,6 +262,18 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     @Override
     public OneDriveCredential getRefreshedCredential() {
         return mRefreshedCredential;
+    }
+
+    @Override
+    public RemoteFileDownloader<OneDriveFile> download(OneDriveFile file) throws StorageException {
+        try {
+            OkHttpClient client = RemoteFileDownloader.HttpClient.getHttpClient();
+            Request request = new Request.Builder().url(file.getUrl()).build();
+            Response response = client.newCall(request).execute();
+            return new RemoteFileDownloader<>(file, response.body().byteStream());
+        } catch (IOException ex) {
+            throw new StorageException(ex);
+        }
     }
 
     @Override

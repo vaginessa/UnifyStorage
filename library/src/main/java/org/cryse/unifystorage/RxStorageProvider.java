@@ -405,7 +405,20 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
                 }
             }
         });
+    }
 
+    public Observable<RemoteFileDownloader> download(final RF file) throws StorageException {
+        return Observable.create(new Observable.OnSubscribe<RemoteFileDownloader>() {
+            @Override
+            public void call(Subscriber<? super RemoteFileDownloader> subscriber) {
+                try {
+                    subscriber.onNext(mStorageProvider.download(file));
+                    subscriber.onCompleted();
+                } catch (Throwable throwable) {
+                    subscriber.onError(throwable);
+                }
+            }
+        });
     }
 
     public CR getRefreshedCredential() {

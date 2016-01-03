@@ -20,6 +20,11 @@ public class LocalStorageFile implements RemoteFile {
     }
 
     @Override
+    public boolean needsDownload() {
+        return false;
+    }
+
+    @Override
     public String getId() {
         return mFile.getAbsolutePath();
     }

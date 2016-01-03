@@ -3,6 +3,8 @@ package org.cryse.unifystorage;
 import java.util.Date;
 
 public interface RemoteFile extends AbstractFile {
+    boolean needsDownload();
+
     String getId();
 
     @Override

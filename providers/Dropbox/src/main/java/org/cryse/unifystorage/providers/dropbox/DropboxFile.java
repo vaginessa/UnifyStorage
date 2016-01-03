@@ -66,6 +66,11 @@ public class DropboxFile implements RemoteFile {
     }
 
     @Override
+    public boolean needsDownload() {
+        return true;
+    }
+
+    @Override
     public String getId() {
         return id;
     }

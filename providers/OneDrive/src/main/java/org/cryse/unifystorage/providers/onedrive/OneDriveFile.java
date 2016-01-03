@@ -70,6 +70,11 @@ public class OneDriveFile implements RemoteFile {
     }
 
     @Override
+    public boolean needsDownload() {
+        return true;
+    }
+
+    @Override
     public String getId() {
         return id;
     }
