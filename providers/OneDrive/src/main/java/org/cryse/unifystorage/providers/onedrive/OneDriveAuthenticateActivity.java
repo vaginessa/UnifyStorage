@@ -44,15 +44,6 @@ public class OneDriveAuthenticateActivity extends AppCompatActivity {
             finish();
         }
         startAuthenticate();
-        /*if (intent.hasExtra(OneDriveStorageProviderConstants.CREDENTIAL_PARCELABLE_NAME)) {
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra(Credential.RESULT_KEY, intent.getParcelableExtra(OneDriveStorageProviderConstants.CREDENTIAL_PARCELABLE_NAME));
-            setResult(RESULT_OK);
-            finish();
-        } else {
-            setResult(100); // Failed
-            finish();
-        }*/
     }
 
     private void cleanUp() {

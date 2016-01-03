@@ -1,71 +1,56 @@
-package org.cryse.unifystorage.providers.onedrive;
+package org.cryse.unifystorage.providers.dropbox;
 
 import android.os.Parcel;
 import android.text.TextUtils;
 
-import com.microsoft.services.msa.LiveConnectSession;
+import com.dropbox.core.android.Auth;
 
 import org.cryse.unifystorage.credential.OAuth2Credential;
 import org.cryse.unifystorage.utils.JsonUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Collections;
 import java.util.Date;
-import java.util.Set;
+import java.util.HashSet;
 
-public class OneDriveCredential extends OAuth2Credential {
+public class DropboxCredential extends OAuth2Credential {
+    private String accessSecret;
+    public DropboxCredential() {
+    }
 
-    public OneDriveCredential(String savedCredential) {
+    public DropboxCredential(String savedCredential) {
         super(savedCredential);
     }
 
-    public OneDriveCredential(String accountName, String accountType) {
+    public DropboxCredential(String accountName, String accountType) {
         super(accountName, accountType);
     }
 
-    public OneDriveCredential(
+    public DropboxCredential(
             String accountName,
             String accountType,
-            String tokenType,
-            String authenticationToken,
             String accessToken,
-            String refreshToken,
-            Date expiresIn,
-            Set<String> scopes,
-            String userId
-    ) {
+            String accessSecret,
+            String userId) {
         super(
                 accountName,
                 accountType,
-                tokenType,
-                authenticationToken,
+                null,
+                null,
                 accessToken,
-                refreshToken,
-                expiresIn,
-                scopes,
+                null,
+                null,
+                null,
                 userId
         );
-        this.userId = userId;
-    }
-
-    public OneDriveCredential(
-            String accountName,
-            String accountType,
-            LiveConnectSession session) {
-        super(accountName, accountType);
-        this.tokenType = session.getTokenType();
-        this.authenticationToken = session.getAuthenticationToken();
-        this.accessToken = session.getAccessToken();
-        this.refreshToken = session.getRefreshToken();
-        this.expiresIn = session.getExpiresIn();
-        this.setScopes(session.getScopes());
+        this.accessSecret = accessSecret;
     }
 
     @Override
     public boolean isAvailable() {
-        return !TextUtils.isEmpty(accessToken) &&
-                !TextUtils.isEmpty(refreshToken) &&
-                !TextUtils.isEmpty(authenticationToken);
+        return !TextUtils.isEmpty(accessToken);
     }
 
     @Override
@@ -81,6 +66,7 @@ public class OneDriveCredential extends OAuth2Credential {
             JsonUtils.addIfNotNull(object, "userId", userId);
             JsonUtils.addIfNotNull(object, "expiresIn", expiresIn);
             JsonUtils.addIfNotNull(object, "scopes", scopes);
+            JsonUtils.addIfNotNull(object, "accessSecret", accessSecret);
         } catch (JSONException ignored) {
 
         }
@@ -100,8 +86,22 @@ public class OneDriveCredential extends OAuth2Credential {
             userId = JsonUtils.readIfExists(object, "userId", String.class);
             expiresIn = JsonUtils.readIfExists(object, "expiresIn", Date.class);
             scopes = JsonUtils.readSetIfExists(object, "scopes", String.class);
+            accessSecret = JsonUtils.readIfExists(object, "accessSecret", String.class);
         } catch (JSONException ignored) {
         }
+    }
+
+    @Override
+    public String getAccessToken() {
+        return accessSecret;
+    }
+
+    public String getAccessSecret() {
+        return accessSecret;
+    }
+
+    public void setAccessSecret(String accessSecret) {
+        this.accessSecret = accessSecret;
     }
 
     @Override
@@ -112,19 +112,21 @@ public class OneDriveCredential extends OAuth2Credential {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         super.writeToParcel(dest, flags);
+        dest.writeString(this.accessSecret);
     }
 
-    protected OneDriveCredential(Parcel in) {
+    protected DropboxCredential(Parcel in) {
         super(in);
+        this.accessSecret = in.readString();
     }
 
-    public static final Creator<OneDriveCredential> CREATOR = new Creator<OneDriveCredential>() {
-        public OneDriveCredential createFromParcel(Parcel source) {
-            return new OneDriveCredential(source);
+    public static final Creator<DropboxCredential> CREATOR = new Creator<DropboxCredential>() {
+        public DropboxCredential createFromParcel(Parcel source) {
+            return new DropboxCredential(source);
         }
 
-        public OneDriveCredential[] newArray(int size) {
-            return new OneDriveCredential[size];
+        public DropboxCredential[] newArray(int size) {
+            return new DropboxCredential[size];
         }
     };
 }

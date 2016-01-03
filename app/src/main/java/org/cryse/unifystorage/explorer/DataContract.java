@@ -7,5 +7,7 @@ public class DataContract {
 
     public static final int CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID = -111;
     public static final String CONST_ONEDRIVE_CLIENT_ID = "000000004C146A60";
+    public static final String CONST_DROPBOX_APP_KEY = "linm61rgwdxyyqt";
+    public static final String CONST_DROPBOX_CLIENT_IDENTIFIER = "UnifyStoragePrototype";
     public static final String[] CONST_ONEDRIVE_SCOPES = new String[]{"onedrive.readwrite", "onedrive.appfolder", "wl.offline_access"};
 }

@@ -53,8 +53,9 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile libDependencies.junit
     compile project(':library')
-    compile project(':providers:OneDrive')
     compile project(':providers:LocalStorage')
+    compile project(':providers:OneDrive')
+    compile project(':providers:Dropbox')
 
     compile libDependencies.appcompat
     compile libDependencies.design

@@ -6,8 +6,8 @@ import io.realm.annotations.PrimaryKey;
 public class StorageProviderRecord extends RealmObject {
     public static final int PROVIDER_LOCAL_STORAGE = 1010;
     public static final int PROVIDER_ONE_DRIVE = 1011;
-    public static final int PROVIDER_DROPBOX = 1011;
-    public static final int PROVIDER_GOOGLE_DRIVE = 1011;
+    public static final int PROVIDER_DROPBOX = 1012;
+    public static final int PROVIDER_GOOGLE_DRIVE = 1013;
 
     private String displayName;
     private String userName;

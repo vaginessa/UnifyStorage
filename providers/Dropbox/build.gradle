@@ -17,15 +17,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    useLibrary  'org.apache.http.legacy'
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile libDependencies.junit
-    compile project(':library')
 
-    compile libDependencies.gson
-    compile libDependencies.msa_auth
-    compile libDependencies.onedrive
+    compile project(':library')
+    compile 'com.dropbox.core:dropbox-core-sdk:2.0-beta-4'
+    compile 'com.squareup.okhttp:okhttp:2.4.0'
 }

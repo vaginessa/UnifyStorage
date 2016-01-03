@@ -16,9 +16,11 @@
 
     <string name="tag_directory">Directory</string>
 
+    <string name="dialog_title_error">Error</string>
     <string name="dialog_title_add_storage_provider">Add Storage Provider</string>
     <string name="dialog_title_permission_storage">Unify Storage needs Storage permission to access your device storage.</string>
     <string name="dialog_title_open_as_type">Open As</string>
+    <string name="dialog_content_error_dropbox_signin">Fail to sign in to Dropbox.</string>
 
     <string name="storage_provider_name_local_path">Local Path</string>
     <string name="storage_provider_name_onedrive">OneDrive</string>

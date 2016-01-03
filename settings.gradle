@@ -1,1 +1,1 @@
-include ':app', ':library', ':providers:OneDrive', ':providers:LocalStorage'
+include ':app', ':library', ':providers:OneDrive', ':providers:LocalStorage', ':providers:Dropbox'

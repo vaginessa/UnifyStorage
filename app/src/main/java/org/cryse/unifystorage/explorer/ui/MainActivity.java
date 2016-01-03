@@ -33,6 +33,8 @@ import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.explorer.viewmodel.MainViewModel;
+import org.cryse.unifystorage.providers.dropbox.DropboxAuthenticator;
+import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
 import org.cryse.unifystorage.providers.onedrive.OneDriveAuthenticator;
 import org.cryse.unifystorage.providers.onedrive.OneDriveCredential;
 
@@ -42,6 +44,7 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AbstractActivity implements EasyPermissions.PermissionCallbacks, MainViewModel.DataListener {
     private static final int RC_AUTHENTICATE_ONEDRIVE = 101;
+    private static final int RC_AUTHENTICATE_DROPBOX = 102;
     private ActivityMainBinding mBinding;
     private MainViewModel mMainViewModel;
 
@@ -193,6 +196,12 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                                 );
                                 oneDriveAuthenticator.startAuthenticate(MainActivity.this, RC_AUTHENTICATE_ONEDRIVE);
                                 break;
+                            case 2:
+                                DropboxAuthenticator dropboxAuthenticator = new DropboxAuthenticator(
+                                        DataContract.CONST_DROPBOX_APP_KEY
+                                );
+                                dropboxAuthenticator.startAuthenticate(MainActivity.this, RC_AUTHENTICATE_DROPBOX);
+                                break;
                         }
                         Toast.makeText(MainActivity.this, text, Toast.LENGTH_SHORT).show();
                     }
@@ -233,6 +242,11 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
 
     public void navigateToOneDriveStorage(OneDriveCredential credential, int storageProviderRecordId) {
         OneDriveStorageFragment fragment = OneDriveStorageFragment.newInstance(credential, storageProviderRecordId);
+        switchContentFragment(fragment, null);
+    }
+
+    public void navigateToDropboxStorage(DropboxCredential credential, int storageProviderRecordId) {
+        DropboxStorageFragment fragment = DropboxStorageFragment.newInstance(credential, storageProviderRecordId);
         switchContentFragment(fragment, null);
     }
 
@@ -318,6 +332,9 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         case StorageProviderRecord.PROVIDER_ONE_DRIVE:
                             navigateToOneDriveStorage(new OneDriveCredential(record.getCredentialData()), record.getId());
                             break;
+                        case StorageProviderRecord.PROVIDER_DROPBOX:
+                            navigateToDropboxStorage(new DropboxCredential(record.getCredentialData()), record.getId());
+                            break;
                     }
                 } else if(drawerItem.getIdentifier() > DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
                     navigateToOtherLocalStorage((String) drawerItem.getTag(), DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID);
@@ -331,15 +348,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 data.hasExtra(Credential.RESULT_KEY)) {
             if(resultCode == RESULT_OK) {
                 OneDriveCredential credential = data.getParcelableExtra(Credential.RESULT_KEY);
-                String credentialString = String.format("AccessToken: %s, ExpiresIn: %s",
-                        credential.getAccessToken(),
-                        DateUtils.formatDateTime(this, credential.getExpiresIn().getTime(), DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME)
-                );
-                new MaterialDialog.Builder(this)
-                        .title(R.string.storage_provider_name_onedrive)
-                        .content(credentialString)
-                        .positiveText(android.R.string.ok)
-                        .show();
                 mMainViewModel.addNewProvider(
                         credential.getAccountName(),
                         credential.getAccountName(),
@@ -347,11 +355,31 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         credential.persist(),
                         ""
                 );
+                mMainViewModel.updateDrawerItems();
             } else {
                 String errorMessage = data.getStringExtra(Credential.RESULT_KEY);
                 new MaterialDialog.Builder(this)
                         .title(R.string.storage_provider_name_onedrive)
                         .content(errorMessage)
+                        .positiveText(android.R.string.ok)
+                        .show();
+            }
+        } else if(requestCode == RC_AUTHENTICATE_DROPBOX && data != null &&
+                data.hasExtra(Credential.RESULT_KEY)) {
+            if(resultCode == RESULT_OK) {
+                DropboxCredential credential = data.getParcelableExtra(Credential.RESULT_KEY);
+                mMainViewModel.addNewProvider(
+                        credential.getAccountName(),
+                        credential.getAccountName(),
+                        StorageProviderRecord.PROVIDER_DROPBOX,
+                        credential.persist(),
+                        ""
+                );
+                mMainViewModel.updateDrawerItems();
+            } else {
+                new MaterialDialog.Builder(this)
+                        .title(R.string.dialog_title_error)
+                        .content(R.string.dialog_content_error_dropbox_signin)
                         .positiveText(android.R.string.ok)
                         .show();
             }
