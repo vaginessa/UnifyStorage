@@ -15,17 +15,11 @@ public class DropboxAuthenticator extends StorageAuthenticator {
 
     @Override
     public String getAccountType() {
-        return DropboxConst.ACCOUNT_TYPE;
-    }
-
-    @Override
-    public String getAccountName() {
-        return DropboxConst.ACCOUNT_NAME;
+        return DropboxConst.NAME_ACCOUNT_TYPE;
     }
 
     private Intent buildIntent(Activity activity) {
         Intent intent = new Intent(activity, DropboxAuthenticateActivity.class);
-        intent.putExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_NAME, getAccountName());
         intent.putExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_TYPE, getAccountType());
         intent.putExtra(DropboxConst.PARCELABLE_NAME_APP_KEY, mAppKey);
         return intent;

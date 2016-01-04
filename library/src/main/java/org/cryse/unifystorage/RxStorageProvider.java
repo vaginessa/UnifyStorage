@@ -19,6 +19,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         this.mStorageProvider = storageProvider;
     }
 
+    public String getStorageProviderName() {
+        return mStorageProvider.getStorageProviderName();
+    }
+
     public Observable<RF> getRootDirectory() {
         return Observable.create(new Observable.OnSubscribe<RF>() {
             @Override
@@ -407,10 +411,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public Observable<RemoteFileDownloader> download(final RF file) throws StorageException {
-        return Observable.create(new Observable.OnSubscribe<RemoteFileDownloader>() {
+    public Observable<RemoteFileDownloader<RF>> download(final RF file) throws StorageException {
+        return Observable.create(new Observable.OnSubscribe<RemoteFileDownloader<RF>>() {
             @Override
-            public void call(Subscriber<? super RemoteFileDownloader> subscriber) {
+            public void call(Subscriber<? super RemoteFileDownloader<RF>> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.download(file));
                     subscriber.onCompleted();
@@ -429,7 +433,7 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         return mStorageProvider.shouldRefreshCredential();
     }
 
-    SP getStorageProvider() {
+    public SP getStorageProvider() {
         return mStorageProvider;
     }
 

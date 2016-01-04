@@ -26,45 +26,6 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Locale;
 
-/*
-public class DropboxAuthenticateActivity extends AppCompatActivity {
-    private String mAccountType;
-    private String mAccountName;
-    private String mAppKey;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Intent intent = getIntent();
-        if(intent.hasExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_NAME) &&
-                intent.hasExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_TYPE) &&
-                intent.hasExtra(DropboxConst.PARCELABLE_NAME_APP_KEY)) {
-            mAccountName = intent.getStringExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_NAME);
-            mAccountType = intent.getStringExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_TYPE);
-            mAppKey = intent.getStringExtra(DropboxConst.PARCELABLE_NAME_APP_KEY);
-        } else {
-            setResult(100); // Failed
-            finish();
-        }
-        startAuthenticate();
-        */
-/*if (intent.hasExtra(OneDriveStorageProviderConstants.CREDENTIAL_PARCELABLE_NAME)) {
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra(Credential.RESULT_KEY, intent.getParcelableExtra(OneDriveStorageProviderConstants.CREDENTIAL_PARCELABLE_NAME));
-            setResult(RESULT_OK);
-            finish();
-        } else {
-            setResult(100); // Failed
-            finish();
-        }*//*
-
-    }
-
-    private void startAuthenticate() {
-        Auth.startOAuth2Authentication(this, mAppKey);
-    }
-}
-*/
 public class DropboxAuthenticateActivity extends AppCompatActivity {
     private static final String TAG = DropboxAuthenticateActivity.class.getName();
 
@@ -321,10 +282,8 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
-        if(intent.hasExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_NAME) &&
-                intent.hasExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_TYPE) &&
+        if(intent.hasExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_TYPE) &&
                 intent.hasExtra(DropboxConst.PARCELABLE_NAME_APP_KEY)) {
-            mAccountName = intent.getStringExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_NAME);
             mAccountType = intent.getStringExtra(DropboxConst.PARCELABLE_NAME_ACCOUNT_TYPE);
             mAppKey = intent.getStringExtra(DropboxConst.PARCELABLE_NAME_APP_KEY);
         } else {

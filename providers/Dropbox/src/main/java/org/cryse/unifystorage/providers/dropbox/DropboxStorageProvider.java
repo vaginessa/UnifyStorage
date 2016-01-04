@@ -47,6 +47,11 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
+    public String getStorageProviderName() {
+        return DropboxConst.NAME_STORAGE_PROVIDER;
+    }
+
+    @Override
     public DropboxFile getRootDirectory() throws StorageException {
         if (mRootFile == null) {
             mRootFile = new DropboxFile();

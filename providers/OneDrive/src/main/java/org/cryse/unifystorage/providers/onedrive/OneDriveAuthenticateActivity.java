@@ -31,14 +31,12 @@ public class OneDriveAuthenticateActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
-        if(intent.hasExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_ACCOUNT_NAME) &&
-                intent.hasExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_ACCOUNT_TYPE) &&
-                intent.hasExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_CLIENT_ID) &&
-                intent.hasExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_SCOPES)) {
-            mAccountName = intent.getStringExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_ACCOUNT_NAME);
-            mAccountType = intent.getStringExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_ACCOUNT_TYPE);
-            mClientId = intent.getStringExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_CLIENT_ID);
-            mScopes = intent.getStringArrayExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_SCOPES);
+        if(intent.hasExtra(OneDriveConst.PARCELABLE_NAME_ACCOUNT_TYPE) &&
+                intent.hasExtra(OneDriveConst.PARCELABLE_NAME_CLIENT_ID) &&
+                intent.hasExtra(OneDriveConst.PARCELABLE_NAME_SCOPES)) {
+            mAccountType = intent.getStringExtra(OneDriveConst.PARCELABLE_NAME_ACCOUNT_TYPE);
+            mClientId = intent.getStringExtra(OneDriveConst.PARCELABLE_NAME_CLIENT_ID);
+            mScopes = intent.getStringArrayExtra(OneDriveConst.PARCELABLE_NAME_SCOPES);
         } else {
             setResult(100); // Failed
             finish();

@@ -9,14 +9,15 @@ public class StorageProviderRecord extends RealmObject {
     public static final int PROVIDER_DROPBOX = 1012;
     public static final int PROVIDER_GOOGLE_DRIVE = 1013;
 
+    @PrimaryKey
+    private int id;
+    private int providerType;
+    private String uuid;
     private String displayName;
     private String userName;
-    private int providerType;
     private String credentialData;
     private String extraData;
     private long sortKey;
-    @PrimaryKey
-    private int id;
 
     public int getId() {
         return id;
@@ -24,6 +25,22 @@ public class StorageProviderRecord extends RealmObject {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public int getProviderType() {
+        return providerType;
+    }
+
+    public void setProviderType(int providerType) {
+        this.providerType = providerType;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
     public String getDisplayName() {
@@ -40,14 +57,6 @@ public class StorageProviderRecord extends RealmObject {
 
     public void setUserName(String userName) {
         this.userName = userName;
-    }
-
-    public int getProviderType() {
-        return providerType;
-    }
-
-    public void setProviderType(int providerType) {
-        this.providerType = providerType;
     }
 
     public String getCredentialData() {

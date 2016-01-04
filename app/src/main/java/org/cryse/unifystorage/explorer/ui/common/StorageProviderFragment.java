@@ -1,5 +1,6 @@
 package org.cryse.unifystorage.explorer.ui.common;
 
+import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +17,7 @@ import android.view.ViewGroup;
 
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
 import com.afollestad.impression.widget.breadcrumbs.Crumb;
+import com.afollestad.materialdialogs.MaterialDialog;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageProvider;
@@ -27,6 +29,7 @@ import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
 import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.FileSizeUtils;
 
 import java.io.File;
 import java.util.List;
@@ -55,6 +58,7 @@ public abstract class StorageProviderFragment<
     protected FragmentStorageProviderBinding mBinding;
     protected FileListViewModel<RF, CR, SP> mViewModel;
     protected FileAdapter<RF> mCollectionAdapter;
+    protected MaterialDialog mDownloadDialog;
 
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
@@ -217,6 +221,51 @@ public abstract class StorageProviderFragment<
     @Override
     public void onCredentialRefreshed(CR credential) {
         this.mCredential = credential;
+    }
+
+    @Override
+    public void onShowDownloadDialog(String fileName, long fileSize, DialogInterface.OnDismissListener dismissListener) {
+        if(mDownloadDialog != null && mDownloadDialog.isShowing()) mDownloadDialog.dismiss();
+        mDownloadDialog = new MaterialDialog.Builder(getContext())
+                .title(R.string.dialog_title_add_storage_provider)
+                .content(R.string.dialog_content_opening)
+                .progress(false, 100, false)
+                .dismissListener(dismissListener)
+                .show();
+    }
+
+    @Override
+    public void onUpdateDownloadDialog(String fileName, long readSize, long fileSize) {
+        if(mDownloadDialog != null && mDownloadDialog.isShowing()) {
+            int newPercent = (int) Math.round(((double) readSize  / (double) fileSize) * 100.0d);
+            int currentPercent = mDownloadDialog.getCurrentProgress();
+            if(newPercent > currentPercent) {
+                mDownloadDialog.incrementProgress(newPercent - currentPercent);
+                mDownloadDialog.setContent(
+                        String.format(
+                                "%s / %s",
+                                FileSizeUtils.humanReadableByteCount(readSize, true),
+                                FileSizeUtils.humanReadableByteCount(fileSize, true)
+                        ));
+            }
+        }
+    }
+
+    @Override
+    public void onDismissDownloadDialog() {
+        if(mDownloadDialog != null && mDownloadDialog.isShowing()) {
+            mDownloadDialog.dismiss();
+            mDownloadDialog = null;
+        }
+    }
+
+    @Override
+    public void onShowErrorDialog(String title, String content) {
+        new MaterialDialog.Builder(getContext())
+                .title(title)
+                .content(content)
+                .positiveText(android.R.string.ok)
+                .show();
     }
 
     public void updateBreadcrumb(String path) {

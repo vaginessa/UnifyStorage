@@ -21,17 +21,11 @@ public class OneDriveAuthenticator extends StorageAuthenticator {
         return ACCOUNT_TYPE;
     }
 
-    @Override
-    public String getAccountName() {
-        return ACCOUNT_TYPE;
-    }
-
     private Intent buildIntent(Activity activity) {
         Intent intent = new Intent(activity, OneDriveAuthenticateActivity.class);
-        intent.putExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_ACCOUNT_NAME, getAccountName());
-        intent.putExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_ACCOUNT_TYPE, getAccountType());
-        intent.putExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_CLIENT_ID, mClientId);
-        intent.putExtra(OneDriveStorageProviderConstants.PARCELABLE_NAME_SCOPES, mScopes);
+        intent.putExtra(OneDriveConst.PARCELABLE_NAME_ACCOUNT_TYPE, getAccountType());
+        intent.putExtra(OneDriveConst.PARCELABLE_NAME_CLIENT_ID, mClientId);
+        intent.putExtra(OneDriveConst.PARCELABLE_NAME_SCOPES, mScopes);
         return intent;
     }
 

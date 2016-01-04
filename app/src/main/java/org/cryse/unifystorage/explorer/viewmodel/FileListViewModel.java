@@ -1,11 +1,15 @@
 package org.cryse.unifystorage.explorer.viewmodel;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
+import android.net.Uri;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.View;
 
+import org.apache.commons.io.FileUtils;
 import org.cryse.unifystorage.AbstractFile;
 import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.RemoteFile;
@@ -19,14 +23,19 @@ import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
-import org.cryse.unifystorage.explorer.utils.DebugUtils;
+import org.cryse.unifystorage.explorer.utils.LocalCachesUtils;
 import org.cryse.unifystorage.explorer.utils.OpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.RxSubscriptionUtils;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
+import org.cryse.unifystorage.io.ProgressInputStream;
+import org.cryse.unifystorage.io.StreamProgressListener;
 import org.cryse.unifystorage.io.comparator.NameFileComparator;
 import org.cryse.unifystorage.utils.DirectoryPair;
-import org.cryse.unifystorage.utils.FileSizeUtils;
+import org.cryse.unifystorage.utils.IOUtils;
+import org.cryse.unifystorage.utils.Path;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -57,6 +66,7 @@ public class FileListViewModel<
     private DataListener<RF, CR> mDataListener;
     private Subscription mLoadFilesSubscription;
     private Subscription mBuildStorageProviderSubscription;
+    private Subscription mDownloadFileSubscription;
 
     private RxStorageProvider<RF, CR, SP> mStorageProvider;
     private Comparator<AbstractFile> mFileComparator;
@@ -66,6 +76,7 @@ public class FileListViewModel<
     protected StorageProviderDatabase mStorageProviderDatabase;
     private CR mCredential;
     private int mStorageProviderRecordId = DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID;
+    private StorageProviderRecord mStorageProviderRecord;
 
     public FileListViewModel(
             Context context,
@@ -133,15 +144,15 @@ public class FileListViewModel<
 
     public void setStorageProviderRecordId(int id) {
         this.mStorageProviderRecordId = id;
+        this.mStorageProviderRecord = mStorageProviderDatabase.getSavedStorageProvider(mStorageProviderRecordId);
     }
 
     public void updateCredential(CR newCredential) {
         if(mDataListener != null)
             mDataListener.onCredentialRefreshed(newCredential);
         if(mStorageProviderDatabase != null && mStorageProviderRecordId != DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID) {
-            StorageProviderRecord record = mStorageProviderDatabase.getSavedStorageProvider(mStorageProviderRecordId);
-            record.setCredentialData(newCredential.persist());
-            mStorageProviderDatabase.updateStorageProviderRecord(record);
+            mStorageProviderRecord.setCredentialData(newCredential.persist());
+            mStorageProviderDatabase.updateStorageProviderRecord(mStorageProviderRecord);
         }
     }
 
@@ -149,7 +160,6 @@ public class FileListViewModel<
         mProgressVisibility.set(View.VISIBLE);
         mRecyclerViewVisibility.set(View.INVISIBLE);
         mInfoMessageVisibility.set(View.INVISIBLE);
-        // mStorageProviderLatch.await();
         RxSubscriptionUtils.checkAndUnsubscribe(mLoadFilesSubscription);
         UnifyStorageApplication application = UnifyStorageApplication.get(mContext);
         Observable<DirectoryPair<RF, List<RF>>> listObservable = parent == null ? mStorageProvider.list() : mStorageProvider.list(parent);
@@ -240,35 +250,93 @@ public class FileListViewModel<
 
     }
 
-    private void downloadFile(RF file) {
-        final long time1 = System.currentTimeMillis();
+    private void downloadFile(final RF file) {
+        final String fileName = file.getName();
+        final long fileSize = file.size();
+        final String localPath = LocalCachesUtils.<RF>getFullCachePath(
+                mContext,
+                mStorageProvider.getStorageProviderName(),
+                mStorageProviderRecord.getUuid(),
+                file
+        );
+
+        if(mDataListener != null) {
+            mDataListener.onShowDownloadDialog(file.getName(), fileSize, new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    RxSubscriptionUtils.checkAndUnsubscribe(mDownloadFileSubscription);
+                }
+            });
+        }
+
         UnifyStorageApplication application = UnifyStorageApplication.get(mContext);
-        mStorageProvider.download(file).observeOn(AndroidSchedulers.mainThread())
+        RxSubscriptionUtils.checkAndUnsubscribe(mDownloadFileSubscription);
+        Observable<Long> downloadObservable = Observable.create(new Observable.OnSubscribe<Long>() {
+            @Override
+            public void call(final Subscriber<? super Long> subscriber) {
+                RemoteFileDownloader<RF> downloader = null;
+                try {
+                    downloader = mStorageProvider.getStorageProvider().download(file);
+                    File targetFile = new File(localPath);
+                    String parentDirectoryPath = Path.getDirectory(localPath);
+                    if(parentDirectoryPath != null) {
+                        File parentDirectory = new File(parentDirectoryPath);
+                        if(!parentDirectory.exists()) parentDirectory.mkdirs();
+                    }
+                    if(!targetFile.exists()) targetFile.createNewFile();
+                    if(!targetFile.canWrite()) throw new IOException("Target file not writable.");
+                    ProgressInputStream progressInputStream = downloader.getProgressDataStream();
+                    progressInputStream.addListener(new StreamProgressListener() {
+                        @Override
+                        public void onProgress(ProgressInputStream stream, long current, long total, double rate) {
+                            subscriber.onNext(current);
+                        }
+                    });
+                    FileUtils.copyInputStreamToFile(downloader.getDataStream(), targetFile);
+                    progressInputStream.removeAllListener();
+                    subscriber.onCompleted();
+                } catch (IOException e) {
+                    subscriber.onError(e);
+                } finally {
+                    if(downloader != null)
+                        IOUtils.safeClose(downloader.getDataStream());
+                }
+            }
+        });
+
+        mDownloadFileSubscription = downloadObservable
+                .onBackpressureBuffer()
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(application.defaultSubscribeScheduler())
-                .subscribe(new Subscriber<RemoteFileDownloader>() {
+                .subscribe(new Subscriber<Long>() {
                     @Override
                     public void onCompleted() {
-
+                        if(mDataListener != null) {
+                            mDataListener.onDismissDownloadDialog();
+                        }
+                        Uri fileUri = FileProvider.getUriForFile(
+                                mContext,
+                                mContext.getString(R.string.authority_file_provider),
+                                new File(localPath));
+                        OpenFileUtils.openFile(mContext, fileUri, true);
                     }
 
                     @Override
-                    public void onError(Throwable error) {
-                        Log.e(TAG, "Error loading files.", error);
-                        toggleRecyclerViewsErrorState(error);
+                    public void onError(Throwable e) {
+                        if(mDataListener != null) {
+                            mDataListener.onDismissDownloadDialog();
+                            mDataListener.onShowErrorDialog(
+                                    mContext.getString(R.string.dialog_title_error),
+                                    mContext.getString(R.string.dialog_content_error_open_file)
+                            );
+                        }
                     }
 
                     @Override
-                    public void onNext(RemoteFileDownloader remoteFileDownloader) {
-                        long time2 = System.currentTimeMillis();
-
-                        String downloadInfo =
-                                String.format(
-                                        "File: %s\nSize: %s\nUseTime: %d",
-                                        remoteFileDownloader.getFile().getName(),
-                                        FileSizeUtils.humanReadableByteCount(remoteFileDownloader.getFile().size(), true),
-                                        time2 - time1
-                                );
-                        DebugUtils.showDialog(mContext, "Download", downloadInfo);
+                    public void onNext(Long readSize) {
+                        if(mDataListener != null) {
+                            mDataListener.onUpdateDownloadDialog(fileName, readSize, fileSize);
+                        }
                     }
                 });
     }
@@ -311,6 +379,7 @@ public class FileListViewModel<
     public void destroy() {
         RxSubscriptionUtils.checkAndUnsubscribe(mLoadFilesSubscription);
         RxSubscriptionUtils.checkAndUnsubscribe(mBuildStorageProviderSubscription);
+        RxSubscriptionUtils.checkAndUnsubscribe(mDownloadFileSubscription);
         mStorageProviderDatabase.destroy();
         mContext = null;
         mDataListener = null;
@@ -320,5 +389,9 @@ public class FileListViewModel<
         void onDirectoryChanged(DirectoryPair<RF, List<RF>> directory);
         void onCollectionViewStateRestore(CollectionViewState collectionViewState);
         void onCredentialRefreshed(CR credential);
+        void onShowDownloadDialog(String fileName, long fileSize, DialogInterface.OnDismissListener dismissListener);
+        void onUpdateDownloadDialog(String fileName, long readSize, long fileSize);
+        void onDismissDownloadDialog();
+        void onShowErrorDialog(String title, String content);
     }
 }

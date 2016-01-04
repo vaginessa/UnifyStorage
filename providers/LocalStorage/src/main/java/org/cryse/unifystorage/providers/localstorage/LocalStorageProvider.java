@@ -26,6 +26,11 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
+    public String getStorageProviderName() {
+        return LocalProviderConst.NAME_STORAGE_PROVIDER;
+    }
+
+    @Override
     public LocalStorageFile getRootDirectory() throws StorageException {
         File file = new File(mStartPath);
         if(mStartFile == null) {

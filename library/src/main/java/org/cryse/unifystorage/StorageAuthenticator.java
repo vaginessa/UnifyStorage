@@ -8,8 +8,6 @@ import org.cryse.unifystorage.credential.Credential;
 public abstract class StorageAuthenticator {
     public abstract String getAccountType();
 
-    public abstract String getAccountName();
-
     public abstract void startAuthenticate(Activity activity, int requestCode);
 
     public abstract void startAuthenticate(Fragment fragment, int requestCode);

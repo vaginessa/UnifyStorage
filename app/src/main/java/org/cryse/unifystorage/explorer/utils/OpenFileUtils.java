@@ -16,28 +16,33 @@ import java.util.List;
 
 public class OpenFileUtils {
     public static void openFile(Context context, String filePath, boolean useSystemSelector) {
+        openFile(context, Uri.fromFile(new File(filePath)), useSystemSelector);
+    }
+
+    public static void openFile(Context context, Uri uri, boolean useSystemSelector) {
         MimeTypeMap mimeMap = MimeTypeMap.getSingleton();
-        String extension = MimeTypeMap.getFileExtensionFromUrl(filePath);
+        String extension = MimeTypeMap.getFileExtensionFromUrl(uri.getPath());
         String mime = mimeMap.getMimeTypeFromExtension(extension);
-        File target = new File(filePath);
         final Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         if (mime != null) {
-            intent.setDataAndType(Uri.fromFile(target), mime);
+            intent.setDataAndType(uri, mime);
             List<ResolveInfo> resolveInfos = context.getPackageManager().queryIntentActivities(intent, 0);
             if(!resolveInfos.isEmpty()) {
                 if(useSystemSelector)
                     context.startActivity(intent);
                 else {
-                    buildCustomOpenChooser(context, filePath, resolveInfos);
+                    buildCustomOpenChooser(context, uri, resolveInfos);
                 }
                 return;
             }
         }
-        openUnknownFile(context, filePath);
+        openUnknownFile(context, uri);
     }
 
-    public static void openUnknownFile(Context context, String filePath) {
+    public static void openUnknownFile(Context context, Uri uri) {
         new MaterialDialog.Builder(context)
                 .title(R.string.dialog_title_open_as_type)
                 .items(R.array.array_open_as_type)
@@ -49,7 +54,7 @@ public class OpenFileUtils {
                 .show();
     }
 
-    public static void buildCustomOpenChooser(Context context, String filePath, List<ResolveInfo> resolveInfos) {
+    public static void buildCustomOpenChooser(Context context, Uri uri, List<ResolveInfo> resolveInfos) {
         String[] items = new String[resolveInfos.size()];
         for (int i = 0; i < resolveInfos.size(); i++) {
             ResolveInfo resolveInfo = resolveInfos.get(i);

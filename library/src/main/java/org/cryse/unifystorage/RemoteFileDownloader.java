@@ -2,6 +2,8 @@ package org.cryse.unifystorage;
 
 import com.squareup.okhttp.OkHttpClient;
 
+import org.cryse.unifystorage.io.ProgressInputStream;
+
 import java.io.InputStream;
 
 public class RemoteFileDownloader<RF extends RemoteFile> {
@@ -12,14 +14,18 @@ public class RemoteFileDownloader<RF extends RemoteFile> {
             return INSTANCE.okHttpClient;
         }
     }
-    private InputStream dataStream;
+    private ProgressInputStream dataStream;
     private RF file;
     public RemoteFileDownloader(RF file, InputStream inputStream) {
         this.file = file;
-        this.dataStream = inputStream;
+        this.dataStream = new ProgressInputStream(inputStream, file.size());
     }
 
     public InputStream getDataStream() {
+        return dataStream;
+    }
+
+    public ProgressInputStream getProgressDataStream() {
         return dataStream;
     }
 

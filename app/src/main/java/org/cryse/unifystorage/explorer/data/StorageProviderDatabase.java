@@ -7,6 +7,7 @@ import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import io.realm.Realm;
 import io.realm.RealmQuery;
@@ -53,6 +54,7 @@ public class StorageProviderDatabase {
         newRecord.setProviderType(providerType);
         newRecord.setExtraData(extraData);
         newRecord.setSortKey(new Date().getTime());
+        newRecord.setUuid(UUID.randomUUID().toString());
         mRealm.beginTransaction();
         mRealm.copyToRealm(newRecord);
         mRealm.commitTransaction();

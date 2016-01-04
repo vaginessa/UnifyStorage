@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.util.List;
 
 public interface StorageProvider<RF extends RemoteFile, CR extends Credential> {
+    String getStorageProviderName();
+
     RF getRootDirectory() throws StorageException;
 
     DirectoryPair<RF, List<RF>> list(RF parent) throws StorageException;

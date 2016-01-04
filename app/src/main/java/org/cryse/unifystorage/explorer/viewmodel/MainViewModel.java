@@ -78,7 +78,9 @@ public class MainViewModel implements ViewModel {
         }
         // Then the saved providers
         for (StorageProviderRecord record : savedStorageProviders) {
-            drawerItems.add(new PrimaryDrawerItem().withName(record.getDisplayName())
+            drawerItems.add(new PrimaryDrawerItem()
+                    .withName(record.getDisplayName())
+                    .withDescription(record.getUserName())
                     .withTag(record)
                     .withIcon(R.drawable.ic_drawer_sdcard)
                     .withIdentifier(record.getId())

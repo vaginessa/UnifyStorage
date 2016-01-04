@@ -349,7 +349,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
             if(resultCode == RESULT_OK) {
                 OneDriveCredential credential = data.getParcelableExtra(Credential.RESULT_KEY);
                 mMainViewModel.addNewProvider(
-                        credential.getAccountName(),
+                        credential.getAccountType(),
                         credential.getAccountName(),
                         StorageProviderRecord.PROVIDER_ONE_DRIVE,
                         credential.persist(),
@@ -369,7 +369,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
             if(resultCode == RESULT_OK) {
                 DropboxCredential credential = data.getParcelableExtra(Credential.RESULT_KEY);
                 mMainViewModel.addNewProvider(
-                        credential.getAccountName(),
+                        credential.getAccountType(),
                         credential.getAccountName(),
                         StorageProviderRecord.PROVIDER_DROPBOX,
                         credential.persist(),

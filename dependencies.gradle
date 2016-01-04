@@ -12,6 +12,7 @@ ext {
     easyPermissionVersion = '0.1.0'
     okhttpVersion = '2.4.0'
     dropboxVersion = '2.0-beta-4'
+    commonsioVersion = '2.4'
 
     libDependencies = [
             // Test
@@ -39,6 +40,9 @@ ext {
 
             // Database
             realm: "io.realm:realm-android:$realmVersion",
+
+            // IO
+            commons_io: "commons-io:commons-io:$commonsioVersion",
 
             // Injection
             butterknife: "com.jakewharton:butterknife:$butterknifeVersion",

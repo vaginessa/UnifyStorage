@@ -77,6 +77,11 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
+    public String getStorageProviderName() {
+        return OneDriveConst.NAME_STORAGE_PROVIDER;
+    }
+
+    @Override
     public OneDriveFile getRootDirectory() throws StorageException {
         if(mRootFile == null) {
             mRootFile = new OneDriveFile(mOneDriveClient.getDrive().getRoot().buildRequest().get());
