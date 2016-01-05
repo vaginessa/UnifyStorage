@@ -144,7 +144,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     private void addStorageProviderItemsAndLoad() {
-        mMainViewModel.updateDrawerItems();
+        mMainViewModel.updateDrawerItems(DrawerItemUtils.DRAWER_ITEM_NONE);
         if (mIsRestorePosition) {
             mDrawer.setSelection(mCurrentSelection, false);
         } else {
@@ -288,9 +288,11 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     @Override
-    public void onDrawerItemsChanged(IDrawerItem[] drawerItems) {
+    public void onDrawerItemsChanged(IDrawerItem[] drawerItems, int selectionIdentifier) {
         mDrawer.removeAllItems();
         mDrawer.addItems(drawerItems);
+        if(selectionIdentifier >= 0)
+            mDrawer.setSelection(selectionIdentifier, false);
     }
 
     @Override
@@ -344,7 +346,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         credential.persist(),
                         ""
                 );
-                mMainViewModel.updateDrawerItems();
+                mMainViewModel.updateDrawerItems(mCurrentSelection);
             } else {
                 String errorMessage = data.getStringExtra(Credential.RESULT_KEY);
                 new MaterialDialog.Builder(this)
@@ -364,7 +366,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         credential.persist(),
                         ""
                 );
-                mMainViewModel.updateDrawerItems();
+                mMainViewModel.updateDrawerItems(mCurrentSelection);
             } else {
                 new MaterialDialog.Builder(this)
                         .title(R.string.dialog_title_error)
@@ -373,5 +375,11 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         .show();
             }
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mMainViewModel.destroy();
     }
 }

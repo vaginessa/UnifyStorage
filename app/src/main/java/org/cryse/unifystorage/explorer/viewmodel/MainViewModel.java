@@ -34,9 +34,9 @@ public class MainViewModel implements ViewModel {
         mStorageProviderDatabase.destroy();
     }
 
-    public void updateDrawerItems() {
+    public void updateDrawerItems(int currentSelectionIdentifier) {
         buildDrawerItems();
-        mDataListener.onDrawerItemsChanged(mDrawerItems);
+        mDataListener.onDrawerItemsChanged(mDrawerItems, currentSelectionIdentifier);
     }
 
     private void buildDrawerItems() {
@@ -115,7 +115,7 @@ public class MainViewModel implements ViewModel {
     }
 
     public interface DataListener {
-        void onDrawerItemsChanged(IDrawerItem[] drawerItems);
+        void onDrawerItemsChanged(IDrawerItem[] drawerItems, int selectionIdentifier);
         void onNavigateTo(IDrawerItem drawerItem);
     }
 }

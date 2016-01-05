@@ -210,6 +210,7 @@ public abstract class StorageProviderFragment<
     public void onDestroy()
     {
         super.onDestroy();
+        mViewModel.destroy();
         if (mHandler != null) { mHandler.removeCallbacks(mBackPressdRunnable); }
     }
 
