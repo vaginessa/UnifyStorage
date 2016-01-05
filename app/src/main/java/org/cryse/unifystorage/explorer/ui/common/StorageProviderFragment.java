@@ -11,6 +11,8 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +24,7 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
+import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.databinding.FragmentStorageProviderBinding;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
@@ -30,6 +33,8 @@ import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
 import org.cryse.unifystorage.utils.DirectoryPair;
 import org.cryse.unifystorage.utils.FileSizeUtils;
+import org.cryse.utils.preference.BooleanPrefs;
+import org.cryse.utils.preference.Prefs;
 
 import java.io.File;
 import java.util.List;
@@ -60,6 +65,9 @@ public abstract class StorageProviderFragment<
     protected FileAdapter<RF> mCollectionAdapter;
     protected MaterialDialog mDownloadDialog;
 
+    protected BooleanPrefs mShowHiddenFilesPrefs;
+    protected MenuItem mShowHiddenFilesMenuItems;
+
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
 
@@ -72,11 +80,16 @@ public abstract class StorageProviderFragment<
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
         readArguments();
         mCollectionAdapter = new FileAdapter<>(getActivity());
         mCollectionAdapter.setOnFileClickListener(this);
         mViewModel = buildViewModel(mCredential);
         mViewModel.setStorageProviderRecordId(mStorageProviderRecordId);
+        mShowHiddenFilesPrefs = Prefs.getBooleanPrefs(
+                PrefsConst.PREFS_SHOW_HIDDEN_FILES,
+                PrefsConst.PREFS_SHOW_HIDDEN_FILES_VALUE
+        );
     }
 
     protected void readArguments() {
@@ -158,6 +171,21 @@ public abstract class StorageProviderFragment<
     }
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.main, menu);
+        mShowHiddenFilesMenuItems = menu.findItem(R.id.action_show_hidden_files);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+        if(mShowHiddenFilesMenuItems != null) {
+            mShowHiddenFilesMenuItems.setChecked(mShowHiddenFilesPrefs.get());
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
@@ -167,6 +195,13 @@ public abstract class StorageProviderFragment<
                 } else {
                     return false;
                 }
+            case R.id.action_show_hidden_files:
+                boolean isShow = mShowHiddenFilesPrefs.get();
+                mShowHiddenFilesPrefs.set(!isShow);
+                if(mShowHiddenFilesMenuItems!= null)
+                    mShowHiddenFilesMenuItems.setChecked(!isShow);
+                mViewModel.setShowHiddenFiles(!isShow);
+                return true;
         }
         return super.onOptionsItemSelected(item);
     }

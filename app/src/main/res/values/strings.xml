@@ -41,6 +41,9 @@
 
     <string name="authority_file_provider">org.cryse.unifystorage</string>
 
+
+    <string name="action_show_hidden_files">Show Hidden Files</string>
+
     <array name="array_open_as_type">
         <item>Text</item>
         <item>Image</item>
