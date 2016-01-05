@@ -38,6 +38,11 @@ public class DropboxStorageFragment extends StorageProviderFragment<
     }
 
     @Override
+    protected String getLogTag() {
+        return DropboxStorageFragment.class.getSimpleName();
+    }
+
+    @Override
     protected FileListViewModel<DropboxFile, DropboxCredential, DropboxStorageProvider> buildViewModel(DropboxCredential credential) {
         return new FileListViewModel<>(
                 getContext(),

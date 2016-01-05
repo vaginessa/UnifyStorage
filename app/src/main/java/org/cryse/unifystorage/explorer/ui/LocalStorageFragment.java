@@ -41,6 +41,11 @@ public class LocalStorageFragment extends StorageProviderFragment<
     }
 
     @Override
+    protected String getLogTag() {
+        return LocalStorageFragment.class.getSimpleName();
+    }
+
+    @Override
     protected FileListViewModel<LocalStorageFile, LocalCredential, LocalStorageProvider> buildViewModel(LocalCredential credential) {
         return new FileListViewModel<>(
                 getContext(),

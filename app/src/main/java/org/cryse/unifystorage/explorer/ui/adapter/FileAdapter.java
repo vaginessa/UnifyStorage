@@ -11,19 +11,27 @@ import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.databinding.ItemFileBinding;
 import org.cryse.unifystorage.explorer.viewmodel.ItemRemoteFileViewModel;
+import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-public class FileAdapter<RF extends RemoteFile> extends RecyclerView.Adapter<FileAdapter.BindingHolder> {
-    private List<RF> mFiles;
+public class FileAdapter<RF extends RemoteFile>
+        extends SelectableRecyclerViewAdapter<
+        RF,
+        List<RF>,
+        FileAdapter.BindingHolder
+        > {
     private Context mContext;
-    private OnFileClickListener mOnFileClickListener;
+    private OnFileClickListener<RF> mOnFileClickListener;
 
     public FileAdapter(Context context) {
         this.mContext = context;
-        this.mFiles = new ArrayList<>();
+    }
+
+    @Override
+    public List<RF> buildItemsCollection() {
+        return new ArrayList<>();
     }
 
     @Override
@@ -39,66 +47,10 @@ public class FileAdapter<RF extends RemoteFile> extends RecyclerView.Adapter<Fil
     @Override
     public void onBindViewHolder(BindingHolder holder, int position) {
         ItemFileBinding fileBinding = holder.binding;
-        fileBinding.setViewModel(new ItemRemoteFileViewModel<>(mContext, mFiles.get(position)));
+        fileBinding.setViewModel(new ItemRemoteFileViewModel<>(mContext, getItems().get(position)));
         fileBinding.setClickListener(this);
         fileBinding.setAdapterPosition(position);
-    }
-
-    @Override
-    public int getItemCount() {
-        return mFiles.size();
-    }
-
-    public void replaceWith(Collection<RF> items) {
-        replaceWith(items, false);
-    }
-
-    public void replaceWith(Collection<RF> items, boolean cleanToReplace) {
-        if(items == null) return;
-        if(cleanToReplace) {
-            clear();
-            addAll(items);
-        } else {
-            int oldCount = mFiles.size();
-            int newCount = items.size();
-            int delCount = oldCount - newCount;
-            mFiles.clear();
-            mFiles.addAll(items);
-            if(delCount > 0) {
-                notifyItemRangeChanged(0, newCount);
-                notifyItemRangeRemoved(newCount, delCount);
-            } else if(delCount < 0) {
-                notifyItemRangeChanged(0, oldCount);
-                notifyItemRangeInserted(oldCount, - delCount);
-            } else {
-                notifyItemRangeChanged(0, newCount);
-            }
-        }
-    }
-
-    public void addItem(RF remoteFile) {
-        if(remoteFile == null) return;
-        if (!mFiles.contains(remoteFile)) {
-            mFiles.add(remoteFile);
-            notifyItemInserted(mFiles.size() - 1);
-        } else {
-            mFiles.set(mFiles.indexOf(remoteFile), remoteFile);
-            notifyItemChanged(mFiles.indexOf(remoteFile));
-        }
-    }
-
-    public void addAll(Collection<RF> files) {
-        if(files == null) return;
-        int currentCount = mFiles.size();
-        int newFilesCount = files.size();
-        mFiles.addAll(files);
-        notifyItemRangeInserted(currentCount, newFilesCount);
-    }
-
-    public void clear() {
-        int size = mFiles.size();
-        mFiles.clear();
-        notifyItemRangeRemoved(0, size);
+        fileBinding.setItemSelected(isSelected(position));
     }
 
     public static class BindingHolder extends RecyclerView.ViewHolder {
@@ -110,21 +62,21 @@ public class FileAdapter<RF extends RemoteFile> extends RecyclerView.Adapter<Fil
         }
     }
 
-    public void setOnFileClickListener(OnFileClickListener onFileClickListener) {
+    public void setOnFileClickListener(OnFileClickListener<RF> onFileClickListener) {
         this.mOnFileClickListener = onFileClickListener;
     }
 
     public void onItemClick(View view) {
         if(mOnFileClickListener != null) {
             int adapterPosition = (int)view.getTag();
-            mOnFileClickListener.onFileClick(view, adapterPosition, mFiles.get(adapterPosition));
+            mOnFileClickListener.onFileClick(view, adapterPosition, getItems().get(adapterPosition));
         }
     }
 
     public boolean onItemLongClick(View view) {
         if(mOnFileClickListener != null) {
             int adapterPosition = (int)view.getTag();
-            mOnFileClickListener.onFileLongClick(view, adapterPosition, mFiles.get(adapterPosition));
+            mOnFileClickListener.onFileLongClick(view, adapterPosition, getItems().get(adapterPosition));
         }
         return true;
     }

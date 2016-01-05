@@ -42,6 +42,11 @@ public class OneDriveStorageFragment extends StorageProviderFragment<
     }
 
     @Override
+    protected String getLogTag() {
+        return OneDriveStorageFragment.class.getSimpleName();
+    }
+
+    @Override
     protected FileListViewModel<OneDriveFile, OneDriveCredential, OneDriveStorageProvider> buildViewModel(OneDriveCredential credential) {
         return new FileListViewModel<>(
                 getContext(),

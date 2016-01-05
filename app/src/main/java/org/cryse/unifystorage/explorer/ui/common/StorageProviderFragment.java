@@ -9,6 +9,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -35,8 +36,10 @@ import org.cryse.unifystorage.utils.DirectoryPair;
 import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
+import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -47,7 +50,10 @@ public abstract class StorageProviderFragment<
         RF extends RemoteFile,
         CR extends Credential,
         SP extends StorageProvider<RF, CR>
-        > extends AbstractFragment implements  FileAdapter.OnFileClickListener<RF>, FileListViewModel.DataListener<RF, CR>  {
+        > extends AbstractFragment implements
+        FileAdapter.OnFileClickListener<RF>,
+        FileListViewModel.DataListener<RF, CR>,
+        SelectableRecyclerViewAdapter.OnSelectionListener {
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
     private Handler mHandler = new Handler();
 
@@ -84,6 +90,7 @@ public abstract class StorageProviderFragment<
         readArguments();
         mCollectionAdapter = new FileAdapter<>(getActivity());
         mCollectionAdapter.setOnFileClickListener(this);
+        mCollectionAdapter.setOnSelectionListener(this);
         mViewModel = buildViewModel(mCredential);
         mViewModel.setStorageProviderRecordId(mStorageProviderRecordId);
         mShowHiddenFilesPrefs = Prefs.getBooleanPrefs(
@@ -95,6 +102,8 @@ public abstract class StorageProviderFragment<
     protected void readArguments() {
 
     }
+
+    protected abstract String getLogTag();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -120,7 +129,10 @@ public abstract class StorageProviderFragment<
                 @Override
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (keyCode == KeyEvent.KEYCODE_BACK) {
-                        if(!mViewModel.isAtTopPaht()) {
+                        if(mCollectionAdapter.isInSelection()) {
+                            mCollectionAdapter.clearSelection();
+                            return true;
+                        } else if(!mViewModel.isAtTopPaht()) {
                             if (!StorageProviderFragment.this.mDoubleBackPressedOnce.get()) {
                                 mViewModel.onBackPressed();
                                 StorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
@@ -173,7 +185,7 @@ public abstract class StorageProviderFragment<
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.main, menu);
+        inflater.inflate(R.menu.menu_filelist, menu);
         mShowHiddenFilesMenuItems = menu.findItem(R.id.action_show_hidden_files);
     }
 
@@ -223,7 +235,17 @@ public abstract class StorageProviderFragment<
 
     @Override
     public void onFileClick(View view, int position, RF file) {
-        mViewModel.onFileClick(file, getCollectionViewState());
+        if(mCollectionAdapter.isInSelection()) {
+            mCollectionAdapter.toggleSelection(position);
+        } else {
+            mViewModel.onFileClick(file, getCollectionViewState());
+        }
+    }
+
+    @Override
+    public void onFileLongClick(View view, int position, RF file) {
+        mCollectionAdapter.toggleSelection(position);
+        mViewModel.onFileLongClick(file);
     }
 
     private CollectionViewState getCollectionViewState() {
@@ -235,11 +257,6 @@ public abstract class StorageProviderFragment<
             return new CollectionViewState(position, offset);
         } else
             return CollectionViewState.EMPTY;
-    }
-
-    @Override
-    public void onFileLongClick(View view, int position, RF file) {
-        mViewModel.onFileLongClick(file);
     }
 
     @Override
@@ -332,5 +349,35 @@ public abstract class StorageProviderFragment<
             mBreadCrumbLayout.addHistory(crumb);
         }
         mBreadCrumbLayout.setActiveOrAdd(crumb, forceRecreate);
+    }
+
+    @Override
+    public void onSelectionStart() {
+        Log.e(getLogTag(), "SelectionStart");
+    }
+
+    @Override
+    public void onSelectionEnd() {
+        Log.e(getLogTag(), "SelectionEnd");
+    }
+
+    @Override
+    public void onSelect(int currentSelectionCount, int...positions) {
+        String selectInfo = positions == null || positions.length == 0 ? "Select all" : String.format(
+                "Select %d items: %s",
+                currentSelectionCount,
+                Arrays.toString(positions)
+        );
+        Log.e(getLogTag(), selectInfo);
+    }
+
+    @Override
+    public void onDeselect(int currentSelectionCount, int...positions) {
+        String selectInfo = positions == null || positions.length == 0 ? "Clear selection" : String.format(
+                "Deselect %d items: %s",
+                currentSelectionCount,
+                Arrays.toString(positions)
+        );
+        Log.e(getLogTag(), selectInfo);
     }
 }
