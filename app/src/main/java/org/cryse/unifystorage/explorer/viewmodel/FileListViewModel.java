@@ -228,9 +228,11 @@ public class FileListViewModel<
 
     public void setShowHiddenFiles(boolean show) {
         this.mShowHiddenFile = show;
-        handleHiddenFile(mDirectory);
-        handleFileSort(mDirectory);
-        if (mDataListener != null) mDataListener.onDirectoryChanged(mDirectory);
+        if(mDirectory != null) {
+            handleHiddenFile(mDirectory);
+            handleFileSort(mDirectory);
+            if (mDataListener != null) mDataListener.onDirectoryChanged(mDirectory);
+        }
     }
 
     public void onFileClick(RF file, CollectionViewState collectionViewState) {

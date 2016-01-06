@@ -104,6 +104,7 @@ public abstract class StorageProviderFragment<
                 PrefsConst.PREFS_SHOW_HIDDEN_FILES,
                 PrefsConst.PREFS_SHOW_HIDDEN_FILES_VALUE
         );
+        mViewModel.setShowHiddenFiles(mShowHiddenFilesPrefs.get());
     }
 
     protected void readArguments() {
