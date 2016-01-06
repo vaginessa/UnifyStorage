@@ -128,7 +128,7 @@ public abstract class SelectableRecyclerViewAdapter<
         for(int position = 0; position < itemCount; position++) {
             mSelectedIndices.put(position, true);
         }
-        notifyDataSetChanged();
+        notifyItemRangeChanged(0, itemCount);
         if (mOnSelectionListener !=null) {
             mOnSelectionListener.onSelect(itemCount);
         }
@@ -152,9 +152,16 @@ public abstract class SelectableRecyclerViewAdapter<
 
     protected void clearSelection(boolean invalidateItems) {
         int lastSize = mSelectedIndices.size();
+        int[] positions = new int[lastSize];
+        for(int i = 0; i < lastSize; i++) {
+            positions[i] = mSelectedIndices.keyAt(i);;
+        }
         mSelectedIndices.clear();
-        if (invalidateItems)
-            notifyDataSetChanged();
+        if (invalidateItems) {
+            for (int position : positions) {
+                notifyItemChanged(position);
+            }
+        }
         if (mOnSelectionListener != null && lastSize > 0) {
             mOnSelectionListener.onDeselect(0);
             mOnSelectionListener.onSelectionEnd();
