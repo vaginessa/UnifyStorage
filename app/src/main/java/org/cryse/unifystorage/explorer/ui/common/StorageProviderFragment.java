@@ -2,8 +2,12 @@ package org.cryse.unifystorage.explorer.ui.common;
 
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -20,6 +24,7 @@ import android.view.ViewGroup;
 
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
 import com.afollestad.impression.widget.breadcrumbs.Crumb;
+import com.afollestad.materialcab.MaterialCab;
 import com.afollestad.materialdialogs.MaterialDialog;
 
 import org.cryse.unifystorage.RemoteFile;
@@ -53,7 +58,8 @@ public abstract class StorageProviderFragment<
         > extends AbstractFragment implements
         FileAdapter.OnFileClickListener<RF>,
         FileListViewModel.DataListener<RF, CR>,
-        SelectableRecyclerViewAdapter.OnSelectionListener {
+        SelectableRecyclerViewAdapter.OnSelectionListener,
+        MaterialCab.Callback {
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
     private Handler mHandler = new Handler();
 
@@ -72,7 +78,8 @@ public abstract class StorageProviderFragment<
     protected MaterialDialog mDownloadDialog;
 
     protected BooleanPrefs mShowHiddenFilesPrefs;
-    protected MenuItem mShowHiddenFilesMenuItems;
+    protected MenuItem mShowHiddenFilesMenuItem;
+    protected MaterialCab mCab;
 
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
@@ -129,16 +136,16 @@ public abstract class StorageProviderFragment<
                 @Override
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (keyCode == KeyEvent.KEYCODE_BACK) {
-                        if(mCollectionAdapter.isInSelection()) {
-                            mCollectionAdapter.clearSelection();
-                            return true;
-                        } else if(!mViewModel.isAtTopPaht()) {
-                            if (!StorageProviderFragment.this.mDoubleBackPressedOnce.get()) {
+                        if (!StorageProviderFragment.this.mDoubleBackPressedOnce.get()) {
+                            if (mCollectionAdapter.isInSelection()) {
+                                mCollectionAdapter.clearSelection();
+                                return true;
+                            } else if (!mViewModel.isAtTopPaht()) {
                                 mViewModel.onBackPressed();
-                                StorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
-                                mHandler.postDelayed(mBackPressdRunnable, 400);
+                                return true;
                             }
-                            return true;
+                            StorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
+                            mHandler.postDelayed(mBackPressdRunnable, 400);
                         }
                     }
                     return false;
@@ -153,7 +160,11 @@ public abstract class StorageProviderFragment<
         if(actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_action_drawer_menu);
+            Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_action_menu_drawer, null);
+            if( drawable != null ) {
+                drawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+                actionBar.setHomeAsUpIndicator(drawable);
+            }
         }
     }
 
@@ -186,14 +197,14 @@ public abstract class StorageProviderFragment<
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.menu_filelist, menu);
-        mShowHiddenFilesMenuItems = menu.findItem(R.id.action_show_hidden_files);
+        mShowHiddenFilesMenuItem = menu.findItem(R.id.action_show_hidden_files);
     }
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        if(mShowHiddenFilesMenuItems != null) {
-            mShowHiddenFilesMenuItems.setChecked(mShowHiddenFilesPrefs.get());
+        if(mShowHiddenFilesMenuItem != null) {
+            mShowHiddenFilesMenuItem.setChecked(mShowHiddenFilesPrefs.get());
         }
     }
 
@@ -210,8 +221,8 @@ public abstract class StorageProviderFragment<
             case R.id.action_show_hidden_files:
                 boolean isShow = mShowHiddenFilesPrefs.get();
                 mShowHiddenFilesPrefs.set(!isShow);
-                if(mShowHiddenFilesMenuItems!= null)
-                    mShowHiddenFilesMenuItems.setChecked(!isShow);
+                if(mShowHiddenFilesMenuItem!= null)
+                    mShowHiddenFilesMenuItem.setChecked(!isShow);
                 mViewModel.setShowHiddenFiles(!isShow);
                 return true;
         }
@@ -353,12 +364,22 @@ public abstract class StorageProviderFragment<
 
     @Override
     public void onSelectionStart() {
+        /*if(mActionMode != null)
+            mActionMode.finish();
+        mActionMode = mToolbar.startActionMode(mActionModeCallback);*/
+        mCab = new MaterialCab(getAppCompatActivity(), R.id.cab_stub)
+                .setMenu(R.menu.menu_cab_fileselection)
+                .setBackgroundColorRes(R.color.colorPrimary)
+                .setCloseDrawableRes(R.drawable.ic_action_menu_close)
+                .start(this);
         Log.e(getLogTag(), "SelectionStart");
     }
 
     @Override
     public void onSelectionEnd() {
         Log.e(getLogTag(), "SelectionEnd");
+        if(mCab != null && mCab.isActive())
+            mCab.finish();
     }
 
     @Override
@@ -368,6 +389,8 @@ public abstract class StorageProviderFragment<
                 currentSelectionCount,
                 Arrays.toString(positions)
         );
+        if(mCab != null && mCab.isActive())
+            mCab.setTitle(Integer.toString(currentSelectionCount));
         Log.e(getLogTag(), selectInfo);
     }
 
@@ -378,6 +401,26 @@ public abstract class StorageProviderFragment<
                 currentSelectionCount,
                 Arrays.toString(positions)
         );
+        if(mCab != null && mCab.isActive())
+            mCab.setTitle(Integer.toString(currentSelectionCount));
         Log.e(getLogTag(), selectInfo);
+    }
+
+    @Override
+    public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
+        return true;
+    }
+
+    @Override
+    public boolean onCabItemClicked(MenuItem menuItem) {
+        Log.e(getLogTag(), menuItem.getTitle().toString());
+        return true;
+    }
+
+    @Override
+    public boolean onCabFinished(MaterialCab materialCab) {
+        if(mCollectionAdapter.isInSelection())
+            mCollectionAdapter.clearSelection();
+        return true;
     }
 }

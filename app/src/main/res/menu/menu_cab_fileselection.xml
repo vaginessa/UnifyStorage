@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_cab_cut"
+        android:icon="@drawable/ic_action_cut"
+        android:title="@string/action_cab_cut"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_cab_copy"
+        android:icon="@drawable/ic_action_copy"
+        android:title="@string/action_cab_copy"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cab_paste"
+        android:icon="@drawable/ic_action_paste"
+        android:title="@string/action_cab_paste"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cab_delete"
+        android:icon="@drawable/ic_action_delete"
+        android:title="@string/action_cab_delete"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cab_archive"
+        android:icon="@drawable/ic_action_archive"
+        android:title="@string/action_cab_archive"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cab_move_to"
+        android:icon="@drawable/ic_action_move_to"
+        android:title="@string/action_cab_move_to"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cab_select_all"
+        android:icon="@drawable/ic_action_select_all"
+        android:title="@string/action_cab_select_all"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cab_select_inverse"
+        android:icon="@drawable/ic_action_select_all"
+        android:title="@string/action_cab_select_inverse"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cab_rename"
+        android:icon="@drawable/ic_action_rename"
+        android:title="@string/action_cab_rename"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cab_properties"
+        android:icon="@drawable/ic_action_info"
+        android:title="@string/action_cab_properties"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_cab_share"
+        android:icon="@drawable/ic_action_share"
+        android:title="@string/action_cab_share"
+        app:showAsAction="ifRoom" />
+</menu>

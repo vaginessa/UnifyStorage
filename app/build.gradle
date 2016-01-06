@@ -77,6 +77,10 @@ dependencies {
     compile(libDependencies.materialdialog) {
         transitive = true
     }
+
+    compile(libDependencies.materialcab) {
+        transitive = true
+    }
 }
 
 def Properties props = new Properties()

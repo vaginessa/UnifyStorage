@@ -9,6 +9,7 @@ ext {
     msaAuthVersion = '0.8.4'
     materialDrawerVersion = '4.6.1'
     materialDialogVersion = '0.8.5.3'
+    materialCabVersion = '0.1.6'
     easyPermissionVersion = '0.1.0'
     okhttpVersion = '2.4.0'
     dropboxVersion = '2.0-beta-4'
@@ -54,6 +55,7 @@ ext {
 
             // UI Elements
             materialdrawer: "com.mikepenz:materialdrawer:$materialDrawerVersion@aar",
-            materialdialog: "com.github.afollestad.material-dialogs:core:$materialDialogVersion@aar"
+            materialdialog: "com.github.afollestad.material-dialogs:core:$materialDialogVersion@aar",
+            materialcab: "com.afollestad:material-cab:$materialCabVersion@aar"
     ]
 }
