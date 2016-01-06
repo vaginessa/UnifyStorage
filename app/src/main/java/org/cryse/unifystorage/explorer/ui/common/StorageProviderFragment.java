@@ -7,6 +7,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
@@ -22,9 +23,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.afollestad.appthemeengine.ATE;
+import com.afollestad.appthemeengine.Config;
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
 import com.afollestad.impression.widget.breadcrumbs.Crumb;
 import com.afollestad.materialcab.MaterialCab;
+import com.afollestad.materialcab.Util;
 import com.afollestad.materialdialogs.MaterialDialog;
 
 import org.cryse.unifystorage.RemoteFile;
@@ -36,6 +40,7 @@ import org.cryse.unifystorage.explorer.databinding.FragmentStorageProviderBindin
 import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
+import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
 import org.cryse.unifystorage.utils.DirectoryPair;
 import org.cryse.unifystorage.utils.FileSizeUtils;
@@ -127,6 +132,21 @@ public abstract class StorageProviderFragment<
     }
 
     @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        String key = Util.resolveString(getActivity(), R.attr.ate_key);
+        int primaryColor = Config.primaryColor(getContext(), key);
+        int toolbarTextColor = ResourceUtils.toolbarTextColor(getContext(), key, mToolbar);
+        int textColorHint = ResourceUtils.adjustAlpha(toolbarTextColor, 0.38f);
+        int arrowColor = ResourceUtils.adjustAlpha(toolbarTextColor, 0.54f);
+        mBreadCrumbLayout.setCrumbActiveColor(toolbarTextColor);
+        mBreadCrumbLayout.setCrumbInactiveColor(textColorHint);
+        mBreadCrumbLayout.setArrowColor(arrowColor);
+        mBreadCrumbLayout.setBackgroundColor(primaryColor);
+        ATE.apply(mBreadCrumbLayout, Util.resolveString(getActivity(), R.attr.ate_key));
+    }
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         getActivity().invalidateOptionsMenu();
@@ -161,11 +181,7 @@ public abstract class StorageProviderFragment<
         if(actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
-            Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_action_menu_drawer, null);
-            if( drawable != null ) {
-                drawable.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-                actionBar.setHomeAsUpIndicator(drawable);
-            }
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_action_menu_drawer);
         }
     }
 

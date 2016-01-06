@@ -37,7 +37,7 @@
             android:ellipsize="end"
             android:text="@{viewModel.fileName}"
             android:textSize="@dimen/text_size_body2"
-            android:textColor="@color/text_color_primary"/>
+            android:tag="text_primary"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -51,7 +51,7 @@
             android:layout_alignParentStart="true"
             android:text="@{viewModel.detail}"
             android:textSize="@dimen/text_size_super_tiny"
-            android:textColor="@color/text_color_secondary"/>
+            android:tag="text_secondary"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -65,7 +65,7 @@
             android:layout_alignParentEnd="true"
             android:text="@{viewModel.detail2}"
             android:textSize="@dimen/text_size_super_tiny"
-            android:textColor="@color/text_color_secondary"/>
+            android:tag="text_secondary"/>
     </RelativeLayout>
 
 </layout>

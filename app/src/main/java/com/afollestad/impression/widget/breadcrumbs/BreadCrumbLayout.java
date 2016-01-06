@@ -9,6 +9,7 @@ import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -44,6 +45,9 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
     private int mActive;
     private SelectionCallback mCallback;
     private String mTopPath;
+    private int mCrumbActiveColor;
+    private int mArrowColor;
+    private int mCrumbInactiveColor;
 
     public BreadCrumbLayout(Context context) {
         super(context);
@@ -78,6 +82,9 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
         setHorizontalScrollBarEnabled(false);
         mCrumbs = new ArrayList<>();
         mHistory = new ArrayList<>();
+        mCrumbActiveColor = ContextCompat.getColor(getContext(), R.color.crumb_active);
+        mCrumbInactiveColor = ContextCompat.getColor(getContext(), R.color.crumb_inactive);
+        mArrowColor = mCrumbInactiveColor;
         mChildFrame = new LinearLayout(getContext());
         addView(mChildFrame, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -126,6 +133,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
 
         ImageView iv = (ImageView) view.getChildAt(1);
         Drawable arrow = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_right_arrow, null);
+        DrawableCompat.setTint(arrow, mArrowColor);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             assert arrow != null;
             arrow.setAutoMirrored(true);
@@ -277,7 +285,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
     private TextView invalidateActivated(View view, boolean isActive, boolean noArrowIfAlone, boolean allowArrowVisible) {
         LinearLayout child = (LinearLayout) view;
         TextView tv = (TextView) child.getChildAt(0);
-        tv.setTextColor(ContextCompat.getColor(getContext(), isActive ? R.color.crumb_active : R.color.crumb_inactive));
+        tv.setTextColor(isActive ? mCrumbActiveColor : mCrumbInactiveColor);
         ImageView iv = (ImageView) child.getChildAt(1);
         setAlpha(iv, isActive ? 255 : 109);
         if (noArrowIfAlone && getChildCount() == 1) {
@@ -292,6 +300,18 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
 
     public int getActiveIndex() {
         return mActive;
+    }
+
+    public void setCrumbActiveColor(int crumbActiveColor) {
+        mCrumbActiveColor = crumbActiveColor;
+    }
+
+    public void setCrumbInactiveColor(int crumbInactiveColor) {
+        mCrumbInactiveColor = crumbInactiveColor;
+    }
+
+    public void setArrowColor(int arrowColor) {
+        mArrowColor = arrowColor;
     }
 
     @Override

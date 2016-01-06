@@ -26,7 +26,7 @@
                 android:layout_height="?attr/actionBarSize"
                 android:background="@android:color/transparent"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                app:theme="@style/AppTheme.AppBarOverlay"
+                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
                 tools:ignore="UnusedAttribute" />
 
             <com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout

@@ -7,6 +7,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.afollestad.appthemeengine.ATE;
+import com.afollestad.materialcab.Util;
+
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.databinding.ItemFileBinding;
@@ -51,6 +54,10 @@ public class FileAdapter<RF extends RemoteFile>
         fileBinding.setClickListener(this);
         fileBinding.setAdapterPosition(position);
         fileBinding.setItemSelected(isSelected(position));
+        ATE.apply(
+                fileBinding.itemFileRootContainer,
+                Util.resolveString(fileBinding.itemFileRootContainer.getContext(), R.attr.ate_key)
+        );
     }
 
     public static class BindingHolder extends RecyclerView.ViewHolder {

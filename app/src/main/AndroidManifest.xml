@@ -25,6 +25,10 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".ui.ThemeSettingsActivity"
+            android:label="@string/drawer_settings"
+            android:windowSoftInputMode="stateAlwaysHidden" />
+        <activity
             android:name="org.cryse.unifystorage.providers.dropbox.DropboxAuthenticateActivity"
             android:configChanges="orientation|keyboard"
             android:launchMode="singleTask" >

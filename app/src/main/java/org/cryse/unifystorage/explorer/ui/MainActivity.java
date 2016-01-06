@@ -18,6 +18,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.afollestad.appthemeengine.ATE;
+import com.afollestad.appthemeengine.Config;
+import com.afollestad.materialcab.Util;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
@@ -56,6 +59,30 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Default config
+        if (!ATE.config(this, "light_theme").isConfigured(1)) {
+            ATE.config(this, "light_theme")
+                    .activityTheme(R.style.AppTheme)
+                    .primaryColorRes(R.color.colorPrimaryLightDefault)
+                    .accentColorRes(R.color.colorAccentLightDefault)
+                    .lightToolbarMode(Config.LIGHT_TOOLBAR_AUTO)
+                    .coloredActionBar(true)
+                    .coloredNavigationBar(false)
+                    .usingMaterialDialogs(true)
+                    .commit();
+        }
+        if (!ATE.config(this, "dark_theme").isConfigured(1)) {
+            ATE.config(this, "dark_theme")
+                    .activityTheme(R.style.AppThemeDark)
+                    .primaryColorRes(R.color.colorPrimaryDarkDefault)
+                    .accentColorRes(R.color.colorAccentDarkDefault)
+                    .lightToolbarMode(Config.LIGHT_TOOLBAR_AUTO)
+                    .coloredActionBar(true)
+                    .coloredNavigationBar(true)
+                    .usingMaterialDialogs(true)
+                    .commit();
+        }
+
         super.onCreate(savedInstanceState);
         // setContentView(R.layout.activity_main);
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
@@ -113,6 +140,9 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 return false;
             }
         });
+        String key = Util.resolveString(this, R.attr.ate_key);
+        int primaryDark = Config.primaryColorDark(this, key);
+        mDrawer.setStatusBarColor(primaryDark);
     }
 
     @Override
@@ -311,7 +341,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 //showAddProviderDialog();
                 break;
             case DrawerItemUtils.DRAWER_ITEM_SETTINGS:
-                //showAddProviderDialog();
+                showThemeSettingsActivity();
                 break;
             default:
                 if(drawerItem.getIdentifier() >= DrawerItemUtils.STORAGE_PROVIDER_START) {
@@ -375,6 +405,10 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         .show();
             }
         }
+    }
+
+    private void showThemeSettingsActivity() {
+        startActivity(new Intent(MainActivity.this, ThemeSettingsActivity.class));
     }
 
     @Override
