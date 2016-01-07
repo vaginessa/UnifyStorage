@@ -139,6 +139,9 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
             arrow.setAutoMirrored(true);
         }
 
+        TextView tv = (TextView) view.getChildAt(0);
+        tv.setText(crumb.getTitle());
+
         iv.setImageDrawable(arrow);
         iv.setVisibility(View.GONE);
 
@@ -200,8 +203,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
     private void invalidateActivatedAll() {
         for (int i = 0; i < mCrumbs.size(); i++) {
             Crumb crumb = mCrumbs.get(i);
-            invalidateActivated(mChildFrame.getChildAt(i), mActive == mCrumbs.indexOf(crumb), false, i < mCrumbs.size() - 1)
-                    .setText(crumb.getTitle());
+            invalidateActivated(mChildFrame.getChildAt(i), mActive == mCrumbs.indexOf(crumb), false, i < mCrumbs.size() - 1);
         }
     }
 
