@@ -138,8 +138,8 @@ public abstract class StorageProviderFragment<
         mATEKey = Util.resolveString(getActivity(), R.attr.ate_key);
         mPrimaryColor = Config.primaryColor(getContext(), mATEKey);
         mToolbarContentColor = ResourceUtils.toolbarTextColor(getContext(), mATEKey, mToolbar);
-        int textColorHint = ResourceUtils.adjustAlpha(mToolbarContentColor, 0.38f);
-        int arrowColor = ResourceUtils.adjustAlpha(mToolbarContentColor, 0.54f);
+        int textColorHint = ResourceUtils.adjustAlpha(mToolbarContentColor, 0.54f);
+        int arrowColor = ResourceUtils.adjustAlpha(mToolbarContentColor, 1.0f);
         mBreadCrumbLayout.setCrumbActiveColor(mToolbarContentColor);
         mBreadCrumbLayout.setCrumbInactiveColor(textColorHint);
         mBreadCrumbLayout.setArrowColor(arrowColor);
@@ -158,16 +158,19 @@ public abstract class StorageProviderFragment<
                 @Override
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (keyCode == KeyEvent.KEYCODE_BACK) {
-                        if (!StorageProviderFragment.this.mDoubleBackPressedOnce.get()) {
-                            if (mCollectionAdapter.isInSelection()) {
-                                mCollectionAdapter.clearSelection();
-                                return true;
-                            } else if (!mViewModel.isAtTopPaht()) {
-                                mViewModel.onBackPressed();
-                                return true;
+                        if(mCollectionAdapter.isInSelection() || !mViewModel.isAtTopPath()) {
+                            if (!StorageProviderFragment.this.mDoubleBackPressedOnce.get()) {
+                                StorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
+                                mHandler.postDelayed(mBackPressdRunnable, 400);
+                                if (mCollectionAdapter.isInSelection()) {
+                                    mCollectionAdapter.clearSelection();
+                                } else if (!mViewModel.isAtTopPath()) {
+                                    mViewModel.onBackPressed();
+                                }
+                            } else {
+                                // Click Back too quick, ignore.
                             }
-                            StorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
-                            mHandler.postDelayed(mBackPressdRunnable, 400);
+                            return true;
                         }
                     }
                     return false;

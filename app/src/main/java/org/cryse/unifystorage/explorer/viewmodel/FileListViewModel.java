@@ -342,7 +342,7 @@ public class FileListViewModel<
                 });
     }
 
-    public boolean isAtTopPaht() {
+    public boolean isAtTopPath() {
         return mBackwardStack.empty();
     }
 
