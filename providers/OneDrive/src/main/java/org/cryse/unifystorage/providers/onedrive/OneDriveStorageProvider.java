@@ -2,7 +2,6 @@ package org.cryse.unifystorage.providers.onedrive;
 
 import android.app.Activity;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.microsoft.services.msa.InternalOneDriveAuthenticator;
 import com.onedrive.sdk.core.DefaultClientConfig;
@@ -26,7 +25,7 @@ import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
-import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.IOUtils;
 import org.cryse.unifystorage.utils.Path;
 import org.cryse.unifystorage.utils.hash.Sha1HashAlgorithm;
@@ -90,7 +89,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public DirectoryPair<OneDriveFile, List<OneDriveFile>> list(OneDriveFile parent) throws StorageException {
+    public DirectoryInfo<OneDriveFile, List<OneDriveFile>> list(OneDriveFile parent) throws StorageException {
         List<Item> children = mOneDriveClient
                 .getDrive()
                 .getItems(parent.getId())
@@ -102,7 +101,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
         for (final Item childItem : children) {
             list.add(new OneDriveFile(childItem));
         }
-        return DirectoryPair.create(parent, list);
+        return DirectoryInfo.create(parent, list);
     }
 
     @Override

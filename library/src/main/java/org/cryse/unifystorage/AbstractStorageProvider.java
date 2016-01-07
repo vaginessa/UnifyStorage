@@ -1,7 +1,7 @@
 package org.cryse.unifystorage;
 
 import org.cryse.unifystorage.credential.Credential;
-import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.DirectoryInfo;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -11,9 +11,9 @@ import java.util.List;
 public abstract class AbstractStorageProvider<R extends RemoteFile, CR extends Credential> implements StorageProvider<R, CR> {
     public abstract R getRootDirectory() throws StorageException;
 
-    public abstract DirectoryPair<R, List<R>> list(R parent) throws StorageException;
+    public abstract DirectoryInfo<R, List<R>> list(R parent) throws StorageException;
 
-    public DirectoryPair<R, List<R>> list() throws StorageException {
+    public DirectoryInfo<R, List<R>> list() throws StorageException {
         return list(getRootDirectory());
     }
 

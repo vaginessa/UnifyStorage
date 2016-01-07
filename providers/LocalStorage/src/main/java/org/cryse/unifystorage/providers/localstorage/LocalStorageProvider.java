@@ -7,7 +7,7 @@ import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
-import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.IOUtils;
 import org.cryse.unifystorage.utils.Path;
 import org.cryse.unifystorage.utils.hash.Sha1HashAlgorithm;
@@ -40,7 +40,7 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public DirectoryPair<LocalStorageFile, List<LocalStorageFile>> list(LocalStorageFile parent) throws StorageException {
+    public DirectoryInfo<LocalStorageFile, List<LocalStorageFile>> list(LocalStorageFile parent) throws StorageException {
         if(parent == null) return list();
 
         File file = new File(parent.getPath());
@@ -51,7 +51,7 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
                 list.add(new LocalStorageFile(f));
             }
         }
-        return DirectoryPair.create(parent, list);
+        return DirectoryInfo.create(parent, list);
     }
 
     @Override

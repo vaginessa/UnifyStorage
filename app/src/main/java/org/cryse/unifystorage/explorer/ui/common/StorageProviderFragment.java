@@ -2,13 +2,9 @@ package org.cryse.unifystorage.explorer.ui.common;
 
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
@@ -43,7 +39,7 @@ import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
-import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
@@ -293,7 +289,7 @@ public abstract class StorageProviderFragment<
     }
 
     @Override
-    public void onDirectoryChanged(DirectoryPair<RF, List<RF>> directory) {
+    public void onDirectoryChanged(DirectoryInfo<RF, List<RF>> directory) {
         mCollectionAdapter.replaceWith(directory.files);
         updateBreadcrumb(directory.directory.getPath());
     }

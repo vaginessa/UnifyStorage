@@ -1,7 +1,7 @@
 package org.cryse.unifystorage;
 
 import org.cryse.unifystorage.credential.Credential;
-import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.DirectoryInfo;
 
 import java.io.InputStream;
 
@@ -37,10 +37,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public Observable<DirectoryPair<RF, List<RF>>> list(final RF parent) {
-        return Observable.create(new Observable.OnSubscribe<DirectoryPair<RF, List<RF>>>() {
+    public Observable<DirectoryInfo<RF, List<RF>>> list(final RF parent) {
+        return Observable.create(new Observable.OnSubscribe<DirectoryInfo<RF, List<RF>>>() {
             @Override
-            public void call(Subscriber<? super DirectoryPair<RF, List<RF>>> subscriber) {
+            public void call(Subscriber<? super DirectoryInfo<RF, List<RF>>> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.list(parent));
                     subscriber.onCompleted();
@@ -51,10 +51,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public Observable<DirectoryPair<RF, List<RF>>> list() {
-        return Observable.create(new Observable.OnSubscribe<DirectoryPair<RF, List<RF>>>() {
+    public Observable<DirectoryInfo<RF, List<RF>>> list() {
+        return Observable.create(new Observable.OnSubscribe<DirectoryInfo<RF, List<RF>>>() {
             @Override
-            public void call(Subscriber<? super DirectoryPair<RF, List<RF>>> subscriber) {
+            public void call(Subscriber<? super DirectoryInfo<RF, List<RF>>> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.list());
                     subscriber.onCompleted();

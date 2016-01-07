@@ -1,7 +1,5 @@
 package org.cryse.unifystorage.providers.dropbox;
 
-import android.util.Log;
-
 import com.dropbox.core.DbxDownloader;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxHost;
@@ -17,8 +15,7 @@ import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
-import org.cryse.unifystorage.utils.DirectoryPair;
-import org.cryse.unifystorage.utils.FileSizeUtils;
+import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.Path;
 
 import java.io.InputStream;
@@ -60,7 +57,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public DirectoryPair<DropboxFile, List<DropboxFile>> list(DropboxFile parent) throws StorageException {
+    public DirectoryInfo<DropboxFile, List<DropboxFile>> list(DropboxFile parent) throws StorageException {
         try {
             List<DropboxFile> list = new ArrayList<DropboxFile>();
             String parentPath = parent.getPath().equalsIgnoreCase("/") ? "" : parent.getPath();
@@ -68,7 +65,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
             for(DbxFiles.Metadata metadata : listFolderResult.entries) {
                 list.add(new DropboxFile(metadata));
             }
-            return DirectoryPair.create(parent, list);
+            return DirectoryInfo.create(parent, list);
         } catch (DbxException ex) {
             throw new StorageException(ex);
         }

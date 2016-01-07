@@ -1,7 +1,7 @@
 package org.cryse.unifystorage;
 
 import org.cryse.unifystorage.credential.Credential;
-import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.DirectoryInfo;
 
 import java.io.InputStream;
 import java.util.List;
@@ -11,9 +11,9 @@ public interface StorageProvider<RF extends RemoteFile, CR extends Credential> {
 
     RF getRootDirectory() throws StorageException;
 
-    DirectoryPair<RF, List<RF>> list(RF parent) throws StorageException;
+    DirectoryInfo<RF, List<RF>> list(RF parent) throws StorageException;
 
-    DirectoryPair<RF, List<RF>> list() throws StorageException;
+    DirectoryInfo<RF, List<RF>> list() throws StorageException;
 
     RF createDirectory(RF parent, String name) throws StorageException;
 

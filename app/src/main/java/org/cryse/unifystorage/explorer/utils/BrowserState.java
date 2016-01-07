@@ -1,21 +1,22 @@
 package org.cryse.unifystorage.explorer.utils;
 
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.utils.DirectoryPair;
+import org.cryse.unifystorage.utils.DirectoryInfo;
 
 import java.util.List;
 
 public class BrowserState<RF extends RemoteFile> {
-    public DirectoryPair<RF, List<RF>> directory;
+    public DirectoryInfo<RF, List<RF>> directory;
     public CollectionViewState collectionViewState;
-    public float scrollOffset;
+    public List<RF> hiddenFiles;
 
     public BrowserState() {
 
     }
 
-    public BrowserState(DirectoryPair<RF, List<RF>> directory, CollectionViewState collectionViewState) {
+    public BrowserState(DirectoryInfo<RF, List<RF>> directory, CollectionViewState collectionViewState, List<RF> hiddenFiles) {
         this.directory = directory;
         this.collectionViewState = collectionViewState;
+        this.hiddenFiles = hiddenFiles;
     }
 }
