@@ -24,6 +24,11 @@ public class ItemRemoteFileViewModel<RF extends RemoteFile> extends BaseObservab
         return mContext;
     }
 
+    public void setRemoteFile(RF remoteFile) {
+        this.mRemoteFile = remoteFile;
+        notifyChange();
+    }
+
     public RF getRemoteFile() {
         return mRemoteFile;
     }

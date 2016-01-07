@@ -30,6 +30,7 @@ public class FileAdapter<RF extends RemoteFile>
 
     public FileAdapter(Context context) {
         this.mContext = context;
+        setHasStableIds(false);
     }
 
     @Override
@@ -50,10 +51,16 @@ public class FileAdapter<RF extends RemoteFile>
     @Override
     public void onBindViewHolder(BindingHolder holder, int position) {
         ItemFileBinding fileBinding = holder.binding;
-        fileBinding.setViewModel(new ItemRemoteFileViewModel<>(mContext, getItems().get(position)));
+        if (fileBinding.getViewModel() == null) {
+            fileBinding.setViewModel(new ItemRemoteFileViewModel<>(mContext, getItems().get(position)));
+        } else {
+            fileBinding.getViewModel().setRemoteFile(getItems().get(position));
+        }
         fileBinding.setClickListener(this);
         fileBinding.setAdapterPosition(position);
         fileBinding.setItemSelected(isSelected(position));
+        fileBinding.getViewModel().notifyChange();
+        fileBinding.executePendingBindings();
         ATE.apply(
                 fileBinding.itemFileRootContainer,
                 Util.resolveString(fileBinding.itemFileRootContainer.getContext(), R.attr.ate_key)

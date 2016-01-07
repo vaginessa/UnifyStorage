@@ -40,20 +40,11 @@ public abstract class SelectableRecyclerViewAdapter<
             clear();
             addAll(items);
         } else {
-            int oldCount = mItems.size();
-            int newCount = items.size();
-            int delCount = oldCount - newCount;
+            int count = Math.max(mItems.size(), items.size());
             mItems.clear();
             mItems.addAll(items);
-            if (delCount > 0) {
-                notifyItemRangeChanged(0, newCount);
-                notifyItemRangeRemoved(newCount, delCount);
-            } else if (delCount < 0) {
-                notifyItemRangeChanged(0, oldCount);
-                notifyItemRangeInserted(oldCount, -delCount);
-            } else {
-                notifyItemRangeChanged(0, newCount);
-            }
+            notifyItemRangeRemoved(0, count);
+            //notifyItemRangeInserted(0, newCount);
         }
     }
 

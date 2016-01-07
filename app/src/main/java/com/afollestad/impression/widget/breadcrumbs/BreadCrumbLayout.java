@@ -158,7 +158,6 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
         if (child != null) {
             smoothScrollTo(child.getLeft(), 0);
         }
-
         invalidateActivatedAll();
     }
 

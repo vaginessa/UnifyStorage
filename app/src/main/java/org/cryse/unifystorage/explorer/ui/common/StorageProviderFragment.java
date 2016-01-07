@@ -425,6 +425,7 @@ public abstract class StorageProviderFragment<
 
     @Override
     public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
+        Log.e(getLogTag(), "onCabCreated");
         return true;
     }
 
@@ -436,6 +437,7 @@ public abstract class StorageProviderFragment<
 
     @Override
     public boolean onCabFinished(MaterialCab materialCab) {
+        Log.e(getLogTag(), "onCabFinished");
         if(mCollectionAdapter.isInSelection())
             mCollectionAdapter.clearSelection();
         return true;
