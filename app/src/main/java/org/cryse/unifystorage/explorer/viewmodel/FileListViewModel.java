@@ -6,8 +6,10 @@ import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
 import android.net.Uri;
 import android.support.v4.content.FileProvider;
+import android.support.v4.util.Pair;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
 import org.cryse.unifystorage.AbstractFile;
@@ -377,6 +379,48 @@ public class FileListViewModel<
         OpenFileUtils.openFile(mContext, file.getPath(), true);
     }
 
+    public Observable<Pair<RF,Boolean>> deleteFile(final RF...files) {
+        return mStorageProvider.deleteFile(files[0]);
+    }
+
+    public void deleteFiles(final RF...files) {
+        UnifyStorageApplication application = UnifyStorageApplication.get(mContext);
+        mStorageProvider.deleteFile(files).observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(application.defaultSubscribeScheduler())
+                .subscribe(new Subscriber<Pair<RF, Boolean>>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        String resultToast = String.format("Delete failed: %s", e.getMessage());
+                        Log.e("DeleteFile", resultToast);
+                        Toast.makeText(mContext, resultToast, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onNext(Pair<RF, Boolean> result) {
+                        String resultToast = String.format("Delete %s %s", result.first.getName(), result.second ? "success" : "failed");
+                        Log.e("DeleteFile", resultToast);
+                        Toast.makeText(mContext, resultToast, Toast.LENGTH_SHORT).show();
+                        int position = 0;
+                        for (Iterator<RF> iterator = mDirectory.files.iterator(); iterator.hasNext();) {
+                            RF rf = iterator.next();
+                            if (rf.getId().compareTo(result.first.getId()) == 0 && result.second) {
+                                // Remove the current element from the iterator and the list.
+                                iterator.remove();
+                                if(mDataListener != null) {
+                                    mDataListener.onDirectoryItemDelete(position);
+                                }
+                            }
+                            position++;
+                        }
+                    }
+                });
+    }
+
     @Override
     public void destroy() {
         RxSubscriptionUtils.checkAndUnsubscribe(mLoadFilesSubscription);
@@ -389,6 +433,7 @@ public class FileListViewModel<
 
     public interface DataListener<RF extends RemoteFile, CR extends Credential> {
         void onDirectoryChanged(DirectoryInfo<RF, List<RF>> directory);
+        void onDirectoryItemDelete(int position);
         void onCollectionViewStateRestore(CollectionViewState collectionViewState);
         void onCredentialRefreshed(CR credential);
         void onShowDownloadDialog(String fileName, long fileSize, DialogInterface.OnDismissListener dismissListener);

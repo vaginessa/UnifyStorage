@@ -47,6 +47,11 @@ public class OneDriveStorageFragment extends StorageProviderFragment<
     }
 
     @Override
+    protected Class<OneDriveFile> getRemoteFileClass() {
+        return OneDriveFile.class;
+    }
+
+    @Override
     protected FileListViewModel<OneDriveFile, OneDriveCredential, OneDriveStorageProvider> buildViewModel(OneDriveCredential credential) {
         return new FileListViewModel<>(
                 getContext(),

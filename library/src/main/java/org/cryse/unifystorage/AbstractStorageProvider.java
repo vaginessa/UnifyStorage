@@ -1,5 +1,7 @@
 package org.cryse.unifystorage;
 
+import android.support.v4.util.Pair;
+
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 
@@ -82,8 +84,6 @@ public abstract class AbstractStorageProvider<R extends RemoteFile, CR extends C
     public R updateFile(R remote, LocalFile local) throws StorageException {
         return updateFile(remote, local, null);
     }
-
-    public abstract boolean deleteFile(R file) throws StorageException;
 
     public abstract R getFileDetail(R file) throws StorageException;
 

@@ -1,15 +1,21 @@
 package org.cryse.unifystorage.providers.onedrive;
 
 import android.app.Activity;
+import android.support.v4.util.Pair;
 import android.text.TextUtils;
 
 import com.microsoft.services.msa.InternalOneDriveAuthenticator;
+import com.onedrive.sdk.concurrency.AsyncMonitor;
+import com.onedrive.sdk.concurrency.ICallback;
+import com.onedrive.sdk.concurrency.IProgressCallback;
+import com.onedrive.sdk.core.ClientException;
 import com.onedrive.sdk.core.DefaultClientConfig;
 import com.onedrive.sdk.core.IClientConfig;
 import com.onedrive.sdk.extensions.Drive;
 import com.onedrive.sdk.extensions.Folder;
 import com.onedrive.sdk.extensions.IOneDriveClient;
 import com.onedrive.sdk.extensions.Item;
+import com.onedrive.sdk.extensions.ItemReference;
 import com.onedrive.sdk.extensions.OneDriveClient;
 import com.onedrive.sdk.logger.LoggerLevel;
 import com.onedrive.sdk.options.Option;
@@ -25,9 +31,11 @@ import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
+import org.cryse.unifystorage.io.StreamProgressListener;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.IOUtils;
 import org.cryse.unifystorage.utils.Path;
+import org.cryse.unifystorage.utils.ProgressCallback;
 import org.cryse.unifystorage.utils.hash.Sha1HashAlgorithm;
 
 import java.io.IOException;
@@ -205,17 +213,72 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public boolean deleteFile(OneDriveFile file) throws StorageException {
+    public Pair<OneDriveFile, Boolean> deleteFile(OneDriveFile file) throws StorageException {
         try {
             mOneDriveClient
                     .getDrive()
                     .getItems(file.getId())
                     .buildRequest()
                     .delete();
-            return true;
+            return Pair.create(file, true);
         } catch (Throwable throwable) {
             throw new StorageException(throwable);
         }
+    }
+
+    @Override
+    public void copyFile(OneDriveFile target, OneDriveFile file, final ProgressCallback callback) throws StorageException {
+        final ItemReference parentReference = new ItemReference();
+        parentReference.id = target.getId();
+
+        final IProgressCallback<Item> progressCallback = new IProgressCallback<Item>() {
+            @Override
+            public void progress(final long current, final long max) {
+                if(callback != null) {
+                    callback.onProgress(current, max);
+                }
+            }
+
+            @Override
+            public void success(final Item item) {
+                if (callback != null) {
+                    callback.onSuccess();
+                }
+            }
+
+                @Override
+                public void failure ( final ClientException error){
+                    if (callback != null) {
+                        callback.onFailure(error);
+                    }
+                }
+            };
+
+        final ICallback<AsyncMonitor<Item>> copyCallback
+                = new ICallback<AsyncMonitor<Item>>() {
+            @Override
+            public void success(final AsyncMonitor<Item> itemAsyncMonitor) {
+                final int millisBetweenPoll = 1000;
+                itemAsyncMonitor.pollForResult(millisBetweenPoll, progressCallback);
+            }
+
+            @Override
+            public void failure(ClientException ex) {
+
+            }
+        };
+
+        mOneDriveClient
+                .getDrive()
+                .getItems(file.getId())
+                .getCopy(file.getName(), parentReference)
+                .buildRequest()
+                .create(copyCallback);
+    }
+
+    @Override
+    public void moveFile(OneDriveFile target, OneDriveFile file, final ProgressCallback callback) throws StorageException {
+
     }
 
     @Override

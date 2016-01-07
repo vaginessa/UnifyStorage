@@ -43,6 +43,11 @@ public class DropboxStorageFragment extends StorageProviderFragment<
     }
 
     @Override
+    protected Class<DropboxFile> getRemoteFileClass() {
+        return DropboxFile.class;
+    }
+
+    @Override
     protected FileListViewModel<DropboxFile, DropboxCredential, DropboxStorageProvider> buildViewModel(DropboxCredential credential) {
         return new FileListViewModel<>(
                 getContext(),

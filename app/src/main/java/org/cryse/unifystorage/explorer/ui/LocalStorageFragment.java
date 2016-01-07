@@ -41,6 +41,11 @@ public class LocalStorageFragment extends StorageProviderFragment<
     }
 
     @Override
+    protected Class<LocalStorageFile> getRemoteFileClass() {
+        return LocalStorageFile.class;
+    }
+
+    @Override
     protected String getLogTag() {
         return LocalStorageFragment.class.getSimpleName();
     }

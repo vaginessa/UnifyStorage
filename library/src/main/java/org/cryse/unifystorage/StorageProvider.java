@@ -1,7 +1,11 @@
 package org.cryse.unifystorage;
 
+import android.support.v4.util.Pair;
+
 import org.cryse.unifystorage.credential.Credential;
+import org.cryse.unifystorage.io.StreamProgressListener;
 import org.cryse.unifystorage.utils.DirectoryInfo;
+import org.cryse.unifystorage.utils.ProgressCallback;
 
 import java.io.InputStream;
 import java.util.List;
@@ -49,7 +53,11 @@ public interface StorageProvider<RF extends RemoteFile, CR extends Credential> {
 
     RF updateFile(RF remote, LocalFile local) throws StorageException;
 
-    boolean deleteFile(RF file) throws StorageException;
+    Pair<RF, Boolean> deleteFile(RF file) throws StorageException;
+
+    void copyFile(RF target, RF file, final ProgressCallback callback);
+
+    void moveFile(RF target, RF file, final ProgressCallback callback);
 
     RF getFileDetail(RF file) throws StorageException;
 

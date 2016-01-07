@@ -37,6 +37,7 @@ import org.cryse.unifystorage.explorer.databinding.FragmentStorageProviderBindin
 import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
+import org.cryse.unifystorage.explorer.utils.MenuUtils;
 import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
 import org.cryse.unifystorage.utils.DirectoryInfo;
@@ -116,6 +117,8 @@ public abstract class StorageProviderFragment<
     protected void readArguments() {
 
     }
+
+    protected abstract Class<RF> getRemoteFileClass();
 
     protected abstract String getLogTag();
 
@@ -298,6 +301,11 @@ public abstract class StorageProviderFragment<
     }
 
     @Override
+    public void onDirectoryItemDelete(int position) {
+        mCollectionAdapter.remove(position);
+    }
+
+    @Override
     public void onCollectionViewStateRestore(CollectionViewState collectionViewState) {
         LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getLayoutManager();
         manager.scrollToPositionWithOffset(collectionViewState.position, (int) collectionViewState.offset);
@@ -430,6 +438,7 @@ public abstract class StorageProviderFragment<
     @Override
     public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
         Log.e(getLogTag(), "onCabCreated");
+        MenuUtils.showMenuItemIcon(menu);
         ATE.applyMenu(getActivity(), mATEKey, menu);
         DrawableCompat.setTint(materialCab.getToolbar().getNavigationIcon(), mToolbarContentColor);
         return true;
@@ -438,6 +447,15 @@ public abstract class StorageProviderFragment<
     @Override
     public boolean onCabItemClicked(MenuItem menuItem) {
         Log.e(getLogTag(), menuItem.getTitle().toString());
+        int menuItemId = menuItem.getItemId();
+        switch (menuItemId) {
+            case R.id.action_cab_delete:
+                menuDeleteFile();
+                break;
+            case R.id.action_cab_select_all:
+                menuSelectAll();
+                break;
+        }
         return true;
     }
 
@@ -447,5 +465,15 @@ public abstract class StorageProviderFragment<
         if(mCollectionAdapter.isInSelection())
             mCollectionAdapter.clearSelection();
         return true;
+    }
+
+    protected void menuDeleteFile() {
+        RF[] files = mCollectionAdapter.getSelectionItems(getRemoteFileClass());
+        mCollectionAdapter.clearSelection();
+        mViewModel.deleteFile(files);
+    }
+
+    protected void menuSelectAll() {
+        mCollectionAdapter.selectAll();
     }
 }

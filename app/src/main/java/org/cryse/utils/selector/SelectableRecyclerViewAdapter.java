@@ -3,6 +3,8 @@ package org.cryse.utils.selector;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseBooleanArray;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -166,6 +168,15 @@ public abstract class SelectableRecyclerViewAdapter<
             selections[i] = mSelectedIndices.keyAt(selectionCount);
         }
         return selections;
+    }
+
+    public ItemType[] getSelectionItems(Class<ItemType> itemTypeClass) {
+        int selectionCount = mSelectedIndices.size();
+        final ItemType[] selectionItems = (ItemType[]) Array.newInstance(itemTypeClass, selectionCount);
+        for (int i = 0; i < selectionCount; i++) {
+            selectionItems[i] = mItems.get(mSelectedIndices.keyAt(i));
+        }
+        return selectionItems;
     }
 
     public boolean isInSelection() {

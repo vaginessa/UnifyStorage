@@ -1,15 +1,20 @@
 package org.cryse.unifystorage;
 
+import android.support.v4.util.Pair;
+
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 
 import java.io.InputStream;
 
+import java.util.Iterator;
 import java.util.List;
 
 
 import rx.Observable;
 import rx.Subscriber;
+import rx.functions.Action0;
+import rx.functions.Action1;
 
 
 public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>> {
@@ -318,12 +323,14 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<Boolean> deleteFile(final RF file) {
-        return Observable.create(new Observable.OnSubscribe<Boolean>() {
+    public Observable<Pair<RF, Boolean>> deleteFile(final RF...files) {
+        return Observable.create(new Observable.OnSubscribe<Pair<RF, Boolean>>() {
             @Override
-            public void call(Subscriber<? super Boolean> subscriber) {
+            public void call(Subscriber<? super Pair<RF, Boolean>> subscriber) {
                 try {
-                    subscriber.onNext(mStorageProvider.deleteFile(file));
+                    for(RF file : files) {
+                        subscriber.onNext(mStorageProvider.deleteFile(file));
+                    }
                     subscriber.onCompleted();
                 } catch (Throwable throwable) {
                     subscriber.onError(throwable);

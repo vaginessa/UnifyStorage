@@ -1,5 +1,7 @@
 package org.cryse.unifystorage.providers.dropbox;
 
+import android.support.v4.util.Pair;
+
 import com.dropbox.core.DbxDownloader;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxHost;
@@ -17,6 +19,7 @@ import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.Path;
+import org.cryse.unifystorage.utils.ProgressCallback;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -118,13 +121,22 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public boolean deleteFile(DropboxFile file) throws StorageException {
-
+    public Pair<DropboxFile, Boolean> deleteFile(DropboxFile file) throws StorageException {
         try {
-            return null != mDropboxClient.files.delete(file.getPath());
+            return Pair.create(file, null != mDropboxClient.files.delete(file.getPath()));
         } catch (DbxException ex) {
             throw new StorageException(ex);
         }
+    }
+
+    @Override
+    public void copyFile(DropboxFile target, DropboxFile file, ProgressCallback callback) {
+
+    }
+
+    @Override
+    public void moveFile(DropboxFile target, DropboxFile file, ProgressCallback callback) {
+
     }
 
     @Override
