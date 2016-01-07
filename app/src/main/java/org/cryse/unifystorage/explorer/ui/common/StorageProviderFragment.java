@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -95,6 +96,10 @@ public abstract class StorageProviderFragment<
     @Bind(R.id.fragment_storageprovider_recyclerview_files)
     RecyclerView mCollectionView;
 
+    private int mPrimaryColor;
+    private String mATEKey;
+    private int mToolbarContentColor;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -134,15 +139,15 @@ public abstract class StorageProviderFragment<
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        String key = Util.resolveString(getActivity(), R.attr.ate_key);
-        int primaryColor = Config.primaryColor(getContext(), key);
-        int toolbarTextColor = ResourceUtils.toolbarTextColor(getContext(), key, mToolbar);
-        int textColorHint = ResourceUtils.adjustAlpha(toolbarTextColor, 0.38f);
-        int arrowColor = ResourceUtils.adjustAlpha(toolbarTextColor, 0.54f);
-        mBreadCrumbLayout.setCrumbActiveColor(toolbarTextColor);
+        mATEKey = Util.resolveString(getActivity(), R.attr.ate_key);
+        mPrimaryColor = Config.primaryColor(getContext(), mATEKey);
+        mToolbarContentColor = ResourceUtils.toolbarTextColor(getContext(), mATEKey, mToolbar);
+        int textColorHint = ResourceUtils.adjustAlpha(mToolbarContentColor, 0.38f);
+        int arrowColor = ResourceUtils.adjustAlpha(mToolbarContentColor, 0.54f);
+        mBreadCrumbLayout.setCrumbActiveColor(mToolbarContentColor);
         mBreadCrumbLayout.setCrumbInactiveColor(textColorHint);
         mBreadCrumbLayout.setArrowColor(arrowColor);
-        mBreadCrumbLayout.setBackgroundColor(primaryColor);
+        mBreadCrumbLayout.setBackgroundColor(mPrimaryColor);
         ATE.apply(mBreadCrumbLayout, Util.resolveString(getActivity(), R.attr.ate_key));
     }
 
@@ -386,7 +391,7 @@ public abstract class StorageProviderFragment<
         mActionMode = mToolbar.startActionMode(mActionModeCallback);*/
         mCab = new MaterialCab(getAppCompatActivity(), R.id.cab_stub)
                 .setMenu(R.menu.menu_cab_fileselection)
-                .setBackgroundColorRes(R.color.colorPrimary)
+                .setBackgroundColor(mPrimaryColor)
                 .setCloseDrawableRes(R.drawable.ic_action_menu_close)
                 .start(this);
         Log.e(getLogTag(), "SelectionStart");
@@ -426,6 +431,8 @@ public abstract class StorageProviderFragment<
     @Override
     public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
         Log.e(getLogTag(), "onCabCreated");
+        ATE.applyMenu(getActivity(), mATEKey, menu);
+        DrawableCompat.setTint(materialCab.getToolbar().getNavigationIcon(), mToolbarContentColor);
         return true;
     }
 
