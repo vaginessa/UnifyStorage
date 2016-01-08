@@ -15,6 +15,7 @@ public class UnifyStorageApplication extends Application {
     public void onCreate() {
         super.onCreate();
         Prefs.with(this).useDefault().init();
+        StorageProviderManager.init(this);
     }
 
     public static UnifyStorageApplication get(Context context) {

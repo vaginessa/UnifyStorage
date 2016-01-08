@@ -250,7 +250,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     public void navigateToInternalStorage() {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(Environment.getExternalStorageDirectory().getAbsolutePath(), DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID);
+        LocalStorageFragment fragment = LocalStorageFragment.newInstance(Environment.getExternalStorageDirectory().getAbsolutePath(), DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE);
         switchContentFragment(fragment, null);
     }
 
@@ -357,8 +357,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                             navigateToDropboxStorage(new DropboxCredential(record.getCredentialData()), record.getId());
                             break;
                     }
-                } else if(drawerItem.getIdentifier() > DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
-                    navigateToOtherLocalStorage((String) drawerItem.getTag(), DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID);
+                } else if(drawerItem.getIdentifier() <= DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
+                    navigateToOtherLocalStorage((String) drawerItem.getTag(), drawerItem.getIdentifier());
         }
     }
 

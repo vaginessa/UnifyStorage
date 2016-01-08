@@ -20,6 +20,7 @@ import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
+import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.application.UnifyStorageApplication;
 import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
@@ -67,7 +68,6 @@ public class FileListViewModel<
     private List<RF> mHiddenFiles;
     private DataListener<RF, CR> mDataListener;
     private Subscription mLoadFilesSubscription;
-    private Subscription mBuildStorageProviderSubscription;
     private Subscription mDownloadFileSubscription;
 
     private RxStorageProvider<RF, CR, SP> mStorageProvider;
@@ -82,6 +82,7 @@ public class FileListViewModel<
 
     public FileListViewModel(
             Context context,
+            int storageProviderRecordId,
             CR credential,
             StorageProviderBuilder<RF, CR, SP> providerBuilder,
             DataListener<RF, CR> dataListener) {
@@ -96,6 +97,8 @@ public class FileListViewModel<
         this.mProviderBuilder = providerBuilder;
         // this.mStorageProvider = new RxStorageProvider<>(providerBuilder.buildStorageProvider(credential));
         this.mStorageProviderDatabase = new StorageProviderDatabase(mContext);
+        this.mStorageProviderRecordId = storageProviderRecordId;
+        this.mStorageProviderRecord = mStorageProviderDatabase.getSavedStorageProvider(mStorageProviderRecordId);
         buildStorageProvider();
     }
 
@@ -107,54 +110,27 @@ public class FileListViewModel<
         mProgressVisibility.set(View.VISIBLE);
         mRecyclerViewVisibility.set(View.INVISIBLE);
         mInfoMessageVisibility.set(View.INVISIBLE);
-        RxSubscriptionUtils.checkAndUnsubscribe(mBuildStorageProviderSubscription);
-        UnifyStorageApplication application = UnifyStorageApplication.get(mContext);
-        mBuildStorageProviderSubscription = Observable.create(new Observable.OnSubscribe<SP>() {
-            @Override
-            public void call(Subscriber<? super SP> subscriber) {
-                try {
-                    subscriber.onNext(mProviderBuilder.buildStorageProvider(mCredential));
-                    subscriber.onCompleted();
-                } catch (Throwable throwable) {
-                    subscriber.onError(throwable);
-                }
-            }
-        })
-                .subscribeOn(application.defaultSubscribeScheduler())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<SP>() {
+
+        StorageProviderManager.getInstance().loadStorageProvider(
+                mStorageProviderRecordId,
+                mProviderBuilder,
+                mCredential,
+                new StorageProviderManager.OnLoadStorageProviderCallback<RF, CR, SP>() {
                     @Override
-                    public void onCompleted() {
+                    public void onSuccess(SP storageProvider) {
+                        mStorageProvider = new RxStorageProvider<>(storageProvider);
+                        if(mStorageProvider.shouldRefreshCredential() && mDataListener != null) {
+                                mDataListener.onCredentialRefreshed(storageProvider.getRefreshedCredential());
+                        }
                         loadFiles(null);
                     }
 
                     @Override
-                    public void onError(Throwable e) {
+                    public void onFailure(Throwable error) {
 
                     }
-
-                    @Override
-                    public void onNext(SP sp) {
-                        mStorageProvider = new RxStorageProvider<>(sp);
-                        if(mStorageProvider.shouldRefreshCredential()) {
-                            updateCredential(mStorageProvider.getRefreshedCredential());
-                        }
-                    }
-                });
-    }
-
-    public void setStorageProviderRecordId(int id) {
-        this.mStorageProviderRecordId = id;
-        this.mStorageProviderRecord = mStorageProviderDatabase.getSavedStorageProvider(mStorageProviderRecordId);
-    }
-
-    public void updateCredential(CR newCredential) {
-        if(mDataListener != null)
-            mDataListener.onCredentialRefreshed(newCredential);
-        if(mStorageProviderDatabase != null && mStorageProviderRecordId != DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID) {
-            mStorageProviderRecord.setCredentialData(newCredential.persist());
-            mStorageProviderDatabase.updateStorageProviderRecord(mStorageProviderRecord);
-        }
+                }
+        );
     }
 
     public void loadFiles(RF parent) {
@@ -424,7 +400,6 @@ public class FileListViewModel<
     @Override
     public void destroy() {
         RxSubscriptionUtils.checkAndUnsubscribe(mLoadFilesSubscription);
-        RxSubscriptionUtils.checkAndUnsubscribe(mBuildStorageProviderSubscription);
         RxSubscriptionUtils.checkAndUnsubscribe(mDownloadFileSubscription);
         mStorageProviderDatabase.destroy();
         mContext = null;

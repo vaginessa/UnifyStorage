@@ -24,6 +24,9 @@ public class StorageProviderDatabase {
     }
 
     public void updateStorageProviderRecord(StorageProviderRecord record) {
+        // When id less than zero, means local storageprovider and should not store in database
+        if(record.getId() < 0)
+            return;
         mRealm.beginTransaction();
         mRealm.copyToRealmOrUpdate(record);
         mRealm.commitTransaction();
@@ -59,6 +62,16 @@ public class StorageProviderDatabase {
         mRealm.copyToRealm(newRecord);
         mRealm.commitTransaction();
         // updateDrawerItems();
+    }
+
+    public void removeProviderRecord(int id) {
+        // obtain the results of a query
+        RealmQuery<StorageProviderRecord> query = mRealm.where(StorageProviderRecord.class);
+        query.equalTo("id", id);
+        RealmResults<StorageProviderRecord> results = query.findAll();
+        mRealm.beginTransaction();
+        results.removeLast();
+        mRealm.commitTransaction();
     }
 
     public void destroy() {

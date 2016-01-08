@@ -54,6 +54,7 @@ public class LocalStorageFragment extends StorageProviderFragment<
     protected FileListViewModel<LocalStorageFile, LocalCredential, LocalStorageProvider> buildViewModel(LocalCredential credential) {
         return new FileListViewModel<>(
                 getContext(),
+                mStorageProviderRecordId,
                 credential,
                 new StorageProviderBuilder<LocalStorageFile, LocalCredential, LocalStorageProvider>() {
                     @Override

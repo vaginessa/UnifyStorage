@@ -4,8 +4,8 @@ import android.content.Context;
 
 public class DrawerItemUtils {
     public static final int DRAWER_ITEM_NONE = -115;
-    public static final int STORAGE_DIRECTORY_INTERNAL_STORAGE = 1000;
-    public static final int STORAGE_DIRECTORY_EXTERNAl_STORAGE_START = 2001;
+    public static final int STORAGE_DIRECTORY_INTERNAL_STORAGE = -1000;
+    public static final int STORAGE_DIRECTORY_EXTERNAl_STORAGE_START = -2001;
     public static final int DRAWER_ITEM_ADD_PROVIDER = 2000;
     public static final int DRAWER_ITEM_HELP_FEEDBACK = 6001;
     public static final int DRAWER_ITEM_GITHUB_REPO = 6002;
@@ -18,7 +18,7 @@ public class DrawerItemUtils {
             if(i == 0) {
                 directoryTypes[i] = STORAGE_DIRECTORY_INTERNAL_STORAGE;
             } else {
-                directoryTypes[i] = STORAGE_DIRECTORY_EXTERNAl_STORAGE_START + i;
+                directoryTypes[i] = STORAGE_DIRECTORY_EXTERNAl_STORAGE_START - i;
             }
         }
         return directoryTypes;

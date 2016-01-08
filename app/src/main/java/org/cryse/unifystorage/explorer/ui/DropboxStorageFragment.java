@@ -51,6 +51,7 @@ public class DropboxStorageFragment extends StorageProviderFragment<
     protected FileListViewModel<DropboxFile, DropboxCredential, DropboxStorageProvider> buildViewModel(DropboxCredential credential) {
         return new FileListViewModel<>(
                 getContext(),
+                mStorageProviderRecordId,
                 credential,
                 new StorageProviderBuilder<DropboxFile, DropboxCredential, DropboxStorageProvider>() {
                     @Override

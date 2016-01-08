@@ -7,11 +7,10 @@ import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import org.cryse.unifystorage.explorer.R;
+import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
-import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
-import org.cryse.unifystorage.utils.Path;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +42,7 @@ public class MainViewModel implements ViewModel {
         List<IDrawerItem> drawerItems = new ArrayList<>();
 
 
-        // Firstly get all local storage devices:
+        /*// Firstly get all local storage devices:
         String[] externalStoragePaths = LocalStorageUtils.getStorageDirectories(mContext);
         int[] externalStorageTypes = DrawerItemUtils.getStorageDirectoryTypes(mContext, externalStoragePaths);
 
@@ -85,6 +84,30 @@ public class MainViewModel implements ViewModel {
                     .withIcon(R.drawable.ic_drawer_sdcard)
                     .withIdentifier(record.getId())
                     .withSelectable(true));
+        }*/
+
+        List<StorageProviderRecord> storageProviderRecords = StorageProviderManager.getInstance().loadStorageProviderRecordsWithLocal(mContext);
+        for(StorageProviderRecord record : storageProviderRecords) {
+            PrimaryDrawerItem item = new PrimaryDrawerItem();
+            item.withName(record.getDisplayName()).withSelectable(true).withIdentifier(record.getId());
+            switch (record.getProviderType()) {
+                case StorageProviderRecord.PROVIDER_LOCAL_STORAGE:
+                    if(record.getId() == DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE) {
+                        item.withTag(record.getExtraData())
+                                .withIcon(R.drawable.ic_drawer_internal_storage);
+                    } else if(record.getId() <= DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START) {
+                        item.withTag(record.getExtraData())
+                                .withIcon(R.drawable.ic_drawer_sdcard);
+                    } else {
+                        item.withTag(record)
+                                .withIcon(R.drawable.ic_file_type_folder);
+                    }
+                    break;
+                default:
+                    item.withTag(record)
+                        .withIcon(R.drawable.ic_drawer_cloud);
+            }
+            drawerItems.add(item);
         }
 
         // Finally const items
@@ -111,7 +134,7 @@ public class MainViewModel implements ViewModel {
     }
 
     public void addNewProvider(String displayName, String userName, int providerType, String credentialData, String extraData) {
-        mStorageProviderDatabase.addNewProvider(displayName, userName, providerType, credentialData, extraData);
+        StorageProviderManager.getInstance().addStorageProviderRecord(displayName, userName, providerType, credentialData, extraData);
     }
 
     public interface DataListener {
