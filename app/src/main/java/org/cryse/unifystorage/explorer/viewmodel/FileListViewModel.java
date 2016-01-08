@@ -351,6 +351,10 @@ public class FileListViewModel<
         }
     }
 
+    public DirectoryInfo<RF, List<RF>> getDirectory() {
+        return mDirectory;
+    }
+
     private void openFile(RF file) {
         OpenFileUtils.openFile(mContext, file.getPath(), true);
     }

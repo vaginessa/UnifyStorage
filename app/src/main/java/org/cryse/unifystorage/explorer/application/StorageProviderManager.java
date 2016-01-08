@@ -93,6 +93,15 @@ public class StorageProviderManager {
     }
 
     public <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
+    SP loadStorageProvider(final int id) {
+        if (mStorageProviderMap.containsKey(id)) {
+            return (SP) mStorageProviderMap.get(id);
+        } else {
+            return null;
+        }
+    }
+
+    public <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
     void loadStorageProvider(
             final int id,
             final StorageProviderBuilder<RF, CR, SP> builder,

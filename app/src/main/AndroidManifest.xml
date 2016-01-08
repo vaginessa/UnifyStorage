@@ -43,6 +43,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <service android:name=".service.LongOperationService"/>
         <provider
             android:exported="false"
             android:grantUriPermissions="true"

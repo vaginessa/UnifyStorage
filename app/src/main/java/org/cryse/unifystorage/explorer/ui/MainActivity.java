@@ -2,12 +2,15 @@ package org.cryse.unifystorage.explorer.ui;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
@@ -33,6 +36,7 @@ import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.AppPermissions;
 import org.cryse.unifystorage.explorer.databinding.ActivityMainBinding;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
+import org.cryse.unifystorage.explorer.service.LongOperationService;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.explorer.viewmodel.MainViewModel;
@@ -56,6 +60,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     boolean mIsRestorePosition = false;
     private Handler mHandler = new Handler();
     private Runnable mPendingRunnable = null;
+    ServiceConnection mLongOperationServiceConnection;
+    private LongOperationService.LongOperationBinder mLongOperationBinder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +105,17 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
 
         initDrawer();
         checkStoragePermissions();
+        mLongOperationServiceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                mLongOperationBinder = (LongOperationService.LongOperationBinder) service;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                mLongOperationBinder = null;
+            }
+        };
     }
 
     private void initDrawer() {
@@ -143,6 +160,20 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         String key = Util.resolveString(this, R.attr.ate_key);
         int primaryDark = Config.primaryColorDark(this, key);
         mDrawer.setStatusBarColor(primaryDark);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Intent service = new Intent(this.getApplicationContext(), LongOperationService.class);
+        startService(service);
+        this.bindService(service, mLongOperationServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        this.unbindService(mLongOperationServiceConnection);
     }
 
     @Override
@@ -415,5 +446,9 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     protected void onDestroy() {
         super.onDestroy();
         mMainViewModel.destroy();
+    }
+
+    public LongOperationService.LongOperationBinder getLongOperationBinder() {
+        return mLongOperationBinder;
     }
 }

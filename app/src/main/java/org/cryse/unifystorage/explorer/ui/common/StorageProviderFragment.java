@@ -34,6 +34,8 @@ import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.databinding.FragmentStorageProviderBinding;
+import org.cryse.unifystorage.explorer.service.FileOperation;
+import org.cryse.unifystorage.explorer.service.LongOperationService;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
@@ -48,6 +50,7 @@ import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -469,10 +472,25 @@ public abstract class StorageProviderFragment<
     protected void menuDeleteFile() {
         RF[] files = mCollectionAdapter.getSelectionItems(getRemoteFileClass());
         mCollectionAdapter.clearSelection();
-        mViewModel.deleteFile(files);
+        LongOperationService.LongOperationBinder longOperationBinder = getMainActivity().getLongOperationBinder();
+        longOperationBinder.<RF, CR, SP>doOperation(
+                new FileOperation<>(
+                        FileOperation.FileOperationCode.DELETE,
+                        new Date().getTime(),
+                        mStorageProviderRecordId,
+                        mViewModel.getDirectory().directory,
+                        files
+                ),
+                (Class<RF>) mViewModel.getDirectory().directory.getClass()
+        );
+        // mViewModel.deleteFile(files);
     }
 
     protected void menuSelectAll() {
         mCollectionAdapter.selectAll();
+    }
+
+    protected MainActivity getMainActivity() {
+        return (MainActivity) getAppCompatActivity();
     }
 }
