@@ -34,6 +34,9 @@ import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.databinding.FragmentStorageProviderBinding;
+import org.cryse.unifystorage.explorer.event.AbstractEvent;
+import org.cryse.unifystorage.explorer.event.EventConst;
+import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.service.FileOperation;
 import org.cryse.unifystorage.explorer.service.LongOperationService;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
@@ -481,9 +484,19 @@ public abstract class StorageProviderFragment<
                         mViewModel.getDirectory().directory,
                         files
                 ),
-                (Class<RF>) mViewModel.getDirectory().directory.getClass()
+                getRemoteFileClass()
         );
         // mViewModel.deleteFile(files);
+    }
+
+    @Override
+    protected void onEvent(AbstractEvent event) {
+        super.onEvent(event);
+        if(event.eventId() == EventConst.EVENT_ID_FILE_DELETE) {
+            FileDeleteEvent fileDeleteEvent = (FileDeleteEvent) event;
+            if(fileDeleteEvent.providerId == this.mStorageProviderRecordId && fileDeleteEvent.targetId.compareTo(mViewModel.getDirectory().directory.getId()) == 0)
+                mViewModel.onDeleteFileEvent(fileDeleteEvent);
+        }
     }
 
     protected void menuSelectAll() {

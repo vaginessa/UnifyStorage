@@ -23,6 +23,7 @@ import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.application.UnifyStorageApplication;
 import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
+import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
@@ -399,6 +400,21 @@ public class FileListViewModel<
                         }
                     }
                 });
+    }
+
+    public void onDeleteFileEvent(FileDeleteEvent event) {
+        int position = 0;
+        for (Iterator<RF> iterator = mDirectory.files.iterator(); iterator.hasNext();) {
+            RF rf = iterator.next();
+            if (rf.getId().compareTo(event.fileId) == 0 && event.success) {
+                // Remove the current element from the iterator and the list.
+                iterator.remove();
+                if(mDataListener != null) {
+                    mDataListener.onDirectoryItemDelete(position);
+                }
+            }
+            position++;
+        }
     }
 
     @Override

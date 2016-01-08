@@ -13,12 +13,16 @@ import org.cryse.unifystorage.RxStorageProvider;
 import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
+import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
+import org.cryse.unifystorage.explorer.event.RxEventBus;
 
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class LongOperationService extends Service {
+    RxEventBus mEventBus = RxEventBus.getInstance();
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -61,10 +65,12 @@ public class LongOperationService extends Service {
     }
 
     private <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
-    void doDelete(FileOperation<RF> fileOperation, Class<RF> rfClass) {
+    void doDelete(final FileOperation<RF> fileOperation, Class<RF> rfClass) {
         SP storageProvider = StorageProviderManager.getInstance().<RF, CR, SP>loadStorageProvider(fileOperation.getStorageProviderId());
         if(storageProvider == null) throw new IllegalStateException("Cannot get StorageProvider instance");
         RxStorageProvider<RF, CR, SP> rxStorageProvider = new RxStorageProvider<>(storageProvider);
+        final int fileCount = fileOperation.getFiles().length;
+        final int[] currentProgress = new int[]{0};
         rxStorageProvider.deleteFile(fileOperation.getFiles()).observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
                 .subscribe(new Subscriber<Pair<RF, Boolean>>() {
@@ -84,6 +90,15 @@ public class LongOperationService extends Service {
                     public void onNext(Pair<RF, Boolean> result) {
                         String resultToast = String.format("Delete %s %s", result.first.getName(), result.second ? "success" : "failed");
                         Log.e("DeleteFile", resultToast);
+                        mEventBus.sendEvent(new FileDeleteEvent(
+                                fileOperation.getStorageProviderId(),
+                                fileOperation.getTarget().getId(),
+                                currentProgress[0],
+                                fileCount,
+                                result.first.getId(),
+                                result.second
+                        ));
+                        currentProgress[0]++;
                         //Toast.makeText(mContext, resultToast, Toast.LENGTH_SHORT).show();
                         /*int position = 0;
                         for (Iterator<RF> iterator = mDirectory.files.iterator(); iterator.hasNext();) {
