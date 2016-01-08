@@ -8,12 +8,12 @@ public class FileOperation<RF extends RemoteFile> {
     }
 
     private FileOperationCode mCode;
-    private long mOperationId;
+    private int mOperationId;
     private int mStorageProviderId;
     private RF mTarget;
     private RF[] mFiles;
 
-    public FileOperation(FileOperationCode code, long operationId, int storageProviderId, RF target, RF...files) {
+    public FileOperation(FileOperationCode code, int operationId, int storageProviderId, RF target, RF...files) {
         this.mCode = code;
         this.mOperationId = operationId;
         this.mStorageProviderId = storageProviderId;
@@ -25,7 +25,7 @@ public class FileOperation<RF extends RemoteFile> {
         return mCode;
     }
 
-    public long getOperationId() {
+    public int getOperationId() {
         return mOperationId;
     }
 

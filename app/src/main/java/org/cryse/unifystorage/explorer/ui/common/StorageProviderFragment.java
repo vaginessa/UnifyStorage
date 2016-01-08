@@ -43,6 +43,7 @@ import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.MenuUtils;
+import org.cryse.unifystorage.explorer.utils.RandomUtils;
 import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
 import org.cryse.unifystorage.utils.DirectoryInfo;
@@ -53,7 +54,6 @@ import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -479,7 +479,7 @@ public abstract class StorageProviderFragment<
         longOperationBinder.<RF, CR, SP>doOperation(
                 new FileOperation<>(
                         FileOperation.FileOperationCode.DELETE,
-                        new Date().getTime(),
+                        RandomUtils.nextInt(),
                         mStorageProviderRecordId,
                         mViewModel.getDirectory().directory,
                         files

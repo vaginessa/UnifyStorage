@@ -1,17 +1,21 @@
 package org.cryse.unifystorage.explorer.service;
 
+import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RxStorageProvider;
 import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
+import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
@@ -22,6 +26,13 @@ import rx.schedulers.Schedulers;
 
 public class LongOperationService extends Service {
     RxEventBus mEventBus = RxEventBus.getInstance();
+    NotificationManager mNotificationManager;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    }
 
     @Nullable
     @Override
@@ -66,23 +77,34 @@ public class LongOperationService extends Service {
 
     private <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
     void doDelete(final FileOperation<RF> fileOperation, Class<RF> rfClass) {
+        final NotificationCompat.Builder deleteNotificationBuilder = new NotificationCompat.Builder(this);
         SP storageProvider = StorageProviderManager.getInstance().<RF, CR, SP>loadStorageProvider(fileOperation.getStorageProviderId());
         if(storageProvider == null) throw new IllegalStateException("Cannot get StorageProvider instance");
         RxStorageProvider<RF, CR, SP> rxStorageProvider = new RxStorageProvider<>(storageProvider);
         final int fileCount = fileOperation.getFiles().length;
         final int[] currentProgress = new int[]{0};
+        deleteNotificationBuilder.setContentTitle(getResources().getString(R.string.notification_title_deleting_files))
+                .setContentText("")
+                .setSmallIcon(R.drawable.ic_action_delete)
+                .setOngoing(true);
+
+        startForeground(fileOperation.getOperationId(), deleteNotificationBuilder.build());
+
         rxStorageProvider.deleteFile(fileOperation.getFiles()).observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
                 .subscribe(new Subscriber<Pair<RF, Boolean>>() {
                     @Override
                     public void onCompleted() {
-
+                        mNotificationManager.cancel(fileOperation.getOperationId());
+                        stopForeground(true);
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         String resultToast = String.format("Delete failed: %s", e.getMessage());
                         Log.e("DeleteFile", resultToast);
+                        mNotificationManager.cancel(fileOperation.getOperationId());
+                        stopForeground(true);
                         //Toast.makeText(mContext, resultToast, Toast.LENGTH_SHORT).show();
                     }
 
@@ -98,21 +120,11 @@ public class LongOperationService extends Service {
                                 result.first.getId(),
                                 result.second
                         ));
+                        deleteNotificationBuilder
+                                .setProgress(fileCount, currentProgress[0], false)
+                                .setContentText(getString(R.string.notification_content_deleting_files, currentProgress[0], fileCount));
+                        mNotificationManager.notify(fileOperation.getOperationId(), deleteNotificationBuilder.build());
                         currentProgress[0]++;
-                        //Toast.makeText(mContext, resultToast, Toast.LENGTH_SHORT).show();
-                        /*int position = 0;
-                        for (Iterator<RF> iterator = mDirectory.files.iterator(); iterator.hasNext();) {
-                            RF rf = iterator.next();
-                            if (rf.getId().compareTo(result.first.getId()) == 0 && result.second) {
-                                // Remove the current element from the iterator and the list.
-                                iterator.remove();
-                                if(mDataListener != null) {
-                                    mDataListener.onDirectoryItemDelete(position);
-                                }
-                            }
-                            position++;
-                        }*/
-                        // TODO: Use EventBus to notify list update.
                     }
                 });
     }
