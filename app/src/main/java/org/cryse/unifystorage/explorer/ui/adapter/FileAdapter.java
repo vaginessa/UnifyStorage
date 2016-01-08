@@ -52,12 +52,13 @@ public class FileAdapter<RF extends RemoteFile>
     public void onBindViewHolder(BindingHolder holder, int position) {
         ItemFileBinding fileBinding = holder.binding;
         if (fileBinding.getViewModel() == null) {
-            fileBinding.setViewModel(new ItemRemoteFileViewModel<>(mContext, getItems().get(position)));
+            ItemRemoteFileViewModel viewModel = new ItemRemoteFileViewModel<>(mContext, position, getItems().get(position));
+            viewModel.setOnFileClickListener(this.mOnFileClickListener);
+            fileBinding.setViewModel(viewModel);
         } else {
-            fileBinding.getViewModel().setRemoteFile(getItems().get(position));
+            fileBinding.getViewModel().setAdapterPosition(position);
+            fileBinding.getViewModel().setRemoteFile(getItem(position));
         }
-        fileBinding.setClickListener(this);
-        fileBinding.setAdapterPosition(position);
         fileBinding.setItemSelected(isSelected(position));
         fileBinding.getViewModel().notifyChange();
         fileBinding.executePendingBindings();
@@ -78,21 +79,6 @@ public class FileAdapter<RF extends RemoteFile>
 
     public void setOnFileClickListener(OnFileClickListener<RF> onFileClickListener) {
         this.mOnFileClickListener = onFileClickListener;
-    }
-
-    public void onItemClick(View view) {
-        if(mOnFileClickListener != null) {
-            int adapterPosition = (int)view.getTag();
-            mOnFileClickListener.onFileClick(view, adapterPosition, getItems().get(adapterPosition));
-        }
-    }
-
-    public boolean onItemLongClick(View view) {
-        if(mOnFileClickListener != null) {
-            int adapterPosition = (int)view.getTag();
-            mOnFileClickListener.onFileLongClick(view, adapterPosition, getItems().get(adapterPosition));
-        }
-        return true;
     }
 
     public interface OnFileClickListener<RF> {

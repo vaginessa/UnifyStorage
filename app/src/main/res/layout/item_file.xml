@@ -3,8 +3,6 @@
 
     <data>
         <variable name="viewModel" type="org.cryse.unifystorage.explorer.viewmodel.ItemRemoteFileViewModel" />
-        <variable name="clickListener" type="org.cryse.unifystorage.explorer.ui.adapter.FileAdapter" />
-        <variable name="adapterPosition" type="int" />
         <variable name="itemSelected" type="boolean" />
     </data>
     <RelativeLayout
@@ -12,10 +10,9 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:background="@drawable/selector_file_item"
-        android:onClick="@{clickListener.onItemClick}"
+        android:onClick="@{viewModel.onItemClick}"
         android:selected="@{itemSelected}"
-        android:onLongClick="@{clickListener.onItemLongClick}"
-        android:tag="@{adapterPosition}">
+        android:onLongClick="@{viewModel.onItemLongClick}">
         <ImageView
             android:layout_width="40dp"
             android:layout_height="40dp"
