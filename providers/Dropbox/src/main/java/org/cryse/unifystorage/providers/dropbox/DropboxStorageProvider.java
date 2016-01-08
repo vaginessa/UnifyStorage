@@ -121,7 +121,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public Pair<DropboxFile, Boolean> deleteFile(DropboxFile file) throws StorageException {
+    public Pair<DropboxFile, Boolean> deleteFile(DropboxFile file) {
         try {
             return Pair.create(file, null != mDropboxClient.files.delete(file.getPath()));
         } catch (DbxException ex) {

@@ -116,8 +116,8 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public Pair<LocalStorageFile, Boolean> deleteFile(LocalStorageFile file) throws StorageException {
-        return Pair.create(file, file.getFile().delete());
+    public Pair<LocalStorageFile, Boolean> deleteFile(LocalStorageFile file) {
+        return Pair.create(file, FileUtils.deleteQuietly(file.getFile()));
     }
 
     @Override

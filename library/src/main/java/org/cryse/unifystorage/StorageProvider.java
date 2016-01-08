@@ -53,7 +53,7 @@ public interface StorageProvider<RF extends RemoteFile, CR extends Credential> {
 
     RF updateFile(RF remote, LocalFile local) throws StorageException;
 
-    Pair<RF, Boolean> deleteFile(RF file) throws StorageException;
+    Pair<RF, Boolean> deleteFile(RF file);
 
     void copyFile(RF target, RF file, final ProgressCallback callback);
 

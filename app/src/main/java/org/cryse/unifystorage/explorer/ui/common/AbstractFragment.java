@@ -27,6 +27,7 @@ public abstract class AbstractFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mEventBusSubscription = mEventBus.toObservable()
+                .onBackpressureBuffer()
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<AbstractEvent>() {

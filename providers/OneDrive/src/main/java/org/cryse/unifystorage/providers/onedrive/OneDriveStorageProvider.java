@@ -213,7 +213,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public Pair<OneDriveFile, Boolean> deleteFile(OneDriveFile file) throws StorageException {
+    public Pair<OneDriveFile, Boolean> deleteFile(OneDriveFile file) {
         try {
             mOneDriveClient
                     .getDrive()
