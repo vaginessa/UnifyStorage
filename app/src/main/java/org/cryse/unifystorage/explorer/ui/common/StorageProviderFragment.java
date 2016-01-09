@@ -2,6 +2,8 @@ package org.cryse.unifystorage.explorer.ui.common;
 
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -11,7 +13,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -27,6 +28,8 @@ import com.afollestad.impression.widget.breadcrumbs.Crumb;
 import com.afollestad.materialcab.MaterialCab;
 import com.afollestad.materialcab.Util;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageProvider;
@@ -53,7 +56,6 @@ import org.cryse.utils.preference.Prefs;
 import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -99,8 +101,19 @@ public abstract class StorageProviderFragment<
     @Bind(R.id.fragment_storageprovider_recyclerview_files)
     RecyclerView mCollectionView;
 
-    private int mPrimaryColor;
+    @Bind(R.id.fragment_storageprovider_fab_menu)
+    FloatingActionMenu mFabMenu;
+
+    @Bind(R.id.fragment_storageprovider_fab_new_directory)
+    FloatingActionButton mFabNewDirectory;
+
+    @Bind(R.id.fragment_storageprovider_fab_new_file)
+    FloatingActionButton mFabNewFile;
+
     private String mATEKey;
+    private int mPrimaryColor;
+    private int mAccentColor;
+    private int mAccentColorDark;
     private int mToolbarContentColor;
 
     @Override
@@ -144,6 +157,10 @@ public abstract class StorageProviderFragment<
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mATEKey = Util.resolveString(getActivity(), R.attr.ate_key);
+        applyColorToViews();
+    }
+
+    private void applyColorToViews() {
         mPrimaryColor = Config.primaryColor(getContext(), mATEKey);
         mToolbarContentColor = ResourceUtils.toolbarTextColor(getContext(), mATEKey, mToolbar);
         int textColorHint = ResourceUtils.adjustAlpha(mToolbarContentColor, 0.54f);
@@ -152,7 +169,17 @@ public abstract class StorageProviderFragment<
         mBreadCrumbLayout.setCrumbInactiveColor(textColorHint);
         mBreadCrumbLayout.setArrowColor(arrowColor);
         mBreadCrumbLayout.setBackgroundColor(mPrimaryColor);
-        ATE.apply(mBreadCrumbLayout, Util.resolveString(getActivity(), R.attr.ate_key));
+        ATE.apply(mBreadCrumbLayout, mATEKey);
+        mAccentColor = Config.accentColor(getContext(), mATEKey);
+        int colorDarken = ResourceUtils.makeColorDarken(mAccentColor, 0.8f);
+        int colorDarken2 = ResourceUtils.makeColorDarken(mAccentColor, 0.9f);
+        int colorDrawable = ResourceUtils.isColorLight(mAccentColor) ? Color.BLACK : Color.WHITE;
+        mFabMenu.setMenuButtonColorNormal(mAccentColor);
+        mFabMenu.setMenuButtonColorPressed(colorDarken);
+        mFabMenu.setMenuButtonColorRipple(colorDarken2);
+        mFabMenu.getMenuIconView().setColorFilter(colorDrawable, PorterDuff.Mode.SRC_ATOP);
+        ResourceUtils.applyColorToFab(mFabNewDirectory, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_folder, colorDrawable);
+        ResourceUtils.applyColorToFab(mFabNewFile, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_file, colorDrawable);
     }
 
     @Override
@@ -325,7 +352,7 @@ public abstract class StorageProviderFragment<
     public void onShowDownloadDialog(String fileName, long fileSize, DialogInterface.OnDismissListener dismissListener) {
         if(mDownloadDialog != null && mDownloadDialog.isShowing()) mDownloadDialog.dismiss();
         mDownloadDialog = new MaterialDialog.Builder(getContext())
-                .title(R.string.dialog_title_add_storage_provider)
+                .title(R.string.dialog_title_opening_file)
                 .content(R.string.dialog_content_opening)
                 .progress(false, 100, false)
                 .dismissListener(dismissListener)
@@ -398,51 +425,33 @@ public abstract class StorageProviderFragment<
 
     @Override
     public void onSelectionStart() {
-        /*if(mActionMode != null)
-            mActionMode.finish();
-        mActionMode = mToolbar.startActionMode(mActionModeCallback);*/
         mCab = new MaterialCab(getAppCompatActivity(), R.id.cab_stub)
                 .setMenu(R.menu.menu_cab_fileselection)
                 .setBackgroundColor(mPrimaryColor)
                 .setCloseDrawableRes(R.drawable.ic_action_menu_close)
                 .start(this);
-        Log.e(getLogTag(), "SelectionStart");
     }
 
     @Override
     public void onSelectionEnd() {
-        Log.e(getLogTag(), "SelectionEnd");
         if(mCab != null && mCab.isActive())
             mCab.finish();
     }
 
     @Override
     public void onSelect(int currentSelectionCount, int...positions) {
-        String selectInfo = positions == null || positions.length == 0 ? "Select all" : String.format(
-                "Select %d items: %s",
-                currentSelectionCount,
-                Arrays.toString(positions)
-        );
         if(mCab != null && mCab.isActive())
             mCab.setTitle(Integer.toString(currentSelectionCount));
-        Log.e(getLogTag(), selectInfo);
     }
 
     @Override
     public void onDeselect(int currentSelectionCount, int...positions) {
-        String selectInfo = positions == null || positions.length == 0 ? "Clear selection" : String.format(
-                "Deselect %d items: %s",
-                currentSelectionCount,
-                Arrays.toString(positions)
-        );
         if(mCab != null && mCab.isActive())
             mCab.setTitle(Integer.toString(currentSelectionCount));
-        Log.e(getLogTag(), selectInfo);
     }
 
     @Override
     public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
-        Log.e(getLogTag(), "onCabCreated");
         MenuUtils.showMenuItemIcon(menu);
         ATE.applyMenu(getActivity(), mATEKey, menu);
         DrawableCompat.setTint(materialCab.getToolbar().getNavigationIcon(), mToolbarContentColor);
@@ -451,7 +460,6 @@ public abstract class StorageProviderFragment<
 
     @Override
     public boolean onCabItemClicked(MenuItem menuItem) {
-        Log.e(getLogTag(), menuItem.getTitle().toString());
         int menuItemId = menuItem.getItemId();
         switch (menuItemId) {
             case R.id.action_cab_delete:
@@ -466,7 +474,6 @@ public abstract class StorageProviderFragment<
 
     @Override
     public boolean onCabFinished(MaterialCab materialCab) {
-        Log.e(getLogTag(), "onCabFinished");
         if(mCollectionAdapter.isInSelection())
             mCollectionAdapter.clearSelection();
         return true;
@@ -486,7 +493,6 @@ public abstract class StorageProviderFragment<
                 ),
                 getRemoteFileClass()
         );
-        // mViewModel.deleteFile(files);
     }
 
     @Override

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
     <data>
         <variable
@@ -65,5 +66,38 @@
             android:layout_centerInParent="true"
             android:visibility="@{viewModel.mProgressVisibility}"
             style="@style/Widget.AppCompat.ProgressBar"/>
+
+        <com.github.clans.fab.FloatingActionMenu
+            android:id="@+id/fragment_storageprovider_fab_menu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginBottom="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginEnd="16dp"
+            fab:menu_showShadow="true"
+            fab:menu_fab_size="normal"
+            fab:menu_labels_showAnimation="@anim/jump_from_down"
+            fab:menu_labels_hideAnimation="@anim/jump_to_down">
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/fragment_storageprovider_fab_new_directory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:menu_showShadow="true"
+                fab:fab_size="mini"
+                fab:fab_label="@string/fab_lable_create_directory"/>
+
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/fragment_storageprovider_fab_new_file"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:menu_showShadow="true"
+                fab:fab_size="mini"
+                fab:fab_label="@string/fab_lable_create_file"/>
+
+        </com.github.clans.fab.FloatingActionMenu>
     </RelativeLayout>
 </layout>

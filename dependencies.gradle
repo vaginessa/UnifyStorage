@@ -15,6 +15,7 @@ ext {
     dropboxVersion = '2.0-beta-4'
     commonsioVersion = '2.4'
     themeEngineVersion = '0.7.0'
+    fabVersion = '1.6.2'
 
     libDependencies = [
             // Test
@@ -58,6 +59,7 @@ ext {
             materialdrawer: "com.mikepenz:materialdrawer:$materialDrawerVersion@aar",
             materialdialog: "com.github.afollestad.material-dialogs:core:$materialDialogVersion@aar",
             materialcab: "com.afollestad:material-cab:$materialCabVersion@aar",
-            theme_engine: "com.github.afollestad:app-theme-engine:$themeEngineVersion@aar"
+            theme_engine: "com.github.afollestad:app-theme-engine:$themeEngineVersion@aar",
+            fab: "com.github.clans:fab:$fabVersion"
     ]
 }
