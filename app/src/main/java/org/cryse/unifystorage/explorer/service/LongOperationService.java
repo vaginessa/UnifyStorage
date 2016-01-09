@@ -18,6 +18,7 @@ import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
+import org.cryse.unifystorage.explorer.event.FileDeleteResultEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
 
 import rx.Subscriber;
@@ -97,6 +98,13 @@ public class LongOperationService extends Service {
                     public void onCompleted() {
                         mNotificationManager.cancel(fileOperation.getOperationId());
                         stopForeground(true);
+                        mEventBus.sendEvent(new FileDeleteResultEvent(
+                                fileOperation.getStorageProviderId(),
+                                fileOperation.getTarget().getId(),
+                                true,
+                                "",
+                                ""
+                        ));
                     }
 
                     @Override
@@ -105,7 +113,13 @@ public class LongOperationService extends Service {
                         Log.e("DeleteFile", resultToast);
                         mNotificationManager.cancel(fileOperation.getOperationId());
                         stopForeground(true);
-                        //Toast.makeText(mContext, resultToast, Toast.LENGTH_SHORT).show();
+                        mEventBus.sendEvent(new FileDeleteResultEvent(
+                                fileOperation.getStorageProviderId(),
+                                fileOperation.getTarget().getId(),
+                                false,
+                                "",
+                                e.getMessage()
+                        ));
                     }
 
                     @Override
@@ -118,6 +132,7 @@ public class LongOperationService extends Service {
                                 currentProgress[0],
                                 fileCount,
                                 result.first.getId(),
+                                result.first.getName(),
                                 result.second
                         ));
                         deleteNotificationBuilder

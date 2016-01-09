@@ -20,6 +20,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.afollestad.appthemeengine.ATE;
 import com.afollestad.appthemeengine.Config;
@@ -40,6 +41,7 @@ import org.cryse.unifystorage.explorer.databinding.FragmentStorageProviderBindin
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
+import org.cryse.unifystorage.explorer.event.FileDeleteResultEvent;
 import org.cryse.unifystorage.explorer.service.FileOperation;
 import org.cryse.unifystorage.explorer.service.LongOperationService;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
@@ -498,10 +500,29 @@ public abstract class StorageProviderFragment<
     @Override
     protected void onEvent(AbstractEvent event) {
         super.onEvent(event);
-        if(event.eventId() == EventConst.EVENT_ID_FILE_DELETE) {
-            FileDeleteEvent fileDeleteEvent = (FileDeleteEvent) event;
-            if(fileDeleteEvent.providerId == this.mStorageProviderRecordId && fileDeleteEvent.targetId.compareTo(mViewModel.getDirectory().directory.getId()) == 0)
-                mViewModel.onDeleteFileEvent(fileDeleteEvent);
+        int eventId = event.eventId();
+        switch (eventId) {
+            case EventConst.EVENT_ID_FILE_DELETE:
+                FileDeleteEvent fileDeleteEvent = (FileDeleteEvent) event;
+                if(fileDeleteEvent.providerId == this.mStorageProviderRecordId && fileDeleteEvent.targetId.compareTo(mViewModel.getDirectory().directory.getId()) == 0) {
+                    if (fileDeleteEvent.success) {
+                        mViewModel.onDeleteFileEvent(fileDeleteEvent);
+                    } else {
+                        Toast.makeText(getContext(), "Delete: " + fileDeleteEvent.fileName + " failed.", Toast.LENGTH_SHORT).show();
+                    }
+
+                }
+                break;
+            case EventConst.EVENT_ID_FILE_DELETE_RESULT:
+                FileDeleteResultEvent fileDeleteResultEvent = (FileDeleteResultEvent) event;
+                if(fileDeleteResultEvent.providerId == this.mStorageProviderRecordId && fileDeleteResultEvent.targetId.compareTo(mViewModel.getDirectory().directory.getId()) == 0) {
+                    if(fileDeleteResultEvent.succes) {
+                    } else {
+                        Toast.makeText(getContext(), fileDeleteResultEvent.errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                }
+                break;
+
         }
     }
 

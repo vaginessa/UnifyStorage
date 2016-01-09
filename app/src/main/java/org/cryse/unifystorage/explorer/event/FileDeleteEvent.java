@@ -6,13 +6,15 @@ public class FileDeleteEvent extends AbstractEvent {
     public long currentCount;
     public long totalFileCount;
     public String fileId;
+    public String fileName;
     public boolean success;
-    public FileDeleteEvent(int providerId, String targetId, long currentCount, long totalFileCount, String fileId, boolean success) {
+    public FileDeleteEvent(int providerId, String targetId, long currentCount, long totalFileCount, String fileId, String fileName, boolean success) {
         this.providerId = providerId;
         this.targetId = targetId;
         this.currentCount = currentCount;
         this.totalFileCount = totalFileCount;
         this.fileId = fileId;
+        this.fileName = fileName;
         this.success = success;
     }
 
