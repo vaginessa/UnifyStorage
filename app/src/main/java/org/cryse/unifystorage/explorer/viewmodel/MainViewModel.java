@@ -8,7 +8,7 @@ import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
-import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
+import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 
@@ -19,18 +19,17 @@ public class MainViewModel implements ViewModel {
     private IDrawerItem[] mDrawerItems;
     private Context mContext;
     private DataListener mDataListener;
-    private StorageProviderDatabase mStorageProviderDatabase;
+    private UnifyStorageDatabase mUnifyStorageDatabase;
     private int mCurrentSelectionIdentifier;
 
     public MainViewModel(DataListener mDataListener, Context mContext) {
         this.mDataListener = mDataListener;
         this.mContext = mContext;
-        this.mStorageProviderDatabase = new StorageProviderDatabase(mContext);
+        this.mUnifyStorageDatabase = UnifyStorageDatabase.getInstance();
     }
 
     @Override
     public void destroy() {
-        mStorageProviderDatabase.destroy();
     }
 
     public void updateDrawerItems(int currentSelectionIdentifier) {
@@ -47,7 +46,7 @@ public class MainViewModel implements ViewModel {
         int[] externalStorageTypes = DrawerItemUtils.getStorageDirectoryTypes(mContext, externalStoragePaths);
 
         // Secondly get all saved storage providers
-        List<StorageProviderRecord> savedStorageProviders = mStorageProviderDatabase.getSavedStorageProviders();
+        List<StorageProviderRecord> savedStorageProviders = mUnifyStorageDatabase.getSavedStorageProviders();
         int otherStorageProvidersCount = savedStorageProviders.size();
 
         // Finally the const items count

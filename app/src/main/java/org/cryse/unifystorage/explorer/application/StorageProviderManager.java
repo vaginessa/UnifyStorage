@@ -6,7 +6,7 @@ import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.R;
-import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
+import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import rx.Observable;
 import rx.Subscriber;
@@ -29,7 +28,7 @@ import rx.subscriptions.CompositeSubscription;
 public class StorageProviderManager {
     private static StorageProviderManager instance;
     Map<Integer, StorageProvider> mStorageProviderMap = new Hashtable<>();
-    private StorageProviderDatabase mStorageProviderDatabase;
+    private UnifyStorageDatabase mUnifyStorageDatabase;
     private CompositeSubscription mBuildProviderSubscriptions = new CompositeSubscription();
 
     public static void init(Context context) {
@@ -47,15 +46,15 @@ public class StorageProviderManager {
     }
 
     protected StorageProviderManager(Context context) {
-        mStorageProviderDatabase = new StorageProviderDatabase(context);
+        mUnifyStorageDatabase = UnifyStorageDatabase.getInstance();
     }
 
     public void addStorageProviderRecord(String displayName, String userName, int providerType, String credentialData, String extraData) {
-        mStorageProviderDatabase.addNewProvider(displayName, userName, providerType, credentialData, extraData);
+        mUnifyStorageDatabase.addNewProvider(displayName, userName, providerType, credentialData, extraData);
     }
 
     public void removeStorageProviderRecord(int id) {
-        mStorageProviderDatabase.removeProviderRecord(id);
+        mUnifyStorageDatabase.removeProviderRecord(id);
     }
 
     public List<StorageProviderRecord> loadStorageProviderRecordsWithLocal(Context context) {
@@ -89,7 +88,7 @@ public class StorageProviderManager {
     }
 
     public List<StorageProviderRecord> loadStorageProviderRecords() {
-        return mStorageProviderDatabase.getSavedStorageProviders();
+        return mUnifyStorageDatabase.getSavedStorageProviders();
     }
 
     public <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
@@ -138,11 +137,11 @@ public class StorageProviderManager {
                         @Override
                         public void onNext(SP storageProvider) {
                             if (storageProvider.shouldRefreshCredential() && id >= 0) {
-                                StorageProviderRecord record = mStorageProviderDatabase.getSavedStorageProvider(id);
+                                StorageProviderRecord record = mUnifyStorageDatabase.getSavedStorageProvider(id);
                                 CR newCredential = storageProvider.getRefreshedCredential();
-                                if (mStorageProviderDatabase != null) {
+                                if (mUnifyStorageDatabase != null) {
                                     record.setCredentialData(newCredential.persist());
-                                    mStorageProviderDatabase.updateStorageProviderRecord(record);
+                                    mUnifyStorageDatabase.updateStorageProviderRecord(record);
                                 }
                             }
                             mStorageProviderMap.put(id, storageProvider);
@@ -154,11 +153,15 @@ public class StorageProviderManager {
 
     }
 
-    public void destroy() {
+    private void destroyManager() {
         if(mBuildProviderSubscriptions.hasSubscriptions() && !mBuildProviderSubscriptions.isUnsubscribed())
             mBuildProviderSubscriptions.unsubscribe();
         mStorageProviderMap.clear();
-        mStorageProviderDatabase.destroy();
+    }
+
+    public static void destroy() {
+        if(instance != null)
+            instance.destroyManager();
     }
 
     public interface OnLoadStorageProviderCallback<RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>> {

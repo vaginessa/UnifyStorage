@@ -127,6 +127,7 @@ public abstract class StorageProviderFragment<
         mCollectionAdapter.setOnFileClickListener(this);
         mCollectionAdapter.setOnSelectionListener(this);
         mViewModel = buildViewModel(mCredential);
+        mViewModel.buildStorageProvider();
         mShowHiddenFilesPrefs = Prefs.getBooleanPrefs(
                 PrefsConst.PREFS_SHOW_HIDDEN_FILES,
                 PrefsConst.PREFS_SHOW_HIDDEN_FILES_VALUE
@@ -326,6 +327,11 @@ public abstract class StorageProviderFragment<
             return new CollectionViewState(position, offset);
         } else
             return CollectionViewState.EMPTY;
+    }
+
+    @Override
+    public void onStorageProviderReady() {
+
     }
 
     @Override

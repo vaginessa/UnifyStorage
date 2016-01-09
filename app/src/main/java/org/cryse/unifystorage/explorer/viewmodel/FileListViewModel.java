@@ -21,7 +21,7 @@ import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.application.UnifyStorageApplication;
-import org.cryse.unifystorage.explorer.data.StorageProviderDatabase;
+import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
@@ -75,7 +75,7 @@ public class FileListViewModel<
     protected Stack<BrowserState<RF>> mBackwardStack = new Stack<>();
     private boolean mShowHiddenFile = false;
     private StorageProviderBuilder<RF, CR, SP> mProviderBuilder;
-    protected StorageProviderDatabase mStorageProviderDatabase;
+    protected UnifyStorageDatabase mUnifyStorageDatabase;
     private CR mCredential;
     private int mStorageProviderRecordId = DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID;
     private StorageProviderRecord mStorageProviderRecord;
@@ -96,10 +96,9 @@ public class FileListViewModel<
         this.mCredential = credential;
         this.mProviderBuilder = providerBuilder;
         // this.mStorageProvider = new RxStorageProvider<>(providerBuilder.buildStorageProvider(credential));
-        this.mStorageProviderDatabase = new StorageProviderDatabase(mContext);
+        this.mUnifyStorageDatabase = UnifyStorageDatabase.getInstance();
         this.mStorageProviderRecordId = storageProviderRecordId;
-        this.mStorageProviderRecord = mStorageProviderDatabase.getSavedStorageProvider(mStorageProviderRecordId);
-        buildStorageProvider();
+        this.mStorageProviderRecord = mUnifyStorageDatabase.getSavedStorageProvider(mStorageProviderRecordId);
     }
 
     public void setDataListener(DataListener<RF, CR> dataListener) {
@@ -122,6 +121,8 @@ public class FileListViewModel<
                         if(mStorageProvider.shouldRefreshCredential() && mDataListener != null) {
                                 mDataListener.onCredentialRefreshed(storageProvider.getRefreshedCredential());
                         }
+                        if(mDataListener != null)
+                            mDataListener.onStorageProviderReady();
                         loadFiles(null);
                     }
 
@@ -382,12 +383,16 @@ public class FileListViewModel<
     public void destroy() {
         RxSubscriptionUtils.checkAndUnsubscribe(mLoadFilesSubscription);
         RxSubscriptionUtils.checkAndUnsubscribe(mDownloadFileSubscription);
-        mStorageProviderDatabase.destroy();
         mContext = null;
         mDataListener = null;
     }
 
+    public RxStorageProvider<RF, CR, SP> getStorageProvider() {
+        return mStorageProvider;
+    }
+
     public interface DataListener<RF extends RemoteFile, CR extends Credential> {
+        void onStorageProviderReady();
         void onDirectoryChanged(DirectoryInfo<RF, List<RF>> directory);
         void onDirectoryItemDelete(int position);
         void onCollectionViewStateRestore(CollectionViewState collectionViewState);

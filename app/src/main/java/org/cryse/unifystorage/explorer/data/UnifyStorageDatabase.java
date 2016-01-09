@@ -3,6 +3,7 @@ package org.cryse.unifystorage.explorer.data;
 import android.content.Context;
 
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
+import org.cryse.unifystorage.explorer.model.StorageUriRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 
 import java.util.Date;
@@ -14,13 +15,48 @@ import io.realm.RealmQuery;
 import io.realm.RealmResults;
 import io.realm.Sort;
 
-public class StorageProviderDatabase {
+public class UnifyStorageDatabase {
     private Context mContext;
     private Realm mRealm;
 
-    public StorageProviderDatabase(Context context) {
+
+    private static UnifyStorageDatabase instance;
+
+    public static void init(Context context) {
+        if (instance == null) {
+            synchronized(UnifyStorageDatabase.class) {
+                if (instance == null) {
+                    instance = new UnifyStorageDatabase(context);
+                }
+            }
+        }
+    }
+
+    public static UnifyStorageDatabase getInstance() {
+        return instance;
+    }
+
+
+    protected UnifyStorageDatabase(Context context) {
         this.mContext = context;
         this.mRealm = Realm.getInstance(context);
+    }
+
+    public void saveStorageUriRecord(StorageUriRecord record) {
+        mRealm.beginTransaction();
+        mRealm.copyToRealmOrUpdate(record);
+        mRealm.commitTransaction();
+    }
+
+    public StorageUriRecord getStorageUriRecord(String path) {
+        RealmQuery<StorageUriRecord> query = mRealm.where(StorageUriRecord.class);
+        query.equalTo("path", path);
+        RealmResults<StorageUriRecord> results = query.findAll();
+        if(results.size() > 0) {
+            return mRealm.copyFromRealm(results.get(0));
+        } else {
+            return null;
+        }
     }
 
     public void updateStorageProviderRecord(StorageProviderRecord record) {
@@ -74,9 +110,15 @@ public class StorageProviderDatabase {
         mRealm.commitTransaction();
     }
 
-    public void destroy() {
+    private void destroyRealm() {
         if(mRealm != null && !mRealm.isClosed()) {
             mRealm.close();
+        }
+    }
+
+    public static void destroy() {
+        if(instance != null) {
+            instance.destroyRealm();
         }
     }
 

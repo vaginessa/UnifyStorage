@@ -1,6 +1,10 @@
 package org.cryse.unifystorage.providers.localstorage;
 
+import android.content.Context;
+import android.net.Uri;
+import android.support.v4.provider.DocumentFile;
 import android.support.v4.util.Pair;
+import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.cryse.unifystorage.AbstractStorageProvider;
@@ -12,6 +16,7 @@ import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
 import org.cryse.unifystorage.io.ProgressInputStream;
 import org.cryse.unifystorage.io.StreamProgressListener;
+import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.IOUtils;
 import org.cryse.unifystorage.utils.Path;
@@ -20,17 +25,24 @@ import org.cryse.unifystorage.utils.hash.Sha1HashAlgorithm;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFile, LocalCredential> {
+    private Context mContext;
     private String mStartPath;
     private LocalStorageFile mStartFile;
-    public LocalStorageProvider(String startPath) {
+    private Uri mSdcardUri;
+
+    public LocalStorageProvider(Context context, String startPath) {
+        this.mContext = context;
         this.mStartPath = startPath;
+    }
+
+    public void setSdcardUri(Uri uri) {
+        this.mSdcardUri = uri;
     }
 
     @Override
@@ -52,6 +64,8 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
         if(parent == null) return list();
 
         File file = new File(parent.getPath());
+        boolean isOnSdcard = isOnExtSdCard(mContext, file.getPath());
+        Log.e("LocalStorageProvider", String.format("File: [%s] %s", file.getName(), isOnSdcard ? "on Sdcard" : "not on Sdcard"));
         List<LocalStorageFile> list = new ArrayList<LocalStorageFile>();
         File[] children = file.listFiles();
         if(children != null) {
@@ -117,7 +131,16 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
 
     @Override
     public Pair<LocalStorageFile, Boolean> deleteFile(LocalStorageFile file) {
-        return Pair.create(file, FileUtils.deleteQuietly(file.getFile()));
+        if (isOnExtSdCard(mContext, file.getPath())) {
+            if (mSdcardUri == null)
+                return Pair.create(file, false);
+            DocumentFile documentFile = getDocumentFile(mContext, mSdcardUri, file.getFile(), file.isDirectory());
+            if (documentFile == null)
+                return Pair.create(file, false);
+            return Pair.create(file, documentFile.delete());
+        } else {
+            return Pair.create(file, FileUtils.deleteQuietly(file.getFile()));
+        }
     }
 
     @Override
@@ -203,5 +226,53 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     @Override
     public HashAlgorithm getHashAlgorithm() {
         return Sha1HashAlgorithm.getInstance();
+    }
+
+    private static boolean isOnExtSdCard(Context context, final String path) {
+        return LocalStorageUtils.isOnSdcard(context, path);
+    }
+
+    public static DocumentFile getDocumentFile(Context context, Uri sdcardUri, final File file, final boolean isDirectory) {
+        String sdcardDirectory = LocalStorageUtils.getSdcardDirectory(context, file.getPath());
+        boolean isSdcardDirectoryRoot=false;
+        if (sdcardDirectory == null) {
+            return null;
+        }
+
+        String relativePath = null;
+        try {
+            String fullPath = file.getCanonicalPath();
+            if(!sdcardDirectory.equals(fullPath))
+                relativePath = fullPath.substring(sdcardDirectory.length() + 1);
+            else isSdcardDirectoryRoot=true;
+        }
+        catch (IOException e) {
+            return null;
+        }
+        catch (Exception f){
+            isSdcardDirectoryRoot = true;
+            //continue
+        }
+
+        // start with root of SD card and then parse through document tree.
+        DocumentFile document = DocumentFile.fromTreeUri(context, sdcardUri);
+        if(isSdcardDirectoryRoot)
+            return document;
+        String[] parts = relativePath.split("/");
+        for (int i = 0; i < parts.length; i++) {
+            DocumentFile nextDocument = document.findFile(parts[i]);
+
+            if (nextDocument == null) {
+                if ((i < parts.length - 1) || isDirectory) {
+                    nextDocument = document.createDirectory(parts[i]);
+                }
+                else {
+                    nextDocument = document.createFile("image", parts[i]);
+                }
+            }
+            document = nextDocument;
+        }
+
+        return document;
     }
 }

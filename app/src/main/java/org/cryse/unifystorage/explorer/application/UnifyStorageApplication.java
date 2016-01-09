@@ -3,6 +3,7 @@ package org.cryse.unifystorage.explorer.application;
 import android.app.Application;
 import android.content.Context;
 
+import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.utils.preference.Prefs;
 
 import rx.Scheduler;
@@ -15,7 +16,15 @@ public class UnifyStorageApplication extends Application {
     public void onCreate() {
         super.onCreate();
         Prefs.with(this).useDefault().init();
+        UnifyStorageDatabase.init(this);
         StorageProviderManager.init(this);
+    }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        StorageProviderManager.destroy();
+        UnifyStorageDatabase.destroy();
     }
 
     public static UnifyStorageApplication get(Context context) {
