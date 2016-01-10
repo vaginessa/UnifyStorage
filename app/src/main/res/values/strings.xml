@@ -44,6 +44,8 @@
     <string name="storage_provider_name_dropbox">Dropbox</string>
     <string name="storage_provider_name_google_drive">Google Drive</string>
 
+    <string name="toast_double_click_to_exit">Please click BACK again to exit</string>
+
     <string name="notification_title_deleting_files">Deleting files…</string>
     <string name="notification_content_deleting_files">%1$d of %2$d</string>
     <string name="notification_title_error_deleting_files">Deleting files error</string>

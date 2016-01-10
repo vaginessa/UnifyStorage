@@ -1,6 +1,8 @@
 package org.cryse.unifystorage.explorer;
 
 public class DataContract {
+    public static final int CONST_DOUBLE_CLICK_TO_EXIT_INTERVAL = 2000;
+
     public static final String ARG_CREDENTIAL = "arguments_credential";
     public static final String ARG_STORAGE_PROVIDER_RECORD_ID = "arguments_storage_provider_record_id";
     public static final String ARG_LOCAL_PATH = "arguments_local_path";

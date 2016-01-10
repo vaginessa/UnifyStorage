@@ -46,6 +46,7 @@ import org.cryse.unifystorage.providers.onedrive.OneDriveAuthenticator;
 import org.cryse.unifystorage.providers.onedrive.OneDriveCredential;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -60,6 +61,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     boolean mIsRestorePosition = false;
     private Handler mHandler = new Handler();
     private Runnable mPendingRunnable = null;
+    AtomicBoolean mDoubleBackToExitPressedOnce = new AtomicBoolean(false);
+
     ServiceConnection mLongOperationServiceConnection;
     private LongOperationService.LongOperationBinder mLongOperationBinder;
 
@@ -181,8 +184,21 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         DrawerLayout drawer = mDrawer.getDrawerLayout();
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else {
+        }
+
+        if (mDoubleBackToExitPressedOnce.get()) {
             super.onBackPressed();
+            return;
+        } else {
+            mDoubleBackToExitPressedOnce.set(true);
+            Toast.makeText(this, R.string.toast_double_click_to_exit, Toast.LENGTH_SHORT).show();
+
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mDoubleBackToExitPressedOnce.set(false);
+                }
+            }, DataContract.CONST_DOUBLE_CLICK_TO_EXIT_INTERVAL);
         }
     }
 
