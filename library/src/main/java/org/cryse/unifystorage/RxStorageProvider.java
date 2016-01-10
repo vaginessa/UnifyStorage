@@ -329,6 +329,11 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
             public void call(Subscriber<? super Pair<RF, Boolean>> subscriber) {
                 try {
                     for(RF file : files) {
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         subscriber.onNext(mStorageProvider.deleteFile(file));
                     }
                     subscriber.onCompleted();

@@ -8,7 +8,6 @@ import java.util.List;
 public class BrowserState<RF extends RemoteFile> {
     public DirectoryInfo<RF, List<RF>> directory;
     public CollectionViewState collectionViewState;
-    public List<RF> hiddenFiles;
 
     public BrowserState() {
 
@@ -17,6 +16,6 @@ public class BrowserState<RF extends RemoteFile> {
     public BrowserState(DirectoryInfo<RF, List<RF>> directory, CollectionViewState collectionViewState, List<RF> hiddenFiles) {
         this.directory = directory;
         this.collectionViewState = collectionViewState;
-        this.hiddenFiles = hiddenFiles;
+        this.directory.files.addAll(hiddenFiles);
     }
 }

@@ -342,7 +342,7 @@ public class FileListViewModel<
         if (!mBackwardStack.empty()) {
             BrowserState<RF> currentState = mBackwardStack.pop();
             mDirectory = currentState.directory;
-            mHiddenFiles = currentState.hiddenFiles;
+            handleHiddenFile(mDirectory);
             this.mDataListener.onDirectoryChanged(mDirectory);
             toggleRecyclerViewsSuccessState();
             this.mDataListener.onCollectionViewStateRestore(currentState.collectionViewState);
@@ -360,22 +360,35 @@ public class FileListViewModel<
         OpenFileUtils.openFile(mContext, file.getPath(), true);
     }
 
-    public Observable<Pair<RF,Boolean>> deleteFile(final RF...files) {
-        return mStorageProvider.deleteFile(files[0]);
-    }
-
     public void onDeleteFileEvent(FileDeleteEvent event) {
-        int position = 0;
-        for (Iterator<RF> iterator = mDirectory.files.iterator(); iterator.hasNext();) {
-            RF rf = iterator.next();
-            if (rf.getId().compareTo(event.fileId) == 0 && event.success) {
+        for(Iterator<BrowserState<RF>> browserStateIterator = mBackwardStack.iterator(); browserStateIterator.hasNext();) {
+            BrowserState<RF> browserState = browserStateIterator.next();
+            if (browserState.directory.directory.getId().compareTo(event.fileId) == 0 && event.success) {
                 // Remove the current element from the iterator and the list.
-                iterator.remove();
-                if(mDataListener != null) {
-                    mDataListener.onDirectoryItemDelete(position);
+                browserStateIterator.remove();
+            } else {
+                for (Iterator<RF> iterator = browserState.directory.files.iterator(); iterator.hasNext();) {
+                    RF rf = iterator.next();
+                    if (rf.getId().compareTo(event.fileId) == 0 && event.success) {
+                        // Remove the current element from the iterator and the list.
+                        iterator.remove();
+                    }
                 }
             }
-            position++;
+        }
+        if (event.targetId.compareTo(mDirectory.directory.getId()) == 0) {
+            int position = 0;
+            for (Iterator<RF> iterator = mDirectory.files.iterator(); iterator.hasNext(); ) {
+                RF rf = iterator.next();
+                if (rf.getId().compareTo(event.fileId) == 0 && event.success) {
+                    // Remove the current element from the iterator and the list.
+                    iterator.remove();
+                    if (mDataListener != null) {
+                        mDataListener.onDirectoryItemDelete(position);
+                    }
+                }
+                position++;
+            }
         }
     }
 

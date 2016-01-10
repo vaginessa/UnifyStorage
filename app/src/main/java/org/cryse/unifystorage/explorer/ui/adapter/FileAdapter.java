@@ -51,13 +51,14 @@ public class FileAdapter<RF extends RemoteFile>
     @Override
     public void onBindViewHolder(BindingHolder holder, int position) {
         ItemFileBinding fileBinding = holder.binding;
-        if (fileBinding.getViewModel() == null) {
-            ItemRemoteFileViewModel viewModel = new ItemRemoteFileViewModel<>(mContext, position, getItems().get(position));
+        ItemRemoteFileViewModel<RF> viewModel = fileBinding.getViewModel();
+        if (viewModel == null) {
+            viewModel = new ItemRemoteFileViewModel<>(mContext, position, getItems().get(position));
             viewModel.setOnFileClickListener(this.mOnFileClickListener);
             fileBinding.setViewModel(viewModel);
         } else {
-            fileBinding.getViewModel().setAdapterPosition(position);
-            fileBinding.getViewModel().setRemoteFile(getItem(position));
+            viewModel.setAdapterPosition(position);
+            viewModel.setRemoteFile(getItem(position));
         }
         fileBinding.setItemSelected(isSelected(position));
         fileBinding.getViewModel().notifyChange();

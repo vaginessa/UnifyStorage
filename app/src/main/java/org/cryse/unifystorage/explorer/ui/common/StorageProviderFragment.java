@@ -510,7 +510,7 @@ public abstract class StorageProviderFragment<
         switch (eventId) {
             case EventConst.EVENT_ID_FILE_DELETE:
                 FileDeleteEvent fileDeleteEvent = (FileDeleteEvent) event;
-                if(fileDeleteEvent.providerId == this.mStorageProviderRecordId && fileDeleteEvent.targetId.compareTo(mViewModel.getDirectory().directory.getId()) == 0) {
+                if(fileDeleteEvent.providerId == this.mStorageProviderRecordId) {
                     if (fileDeleteEvent.success) {
                         mViewModel.onDeleteFileEvent(fileDeleteEvent);
                     } else {
@@ -521,7 +521,7 @@ public abstract class StorageProviderFragment<
                 break;
             case EventConst.EVENT_ID_FILE_DELETE_RESULT:
                 FileDeleteResultEvent fileDeleteResultEvent = (FileDeleteResultEvent) event;
-                if(fileDeleteResultEvent.providerId == this.mStorageProviderRecordId && fileDeleteResultEvent.targetId.compareTo(mViewModel.getDirectory().directory.getId()) == 0) {
+                if(fileDeleteResultEvent.providerId == this.mStorageProviderRecordId) {
                     if(fileDeleteResultEvent.succes) {
                     } else {
                         Toast.makeText(getContext(), fileDeleteResultEvent.errorMessage, Toast.LENGTH_SHORT).show();
