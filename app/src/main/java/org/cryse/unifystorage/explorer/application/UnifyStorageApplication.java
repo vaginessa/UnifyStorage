@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 
 import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
+import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
 import org.cryse.utils.preference.Prefs;
 
 import rx.Scheduler;
@@ -18,6 +19,7 @@ public class UnifyStorageApplication extends Application {
         Prefs.with(this).useDefault().init();
         UnifyStorageDatabase.init(this);
         StorageProviderManager.init(this);
+        CopyManager.init(this);
     }
 
     @Override

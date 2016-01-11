@@ -71,9 +71,34 @@ public class LongOperationService extends Service {
                 break;
         }
     }
+    private <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
+    void doCopy(final FileOperation<RF> fileOperation, Class<RF> rfClass) {
+        SP storageProvider = StorageProviderManager.getInstance().<RF, CR, SP>loadStorageProvider(fileOperation.getStorageProviderId());
+        if(storageProvider == null) throw new IllegalStateException("Cannot get StorageProvider instance");
+        RxStorageProvider<RF, CR, SP> rxStorageProvider = new RxStorageProvider<>(storageProvider);
+        final int fileCount = fileOperation.getFiles().length;
+        final int[] currentProgress = new int[]{0};
 
-    private <RF extends RemoteFile> void doCopy(FileOperation fileOperation, Class<RF> rfClass) {
+        rxStorageProvider.copyFiles(fileOperation.getTarget(), fileOperation.getFiles()).observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(new Subscriber<Pair<RF, Boolean>>() {
+                    @Override
+                    public void onCompleted() {
+                    }
 
+                    @Override
+                    public void onError(Throwable e) {
+                        String resultToast = String.format("Copy failed: %s", e.getMessage());
+                        Log.e("CopyFile", resultToast);
+                    }
+
+                    @Override
+                    public void onNext(Pair<RF, Boolean> result) {
+                        String resultToast = String.format("Copy %s %s", result.first.getName(), result.second ? "success" : "failed");
+                        Log.e("CopyFile", resultToast);
+                        currentProgress[0]++;
+                    }
+                });
     }
 
     private <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>

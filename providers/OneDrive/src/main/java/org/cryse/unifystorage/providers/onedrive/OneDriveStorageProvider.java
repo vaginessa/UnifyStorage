@@ -227,8 +227,8 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public void copyFile(OneDriveFile target, OneDriveFile file, final ProgressCallback callback) throws StorageException {
-        final ItemReference parentReference = new ItemReference();
+    public void copyFile(OneDriveFile target, final ProgressCallback callback, OneDriveFile...files) throws StorageException {
+        /*final ItemReference parentReference = new ItemReference();
         parentReference.id = target.getId();
 
         final IProgressCallback<Item> progressCallback = new IProgressCallback<Item>() {
@@ -273,11 +273,11 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
                 .getItems(file.getId())
                 .getCopy(file.getName(), parentReference)
                 .buildRequest()
-                .create(copyCallback);
+                .create(copyCallback);*/
     }
 
     @Override
-    public void moveFile(OneDriveFile target, OneDriveFile file, final ProgressCallback callback) throws StorageException {
+    public void moveFile(OneDriveFile targe, final ProgressCallback callback, OneDriveFile...files) throws StorageException {
 
     }
 

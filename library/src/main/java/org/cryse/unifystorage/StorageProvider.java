@@ -55,9 +55,9 @@ public interface StorageProvider<RF extends RemoteFile, CR extends Credential> {
 
     Pair<RF, Boolean> deleteFile(RF file);
 
-    void copyFile(RF target, RF file, final ProgressCallback callback);
+    void copyFile(RF target, final ProgressCallback callback, RF...files);
 
-    void moveFile(RF target, RF file, final ProgressCallback callback);
+    void moveFile(RF target, final ProgressCallback callback, RF...files);
 
     RF getFileDetail(RF file) throws StorageException;
 

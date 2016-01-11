@@ -2,8 +2,10 @@ package org.cryse.unifystorage;
 
 import android.support.v4.util.Pair;
 
+import org.apache.commons.io.FileUtils;
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.utils.DirectoryInfo;
+import org.cryse.unifystorage.utils.ProgressCallback;
 
 import java.io.InputStream;
 
@@ -332,6 +334,47 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
                         subscriber.onNext(mStorageProvider.deleteFile(file));
                     }
                     subscriber.onCompleted();
+                } catch (Throwable throwable) {
+                    subscriber.onError(throwable);
+                }
+            }
+        });
+    }
+
+
+    public Observable<Pair<RF, Boolean>> copyFiles(final RF target, final RF...files) {
+        return Observable.create(new Observable.OnSubscribe<Pair<RF, Boolean>>() {
+            @Override
+            public void call(final Subscriber<? super Pair<RF, Boolean>> subscriber) {
+                try {
+                    long totalSize = 0;
+                    for (RF file : files) {
+                        totalSize += file.size();
+                    }
+                    final int totalFileCount = files.length;
+                    final int[] currentFileCount = new int[]{0};
+                    mStorageProvider.copyFile(target, new ProgressCallback() {
+                        @Override
+                        public void onSuccess() {
+                            currentFileCount[0]++;
+                            // subscriber.onNext(Pair.create(file, true));
+                            if (currentFileCount[0] == totalFileCount)
+                                subscriber.onCompleted();
+                        }
+
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            currentFileCount[0]++;
+                            // subscriber.onNext(Pair.create(file, false));
+                            if (currentFileCount[0] == totalFileCount)
+                                subscriber.onCompleted();
+                        }
+
+                        @Override
+                        public void onProgress(long current, long max) {
+
+                        }
+                    }, files);
                 } catch (Throwable throwable) {
                     subscriber.onError(throwable);
                 }

@@ -3,7 +3,7 @@ package org.cryse.unifystorage.explorer.service;
 import org.cryse.unifystorage.RemoteFile;
 
 public class FileOperation<RF extends RemoteFile> {
-    public static enum FileOperationCode {
+    public enum FileOperationCode {
         COPY, MOVE, DELETE, RENAME, UPLOAD, DOWNLOAD, COMPRESS, UNCOMPRESS
     }
 

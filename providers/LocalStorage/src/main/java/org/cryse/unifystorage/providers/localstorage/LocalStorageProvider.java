@@ -2,6 +2,7 @@ package org.cryse.unifystorage.providers.localstorage;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.provider.DocumentFile;
 import android.support.v4.util.Pair;
 import android.util.Log;
@@ -25,9 +26,15 @@ import org.cryse.unifystorage.utils.hash.Sha1HashAlgorithm;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFile, LocalCredential> {
@@ -144,30 +151,113 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public void copyFile(LocalStorageFile target, LocalStorageFile file, final ProgressCallback callback) {
-        try {
-            InputStream input = new FileInputStream(file.getFile());
-            ProgressInputStream progressInputStream = new ProgressInputStream(input, file.size());
-            progressInputStream.addListener(new StreamProgressListener() {
-                @Override
-                public void onProgress(ProgressInputStream stream, long current, long total, double rate) {
-                    if(callback != null)
-                        callback.onProgress(current, total);
+    public void copyFile(LocalStorageFile target, final ProgressCallback callback, LocalStorageFile...files) {
+        List<File> sourceFileList = new ArrayList<>();
+        List<File> targetFileList = new ArrayList<>();
+        for(LocalStorageFile localStorageFile : files) {
+            File localFile = localStorageFile.getFile();
+            if(localFile.isDirectory()) {
+                Collection<File> allSubFiles = LocalStorageUtils.listFilesRecursive(localFile);
+                sourceFileList.addAll(allSubFiles);
+                for(File subFile : allSubFiles) {
+                    File targetFile = new File(subFile.getPath().replace(Path.getDirectory(localFile.getPath()), target.getPath()));
+                    targetFileList.add(targetFile);
                 }
-            });
-            String targetPath = Path.combine(target.getPath(), file.getName());
-            File targetFile = new File(targetPath);
-            FileUtils.copyInputStreamToFile(progressInputStream, targetFile);
-            progressInputStream.removeAllListener();
+            } else {
+                sourceFileList.add(localFile);
+                File targetFile = new File(localFile.getPath().replace(Path.getDirectory(localFile.getPath()), target.getPath()));
+                targetFileList.add(targetFile);
+            }
+        }
+        int sourceFileListCount = sourceFileList.size();
+
+        for(int i = 0; i < sourceFileListCount; i++) {
+            copyFileSingle(sourceFileList.get(i), targetFileList.get(i), callback);
+        }
+
+        /*File fromFile = file.getFile();
+        if(fromFile.isDirectory()) {
+            StringBuilder builder = new StringBuilder();
+            StringBuilder stargetBuilder = new StringBuilder();
+            Collection<File> allSubFiles = FileUtils.listFiles(fromFile, null, true);
+            for (File sub : allSubFiles) {
+                builder.append(sub.getPath()).append("\n");
+                stargetBuilder.append(sub.getPath().replace(Path.getDirectory(fromFile.getPath()), target.getPath())).append("\n");
+            }
+            String fileList = builder.toString();
+            String newfileList = stargetBuilder.toString();
+            int len = fileList.length();
+            int len2 = newfileList.length();
+        } else {
+            copyFileSingle(fromFile, new File(Path.combine(target.getPath(), file.getName())), callback);
+        }*/
+    }
+
+    private void copyFileSingle(File sourceFile, File targetFile, final ProgressCallback callback) {
+        FileInputStream inStream = null;
+        OutputStream outStream = null;
+        FileChannel inChannel = null;
+        FileChannel outChannel = null;
+        try {
+            inStream = new FileInputStream(sourceFile);
+            File parent = targetFile.getParentFile();
+            boolean parentExists = parent.exists();
+            if(!parent.exists())
+                parentExists = parent.mkdirs();
+
+            if (parentExists && isWritable(targetFile)) {
+                outStream = new FileOutputStream(targetFile);
+                inChannel = inStream.getChannel();
+                outChannel = ((FileOutputStream) outStream).getChannel();
+                inChannel.transferTo(0, inChannel.size(), outChannel);
+            } else {
+                if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP) {
+                    // Storage Access Framework
+                    DocumentFile targetDocument = getDocumentFile(mContext, mSdcardUri, targetFile, false);
+                    outStream =
+                            mContext.getContentResolver().openOutputStream(targetDocument.getUri());
+                }
+                else if (Build.VERSION.SDK_INT==Build.VERSION_CODES.KITKAT) {
+                    if (callback != null)
+                        callback.onFailure(new Exception());
+                    /*// Workaround for Kitkat ext SD card
+                    Uri uri = MediaStoreHack.getUriFromFile(target.getAbsolutePath(),context);
+                    outStream = context.getContentResolver().openOutputStream(uri);*/
+                }
+                else {
+                    if (callback != null)
+                        callback.onFailure(new Exception());
+                }
+
+                if (outStream != null) {
+                    // Both for SAF and for Kitkat, write to output stream.
+                    byte[] buffer = new byte[16384]; // MAGIC_NUMBER
+                    int bytesRead;
+                    while ((bytesRead = inStream.read(buffer)) != -1) {
+                        outStream.write(buffer, 0, bytesRead);
+                    }
+                }
+            }
         } catch (IOException e) {
-            if(callback != null)
+            if (callback != null)
                 callback.onFailure(e);
+        } finally {
+            try {
+                if(inChannel != null)
+                    inChannel.close();
+                if(outChannel != null)
+                    outChannel.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            IOUtils.safeClose(inStream);
+            IOUtils.safeClose(outStream);
         }
     }
 
     @Override
-    public void moveFile(LocalStorageFile target, LocalStorageFile file, final ProgressCallback callback){
-        try {
+    public void moveFile(LocalStorageFile target, final ProgressCallback callback, LocalStorageFile...files){
+        /*try {
             InputStream input = new FileInputStream(file.getFile());
             ProgressInputStream progressInputStream = new ProgressInputStream(input, file.size());progressInputStream.addListener(new StreamProgressListener() {
                 @Override
@@ -185,7 +275,7 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
         } catch (IOException e) {
             if(callback != null)
                 callback.onFailure(e);
-        }
+        }*/
     }
 
     @Override
@@ -274,5 +364,39 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
         }
 
         return document;
+    }
+
+    /**
+     * Check is a file is writable. Detects write issues on external SD card.
+     *
+     * @param file
+     *            The file
+     * @return true if the file is writable.
+     */
+    public static final boolean isWritable(final File file) {
+        if(file==null)
+            return false;
+        boolean isExisting = file.exists();
+
+        try {
+            FileOutputStream output = new FileOutputStream(file, true);
+            try {
+                output.close();
+            }
+            catch (IOException e) {
+                // do nothing.
+            }
+        }
+        catch (FileNotFoundException e) {
+            return false;
+        }
+        boolean result = file.canWrite();
+
+        // Ensure that file is not created during this process.
+        if (!isExisting) {
+            file.delete();
+        }
+
+        return result;
     }
 }

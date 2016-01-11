@@ -108,9 +108,12 @@ public class LocalStorageFragment extends StorageProviderFragment<
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == RC_SDCARD_URI) {
+        if(requestCode == RC_SDCARD_URI && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if(resultCode == Activity.RESULT_OK) {
                 mSdcardUri = data.getData();
+                getContext().getContentResolver().takePersistableUriPermission(mSdcardUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 StorageUriRecord record = new StorageUriRecord();
                 record.setPath(LocalStorageUtils.getSdcardDirectory(getContext(), mStartPath));
                 record.setUriData(mSdcardUri.toString());

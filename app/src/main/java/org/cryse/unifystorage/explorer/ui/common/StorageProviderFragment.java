@@ -50,6 +50,8 @@ import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.MenuUtils;
 import org.cryse.unifystorage.explorer.utils.RandomUtils;
 import org.cryse.unifystorage.explorer.utils.ResourceUtils;
+import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
+import org.cryse.unifystorage.explorer.utils.copy.CopyTask;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.FileSizeUtils;
@@ -112,11 +114,15 @@ public abstract class StorageProviderFragment<
     @Bind(R.id.fragment_storageprovider_fab_new_file)
     FloatingActionButton mFabNewFile;
 
+    @Bind(R.id.fragment_storageprovider_fab_paste)
+    FloatingActionButton mFabPaste;
+
     private String mATEKey;
     private int mPrimaryColor;
     private int mAccentColor;
     private int mAccentColorDark;
     private int mToolbarContentColor;
+    private int mFabIconColor;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -153,7 +159,24 @@ public abstract class StorageProviderFragment<
         setupToolbar();
         setupRecyclerView();
         setupBreadCrumb();
+        setupFab();
         return fragmentView;
+    }
+
+    private void setupFab() {
+        if(CopyManager.getInstance().hasCopyTask()) {
+            mFabMenu.setVisibility(View.GONE);
+            mFabPaste.setVisibility(View.VISIBLE);
+        } else {
+            mFabMenu.setVisibility(View.VISIBLE);
+            mFabPaste.setVisibility(View.GONE);
+        }
+        mFabPaste.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                menuPasteFile();
+            }
+        });
     }
 
     @Override
@@ -176,13 +199,14 @@ public abstract class StorageProviderFragment<
         mAccentColor = Config.accentColor(getContext(), mATEKey);
         int colorDarken = ResourceUtils.makeColorDarken(mAccentColor, 0.8f);
         int colorDarken2 = ResourceUtils.makeColorDarken(mAccentColor, 0.9f);
-        int colorDrawable = ResourceUtils.isColorLight(mAccentColor) ? Color.BLACK : Color.WHITE;
+        int mFabIconColor = ResourceUtils.isColorLight(mAccentColor) ? Color.BLACK : Color.WHITE;
         mFabMenu.setMenuButtonColorNormal(mAccentColor);
         mFabMenu.setMenuButtonColorPressed(colorDarken);
         mFabMenu.setMenuButtonColorRipple(colorDarken2);
-        mFabMenu.getMenuIconView().setColorFilter(colorDrawable, PorterDuff.Mode.SRC_ATOP);
-        ResourceUtils.applyColorToFab(mFabNewDirectory, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_folder, colorDrawable);
-        ResourceUtils.applyColorToFab(mFabNewFile, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_file, colorDrawable);
+        mFabMenu.getMenuIconView().setColorFilter(mFabIconColor, PorterDuff.Mode.SRC_ATOP);
+        ResourceUtils.applyColorToFab(mFabNewDirectory, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_folder, mFabIconColor);
+        ResourceUtils.applyColorToFab(mFabNewFile, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_file, mFabIconColor);
+        ResourceUtils.applyColorToFab(mFabPaste, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_action_paste, mFabIconColor);
     }
 
     @Override
@@ -476,6 +500,9 @@ public abstract class StorageProviderFragment<
             case R.id.action_cab_select_all:
                 menuSelectAll();
                 break;
+            case R.id.action_cab_copy:
+                menuCopyFile();
+                break;
         }
         return true;
     }
@@ -503,6 +530,32 @@ public abstract class StorageProviderFragment<
         );
     }
 
+    protected void menuCopyFile() {
+        RF[] files = mCollectionAdapter.getSelectionItems(getRemoteFileClass());
+        mCollectionAdapter.clearSelection();
+        CopyManager.getInstance().setCopyTask(new CopyTask<RF>(mStorageProviderRecordId, files, getRemoteFileClass()));
+    }
+
+    protected void menuPasteFile() {
+        if (CopyManager.getInstance().hasCopyTask()) {
+            CopyTask<RF> task = CopyManager.getInstance().getCurrentCopyTask();
+            RF[] files = task.fileToCopy;
+            Toast.makeText(getContext(), "Paste!", Toast.LENGTH_SHORT).show();
+            CopyManager.getInstance().cancelCopyTask();
+            LongOperationService.LongOperationBinder longOperationBinder = getMainActivity().getLongOperationBinder();
+            longOperationBinder.<RF, CR, SP>doOperation(
+                    new FileOperation<>(
+                            FileOperation.FileOperationCode.COPY,
+                            RandomUtils.nextInt(),
+                            mStorageProviderRecordId,
+                            mViewModel.getDirectory().directory,
+                            files
+                    ),
+                    getRemoteFileClass()
+            );
+        }
+    }
+
     @Override
     protected void onEvent(AbstractEvent event) {
         super.onEvent(event);
@@ -528,7 +581,16 @@ public abstract class StorageProviderFragment<
                     }
                 }
                 break;
-
+            case EventConst.EVENT_ID_SELECT_COPY_EVENT:
+                Toast.makeText(getContext(), String.format("Select %d files to copy.", CopyManager.getInstance().getCurrentCopyTask().fileToCopy.length), Toast.LENGTH_SHORT).show();
+                mFabMenu.setVisibility(View.GONE);
+                mFabPaste.setVisibility(View.VISIBLE);
+                break;
+            case EventConst.EVENT_ID_CANCEL_SELECT_COPY_EVENT:
+                Toast.makeText(getContext(), "Copy cancel.", Toast.LENGTH_SHORT).show();
+                mFabMenu.setVisibility(View.VISIBLE);
+                mFabPaste.setVisibility(View.GONE);
+                break;
         }
     }
 

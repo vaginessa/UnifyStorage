@@ -130,12 +130,12 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public void copyFile(DropboxFile target, DropboxFile file, ProgressCallback callback) {
+    public void copyFile(DropboxFile target, ProgressCallback callback, DropboxFile...files) {
 
     }
 
     @Override
-    public void moveFile(DropboxFile target, DropboxFile file, ProgressCallback callback) {
+    public void moveFile(DropboxFile target, ProgressCallback callback, DropboxFile...files) {
 
     }
 

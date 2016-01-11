@@ -10,6 +10,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 public class LocalStorageUtils {
 
@@ -58,5 +59,21 @@ public class LocalStorageUtils {
                 return dirPath;
         }
         return null;
+    }
+
+    public static List<File> listFilesRecursive(File directory) {
+        List<File> fileList = new ArrayList<>();
+        Stack<File> stack = new Stack<File>();
+        stack.push(directory);
+        while(!stack.isEmpty()) {
+            File child = stack.pop();
+            if (child.isDirectory()) {
+                for(File file : child.listFiles())
+                    stack.push(file);
+            } else if (child.isFile()) {
+                fileList.add(child);
+            }
+        }
+        return fileList;
     }
 }
