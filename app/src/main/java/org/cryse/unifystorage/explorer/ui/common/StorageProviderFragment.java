@@ -6,12 +6,14 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -28,6 +30,7 @@ import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
 import com.afollestad.impression.widget.breadcrumbs.Crumb;
 import com.afollestad.materialcab.MaterialCab;
 import com.afollestad.materialcab.Util;
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
@@ -171,6 +174,23 @@ public abstract class StorageProviderFragment<
             mFabMenu.setVisibility(View.VISIBLE);
             mFabPaste.setVisibility(View.GONE);
         }
+        mFabNewDirectory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new MaterialDialog.Builder(getContext())
+                        .title(R.string.dialog_title_create_new_directory)
+                        .content(R.string.dialog_content_create_new_directory)
+                        .inputType(InputType.TYPE_CLASS_TEXT)
+                        .input(null, null, false, new MaterialDialog.InputCallback() {
+                            @Override
+                            public void onInput(MaterialDialog dialog, CharSequence input) {
+                                mViewModel.getStorageProvider().getStorageProvider().createDirectory(mViewModel.getDirectory().directory, input.toString());
+                            }
+                        })
+                        .show();
+                mFabMenu.close(true);
+            }
+        });
         mFabPaste.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -562,24 +582,10 @@ public abstract class StorageProviderFragment<
         int eventId = event.eventId();
         switch (eventId) {
             case EventConst.EVENT_ID_FILE_DELETE:
-                FileDeleteEvent fileDeleteEvent = (FileDeleteEvent) event;
-                if(fileDeleteEvent.providerId == this.mStorageProviderRecordId) {
-                    if (fileDeleteEvent.success) {
-                        mViewModel.onDeleteFileEvent(fileDeleteEvent);
-                    } else {
-                        Toast.makeText(getContext(), "Delete: " + fileDeleteEvent.fileName + " failed.", Toast.LENGTH_SHORT).show();
-                    }
-
-                }
+                onFileDeleteEvent((FileDeleteEvent) event);
                 break;
             case EventConst.EVENT_ID_FILE_DELETE_RESULT:
-                FileDeleteResultEvent fileDeleteResultEvent = (FileDeleteResultEvent) event;
-                if(fileDeleteResultEvent.providerId == this.mStorageProviderRecordId) {
-                    if(fileDeleteResultEvent.succes) {
-                    } else {
-                        Toast.makeText(getContext(), fileDeleteResultEvent.errorMessage, Toast.LENGTH_SHORT).show();
-                    }
-                }
+                onFileDeleteResultEvent((FileDeleteResultEvent) event);
                 break;
             case EventConst.EVENT_ID_SELECT_COPY_EVENT:
                 Toast.makeText(getContext(), String.format("Select %d files to copy.", CopyManager.getInstance().getCurrentCopyTask().fileToCopy.length), Toast.LENGTH_SHORT).show();
@@ -591,6 +597,26 @@ public abstract class StorageProviderFragment<
                 mFabMenu.setVisibility(View.VISIBLE);
                 mFabPaste.setVisibility(View.GONE);
                 break;
+        }
+    }
+
+    protected void onFileDeleteEvent(FileDeleteEvent fileDeleteEvent) {
+        if(fileDeleteEvent.providerId == this.mStorageProviderRecordId) {
+            if (fileDeleteEvent.success) {
+                mViewModel.onDeleteFileEvent(fileDeleteEvent);
+            } else {
+                Toast.makeText(getContext(), "Delete: " + fileDeleteEvent.fileName + " failed.", Toast.LENGTH_SHORT).show();
+            }
+
+        }
+    }
+
+    protected void onFileDeleteResultEvent(FileDeleteResultEvent fileDeleteResultEvent) {
+        if(fileDeleteResultEvent.providerId == this.mStorageProviderRecordId) {
+            if(fileDeleteResultEvent.succes) {
+            } else {
+                Toast.makeText(getContext(), fileDeleteResultEvent.errorMessage, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

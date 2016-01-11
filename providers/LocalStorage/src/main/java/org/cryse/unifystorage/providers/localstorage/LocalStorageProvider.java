@@ -5,7 +5,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.v4.provider.DocumentFile;
 import android.support.v4.util.Pair;
-import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.cryse.unifystorage.AbstractStorageProvider;
@@ -15,8 +14,6 @@ import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
-import org.cryse.unifystorage.io.ProgressInputStream;
-import org.cryse.unifystorage.io.StreamProgressListener;
 import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.IOUtils;
@@ -34,7 +31,6 @@ import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFile, LocalCredential> {
@@ -71,8 +67,6 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
         if(parent == null) return list();
 
         File file = new File(parent.getPath());
-        boolean isOnSdcard = isOnExtSdCard(mContext, file.getPath());
-        Log.e("LocalStorageProvider", String.format("File: [%s] %s", file.getName(), isOnSdcard ? "on Sdcard" : "not on Sdcard"));
         List<LocalStorageFile> list = new ArrayList<LocalStorageFile>();
         File[] children = file.listFiles();
         if(children != null) {
@@ -85,8 +79,15 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
 
     @Override
     public LocalStorageFile createDirectory(LocalStorageFile parent, String name) throws StorageException {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && isOnExtSdCard(mContext, parent.getPath())) {
+            DocumentFile documentFile = getDocumentFile(mContext, mSdcardUri, parent.getFile(), true);
+            DocumentFile newFile = documentFile.createDirectory(name);
+        } else {
+            File file = new File(Path.combine(parent.getPath(), name));
+            boolean res = file.mkdir();
+            if(!res) throw new StorageException();
+        }
         File file = new File(Path.combine(parent.getPath(), name));
-        file.mkdir();
         return new LocalStorageFile(file);
     }
 

@@ -4,12 +4,22 @@ package org.cryse.unifystorage.explorer.ui;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.FileObserver;
+import android.os.Handler;
+import android.support.annotation.Nullable;
+import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
+
+import com.owncloud.android.utils.RecursiveFileObserver;
 
 import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
+import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.model.StorageUriRecord;
 import org.cryse.unifystorage.explorer.ui.common.StorageProviderFragment;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
@@ -18,6 +28,9 @@ import org.cryse.unifystorage.providers.localstorage.LocalCredential;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageFile;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
+import org.cryse.unifystorage.utils.DirectoryInfo;
+
+import java.util.List;
 
 public class LocalStorageFragment extends StorageProviderFragment<
         LocalStorageFile,
@@ -28,6 +41,7 @@ public class LocalStorageFragment extends StorageProviderFragment<
     protected String mStartPath;
     private Uri mSdcardUri;
     protected boolean mOnSdCard;
+    private FileObserver mFileObserver;
 
     public static LocalStorageFragment newInstance(String startPath, int storageProviderRecordId) {
         LocalStorageFragment fragment = new LocalStorageFragment();
@@ -71,6 +85,45 @@ public class LocalStorageFragment extends StorageProviderFragment<
                 }
             }
         }
+        if (mFileObserver != null) {
+            mFileObserver.stopWatching();
+        }
+        mFileObserver = new RecursiveFileObserver(mStartPath) { // set up a file observer to watch this directory on sd card
+            @Override
+            public void onEvent(int event, String file) {
+                if ((event & MOVE_SELF) != 0) {
+                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                    Log.e(getLogTag(), String.format("Directory MOVE_SELF: %s", file));
+                }
+                if ((event & MOVED_FROM) != 0) {
+                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                    Log.e(getLogTag(), String.format("Directory MOVED_FROM: %s", file));
+                }
+                if ((event & DELETE) != 0) {
+                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                    Log.e(getLogTag(), String.format("Directory DELETE: %s", file));
+                }
+                if ((event & DELETE_SELF) != 0) {
+                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                    Log.e(getLogTag(), String.format("Directory DELETE_SELF: %s", file));
+                }
+                if ((event & MODIFY) != 0) {
+                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                    Log.e(getLogTag(), String.format("Directory MODIFY: %s", file));
+                }
+                if ((event & CREATE) != 0) {
+                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                    Log.e(getLogTag(), String.format("Directory CREATE: %s", file));
+                }
+            }
+        };
+        mFileObserver.startWatching(); //START OBSERVING
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -106,6 +159,16 @@ public class LocalStorageFragment extends StorageProviderFragment<
     }
 
     @Override
+    public void onDirectoryChanged(DirectoryInfo<LocalStorageFile, List<LocalStorageFile>> directory) {
+        super.onDirectoryChanged(directory);
+    }
+
+    @Override
+    protected void onFileDeleteEvent(FileDeleteEvent fileDeleteEvent) {
+        // super.onFileDeleteEvent(fileDeleteEvent);
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == RC_SDCARD_URI && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -128,5 +191,7 @@ public class LocalStorageFragment extends StorageProviderFragment<
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if(mFileObserver != null)
+            mFileObserver.stopWatching();
     }
 }
