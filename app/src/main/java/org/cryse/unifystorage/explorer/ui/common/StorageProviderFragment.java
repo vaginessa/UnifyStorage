@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.ActionBar;
@@ -29,8 +28,6 @@ import com.afollestad.appthemeengine.Config;
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
 import com.afollestad.impression.widget.breadcrumbs.Crumb;
 import com.afollestad.materialcab.MaterialCab;
-import com.afollestad.materialcab.Util;
-import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
@@ -120,7 +117,6 @@ public abstract class StorageProviderFragment<
     @Bind(R.id.fragment_storageprovider_fab_paste)
     FloatingActionButton mFabPaste;
 
-    private String mATEKey;
     private int mPrimaryColor;
     private int mAccentColor;
     private int mAccentColorDark;
@@ -132,7 +128,7 @@ public abstract class StorageProviderFragment<
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         readArguments();
-        mCollectionAdapter = new FileAdapter<>(getActivity());
+        mCollectionAdapter = new FileAdapter<>(getActivity(), mATEKey);
         mCollectionAdapter.setOnFileClickListener(this);
         mCollectionAdapter.setOnSelectionListener(this);
         mViewModel = buildViewModel(mCredential);
@@ -202,7 +198,6 @@ public abstract class StorageProviderFragment<
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mATEKey = Util.resolveString(getActivity(), R.attr.ate_key);
         applyColorToViews();
     }
 

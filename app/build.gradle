@@ -80,6 +80,10 @@ dependencies {
         transitive = true
     }
 
+    compile(libDependencies.materialdialog_commons) {
+        transitive = true
+    }
+
     compile(libDependencies.materialcab) {
         transitive = true
     }

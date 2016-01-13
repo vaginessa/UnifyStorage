@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -29,6 +30,7 @@ import org.cryse.unifystorage.providers.localstorage.LocalStorageFile;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
+import org.cryse.unifystorage.utils.Path;
 
 import java.util.List;
 
@@ -91,29 +93,39 @@ public class LocalStorageFragment extends StorageProviderFragment<
         mFileObserver = new RecursiveFileObserver(mStartPath) { // set up a file observer to watch this directory on sd card
             @Override
             public void onEvent(int event, String file) {
-                if ((event & MOVE_SELF) != 0) {
-                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
-                    Log.e(getLogTag(), String.format("Directory MOVE_SELF: %s", file));
-                }
-                if ((event & MOVED_FROM) != 0) {
-                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
-                    Log.e(getLogTag(), String.format("Directory MOVED_FROM: %s", file));
-                }
-                if ((event & DELETE) != 0) {
-                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
-                    Log.e(getLogTag(), String.format("Directory DELETE: %s", file));
-                }
-                if ((event & DELETE_SELF) != 0) {
-                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
-                    Log.e(getLogTag(), String.format("Directory DELETE_SELF: %s", file));
-                }
-                if ((event & MODIFY) != 0) {
-                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
-                    Log.e(getLogTag(), String.format("Directory MODIFY: %s", file));
-                }
-                if ((event & CREATE) != 0) {
-                    mViewModel.loadFiles(mViewModel.getDirectory().directory);
-                    Log.e(getLogTag(), String.format("Directory CREATE: %s", file));
+                if ((event & CLOSE_NOWRITE) != 0 || (event & OPEN) != 0) return;
+                if (mViewModel.getDirectory() != null && !TextUtils.isEmpty(file)) {
+                    String currentDirectoryPath = mViewModel.getDirectory().directory.getPath();
+                    if(Path.isEqualOrDirectChild(currentDirectoryPath, file)) {
+                        Log.e("FILE_EQUAL",
+                                String.format(
+                                        "onEvent:\n\t\tEvent: %08X\n\t\tParent: %s\n\t\tChild: %s",
+                                        event,
+                                        mViewModel.getDirectory().directory.getPath(),
+                                        file
+                                )
+                        );
+                        if ((event & MOVE_SELF) != 0) {
+                            mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                            Log.e(getLogTag(), String.format("Directory MOVE_SELF: %s", file));
+                        }
+                        if ((event & MOVED_FROM) != 0) {
+                            mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                            Log.e(getLogTag(), String.format("Directory MOVED_FROM: %s", file));
+                        }
+                        if ((event & DELETE) != 0) {
+                            mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                            Log.e(getLogTag(), String.format("Directory DELETE: %s", file));
+                        }
+                        if ((event & DELETE_SELF) != 0) {
+                        }
+                        if ((event & MODIFY) != 0) {
+                        }
+                        if ((event & CREATE) != 0) {
+                            mViewModel.loadFiles(mViewModel.getDirectory().directory);
+                            Log.e(getLogTag(), String.format("Directory CREATE: %s", file));
+                        }
+                    }
                 }
             }
         };

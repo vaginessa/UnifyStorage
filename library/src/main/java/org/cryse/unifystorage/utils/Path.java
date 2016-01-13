@@ -1,6 +1,10 @@
 package org.cryse.unifystorage.utils;
 
+import android.util.Log;
+
 import org.cryse.unifystorage.RemoteFile;
+
+import java.net.URI;
 
 public final class Path {
 
@@ -60,6 +64,15 @@ public final class Path {
         }
 
         return path;
+    }
+
+    public static boolean isEqualOrDirectChild(String path1, String path2) {
+        if(path2.startsWith(path1)) {
+            String relative = path2.replace(path1, "");
+            return relative.indexOf('/') == relative.lastIndexOf("/");
+        } else {
+            return false;
+        }
     }
 
     private static String emptyIfNull(String str){

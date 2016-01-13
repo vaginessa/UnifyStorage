@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Stack;
 
 import android.os.FileObserver;
+import android.text.TextUtils;
 
 public class RecursiveFileObserver extends FileObserver {
 
@@ -34,14 +35,20 @@ public class RecursiveFileObserver extends FileObserver {
     List<SingleFileObserver> mObservers;
     String mPath;
     int mMask;
+    int mMaxLevel;
 
     public RecursiveFileObserver(String path) {
-        this(path, ALL_EVENTS);
+        this(path, -1, ALL_EVENTS);
     }
 
-    public RecursiveFileObserver(String path, int mask) {
+    public RecursiveFileObserver(String path, int level) {
+        this(path, level, ALL_EVENTS);
+    }
+
+    public RecursiveFileObserver(String path, int level, int mask) {
         super(path, mask);
         mPath = path;
+        mMaxLevel = level;
         mMask = mask;
     }
 
@@ -52,6 +59,7 @@ public class RecursiveFileObserver extends FileObserver {
         Stack<String> stack = new Stack<String>();
         stack.push(mPath);
 
+        int currentLevel = 0;
         while (!stack.empty()) {
             String parent = stack.pop();
             mObservers.add(new SingleFileObserver(parent, mMask));
@@ -60,7 +68,7 @@ public class RecursiveFileObserver extends FileObserver {
             if (files == null) continue;
             for (int i = 0; i < files.length; ++i) {
                 if (files[i].isDirectory() && !files[i].getName().equals(".")
-                        && !files[i].getName().equals("..")) {
+                        && !files[i].getName().equals("..") && ((mMaxLevel >=0 && currentLevel < mMaxLevel)||(mMaxLevel < 0))) {
                     stack.push(files[i].getPath());
                 }
             }
@@ -95,7 +103,7 @@ public class RecursiveFileObserver extends FileObserver {
 
         @Override
         public void onEvent(int event, String path) {
-            String newPath = mPath + "/" + path;
+            String newPath = (TextUtils.isEmpty(path) ? "" : (mPath + "/" + path));
             RecursiveFileObserver.this.onEvent(event, newPath);
         }
 

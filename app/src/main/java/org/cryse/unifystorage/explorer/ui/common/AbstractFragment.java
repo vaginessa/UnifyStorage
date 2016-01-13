@@ -1,15 +1,14 @@
 package org.cryse.unifystorage.explorer.ui.common;
 
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.afollestad.appthemeengine.ATE;
-import com.afollestad.materialcab.Util;
 
-import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
 import org.cryse.unifystorage.explorer.utils.RxSubscriptionUtils;
@@ -22,10 +21,11 @@ import rx.schedulers.Schedulers;
 public abstract class AbstractFragment extends Fragment {
     RxEventBus mEventBus = RxEventBus.getInstance();
     private Subscription mEventBusSubscription;
-
+    protected String mATEKey;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mATEKey = getATEKey();
         mEventBusSubscription = mEventBus.toObservable()
                 .onBackpressureBuffer()
                 .subscribeOn(Schedulers.computation())
@@ -36,6 +36,12 @@ public abstract class AbstractFragment extends Fragment {
                         onEvent(abstractEvent);
                     }
                 });
+    }
+
+    @Nullable
+    protected final String getATEKey() {
+        return PreferenceManager.getDefaultSharedPreferences(getActivity()).getBoolean("dark_theme", false) ?
+                "dark_theme" : "light_theme";
     }
 
     @Override
@@ -51,9 +57,8 @@ public abstract class AbstractFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         // Apply theming to the Fragment view
-        ATE.apply(this, Util.resolveString(getActivity(), R.attr.ate_key));
+        ATE.apply(this, mATEKey);
     }
 
     public AppCompatActivity getAppCompatActivity() {

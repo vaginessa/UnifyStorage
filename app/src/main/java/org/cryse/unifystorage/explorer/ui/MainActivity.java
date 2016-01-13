@@ -160,8 +160,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 return false;
             }
         });
-        String key = Util.resolveString(this, R.attr.ate_key);
-        int primaryDark = Config.primaryColorDark(this, key);
+        int primaryDark = Config.primaryColorDark(this, mATEKey);
         mDrawer.setStatusBarColor(primaryDark);
     }
 
