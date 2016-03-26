@@ -28,4 +28,7 @@
     <dimen name="text_size_super_tiny">9sp</dimen>
     <dimen name="text_size_button">15sp</dimen>
     <!-- Font Size End-->
+
+    <dimen name="content_inset">16dp</dimen>
+    <dimen name="content_inset_half">8dp</dimen>
 </resources>

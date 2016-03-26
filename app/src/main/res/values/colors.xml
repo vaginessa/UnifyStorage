@@ -6,6 +6,8 @@
     <color name="colorPrimaryDarkDefault">#37474F</color>
     <color name="colorAccentDarkDefault">#2196F3</color>
 
+    <color name="scrim_inset_color">#0000</color>
+
     <color name="black_semi_transparent">#B2000000</color>
     <color name="background">#e5e5e5</color>
     <color name="half_black">#808080</color>

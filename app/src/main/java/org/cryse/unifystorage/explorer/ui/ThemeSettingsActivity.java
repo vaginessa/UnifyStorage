@@ -24,6 +24,7 @@ import com.afollestad.materialdialogs.prefs.MaterialListPreference;
 
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
+import org.cryse.unifystorage.explorer.ui.dialog.TextSizeDialog;
 
 /**
  * @author Aidan Follestad (afollestad)
@@ -35,6 +36,7 @@ public class ThemeSettingsActivity extends AbstractActivity
     @StyleRes
     @Override
     public int getActivityTheme() {
+        // Overrides what's set in the current ATE Config
         return PreferenceManager.getDefaultSharedPreferences(this).getBoolean("dark_theme", false) ?
                 R.style.AppThemeDark_ActionBar : R.style.AppTheme_ActionBar;
     }
@@ -48,6 +50,10 @@ public class ThemeSettingsActivity extends AbstractActivity
                 break;
             case R.string.accent_color:
                 config.accentColor(selectedColor);
+                // We've overridden the navigation view selected colors in the default config,
+                // which means we are responsible for keeping those colors up to date.
+                config.navigationViewSelectedIcon(selectedColor);
+                config.navigationViewSelectedText(selectedColor);
                 break;
             case R.string.primary_text_color:
                 config.textColorPrimary(selectedColor);
@@ -205,6 +211,35 @@ public class ThemeSettingsActivity extends AbstractActivity
                 navBarPref.setEnabled(false);
                 navBarPref.setSummary(R.string.not_available_below_lollipop);
             }
+
+            final Preference.OnPreferenceClickListener textsizeClickListener = new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    //noinspection ResourceType
+                    TextSizeDialog.show(getActivity(), preference.getKey(), mAteKey, preference.getTitleRes(), true);
+                    return false;
+                }
+            };
+
+            final Preference textsizeHeadline = findPreference("text_size|headline");
+            textsizeHeadline.setOnPreferenceClickListener(textsizeClickListener);
+            textsizeHeadline.setSummary(getString(R.string.headline_textsize_desc,
+                    TextSizeDialog.pxToSp(this, Config.textSizeForMode(getActivity(), mAteKey, Config.TEXTSIZE_HEADLINE))));
+
+            final Preference textsizeTitle = findPreference("text_size|title");
+            textsizeTitle.setOnPreferenceClickListener(textsizeClickListener);
+            textsizeTitle.setSummary(getString(R.string.title_textsize_desc,
+                    TextSizeDialog.pxToSp(this, Config.textSizeForMode(getActivity(), mAteKey, Config.TEXTSIZE_TITLE))));
+
+            final Preference textsizeSubheading = findPreference("text_size|subheading");
+            textsizeSubheading.setOnPreferenceClickListener(textsizeClickListener);
+            textsizeSubheading.setSummary(getString(R.string.subheading_textsize_desc,
+                    TextSizeDialog.pxToSp(this, Config.textSizeForMode(getActivity(), mAteKey, Config.TEXTSIZE_SUBHEADING))));
+
+            final Preference textsizeBody = findPreference("text_size|body");
+            textsizeBody.setOnPreferenceClickListener(textsizeClickListener);
+            textsizeBody.setSummary(getString(R.string.body_textsize_desc,
+                    TextSizeDialog.pxToSp(this, Config.textSizeForMode(getActivity(), mAteKey, Config.TEXTSIZE_BODY))));
         }
     }
 
