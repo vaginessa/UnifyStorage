@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimaryLightDefault">#FAFAFA</color>
+    <color name="colorLightPrimaryDefault">#2196F3</color>
+    <color name="colorLightPrimaryDarkDefault">#1976D2</color>
     <color name="colorAccentLightDefault">#E91E63</color>
 
-    <color name="colorPrimaryDarkDefault">#37474F</color>
-    <color name="colorAccentDarkDefault">#2196F3</color>
+    <color name="colorDarkPrimaryDefault">#607D8B</color>
+    <color name="colorDarkPrimaryDarkDefault">#455A64</color>
+    <color name="colorDarkAccentDefault">#2196F3</color>
 
     <color name="scrim_inset_color">#0000</color>
 

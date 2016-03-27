@@ -13,16 +13,12 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.afollestad.appthemeengine.ATE;
-import com.afollestad.appthemeengine.Config;
-import com.afollestad.appthemeengine.customizers.ATEStatusBarCustomizer;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
@@ -33,7 +29,6 @@ import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.AppPermissions;
-import org.cryse.unifystorage.explorer.application.UnifyStorageApplication;
 import org.cryse.unifystorage.explorer.databinding.ActivityMainBinding;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.service.LongOperationService;
@@ -51,8 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AbstractActivity implements EasyPermissions.PermissionCallbacks,
-        MainViewModel.DataListener,
-        ATEStatusBarCustomizer {
+        MainViewModel.DataListener {
     private static final int RC_AUTHENTICATE_ONEDRIVE = 101;
     private static final int RC_AUTHENTICATE_DROPBOX = 102;
     private ActivityMainBinding mBinding;
@@ -71,29 +65,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Default config
-        if (!ATE.config(this, "light_theme").isConfigured(1)) {
-            ATE.config(this, "light_theme")
-                    .activityTheme(R.style.AppTheme)
-                    .primaryColorRes(R.color.colorPrimaryLightDefault)
-                    .accentColorRes(R.color.colorAccentLightDefault)
-                    .lightToolbarMode(Config.LIGHT_TOOLBAR_AUTO)
-                    .coloredActionBar(true)
-                    .coloredNavigationBar(false)
-                    .usingMaterialDialogs(true)
-                    .commit();
-        }
-        if (!ATE.config(this, "dark_theme").isConfigured(1)) {
-            ATE.config(this, "dark_theme")
-                    .activityTheme(R.style.AppThemeDark)
-                    .primaryColorRes(R.color.colorPrimaryDarkDefault)
-                    .accentColorRes(R.color.colorAccentDarkDefault)
-                    .lightToolbarMode(Config.LIGHT_TOOLBAR_AUTO)
-                    .coloredActionBar(true)
-                    .coloredNavigationBar(true)
-                    .usingMaterialDialogs(true)
-                    .commit();
-        }
-
         super.onCreate(savedInstanceState);
         // setContentView(R.layout.activity_main);
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
@@ -162,7 +133,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 return false;
             }
         });
-        int primaryDark = Config.primaryColorDark(this, mATEKey);
         //mDrawer.setStatusBarColor(primaryDark);
     }
 
@@ -456,7 +426,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     private void showThemeSettingsActivity() {
-        startActivity(new Intent(MainActivity.this, ThemeSettingsActivity.class));
+        //startActivity(new Intent(MainActivity.this, ThemeSettingsActivity.class));
     }
 
     @Override
@@ -467,17 +437,5 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
 
     public LongOperationService.LongOperationBinder getLongOperationBinder() {
         return mLongOperationBinder;
-    }
-
-    @Override
-    public int getStatusBarColor() {
-        if(mDrawer != null && mDrawer.getDrawerLayout() != null)
-            mDrawer.getDrawerLayout().setStatusBarBackgroundColor(getPrimaryDarkColor());
-        return ResourcesCompat.getColor(getResources(), R.color.scrim_inset_color, null);
-    }
-
-    @Override
-    public int getLightStatusBarMode() {
-        return Config.lightStatusBarMode(UnifyStorageApplication.get(this), mATEKey);
     }
 }

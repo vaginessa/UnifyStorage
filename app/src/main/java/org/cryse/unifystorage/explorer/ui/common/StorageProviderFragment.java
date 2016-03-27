@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -23,8 +24,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.afollestad.appthemeengine.ATE;
-import com.afollestad.appthemeengine.Config;
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
 import com.afollestad.impression.widget.breadcrumbs.Crumb;
 import com.afollestad.materialcab.MaterialCab;
@@ -128,7 +127,7 @@ public abstract class StorageProviderFragment<
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         readArguments();
-        mCollectionAdapter = new FileAdapter<>(getActivity(), mATEKey);
+        mCollectionAdapter = new FileAdapter<>(getActivity());
         mCollectionAdapter.setOnFileClickListener(this);
         mCollectionAdapter.setOnSelectionListener(this);
         mViewModel = buildViewModel(mCredential);
@@ -202,7 +201,7 @@ public abstract class StorageProviderFragment<
     }
 
     private void applyColorToViews() {
-        mPrimaryColor = Config.primaryColor(getContext(), mATEKey);
+        /*mPrimaryColor = Config.primaryColor(getContext(), mATEKey);
         mToolbarContentColor = ResourceUtils.toolbarTextColor(getContext(), mATEKey, mToolbar);
         int textColorHint = ResourceUtils.adjustAlpha(mToolbarContentColor, 0.54f);
         int arrowColor = ResourceUtils.adjustAlpha(mToolbarContentColor, 1.0f);
@@ -210,7 +209,7 @@ public abstract class StorageProviderFragment<
         mBreadCrumbLayout.setCrumbInactiveColor(textColorHint);
         mBreadCrumbLayout.setArrowColor(arrowColor);
         mBreadCrumbLayout.setBackgroundColor(mPrimaryColor);
-        ATE.apply(mBreadCrumbLayout, mATEKey);
+        // ATE.apply(mBreadCrumbLayout, mATEKey);
         mAccentColor = Config.accentColor(getContext(), mATEKey);
         int colorDarken = ResourceUtils.makeColorDarken(mAccentColor, 0.8f);
         int colorDarken2 = ResourceUtils.makeColorDarken(mAccentColor, 0.9f);
@@ -221,7 +220,9 @@ public abstract class StorageProviderFragment<
         mFabMenu.getMenuIconView().setColorFilter(mFabIconColor, PorterDuff.Mode.SRC_ATOP);
         ResourceUtils.applyColorToFab(mFabNewDirectory, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_folder, mFabIconColor);
         ResourceUtils.applyColorToFab(mFabNewFile, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_file, mFabIconColor);
-        ResourceUtils.applyColorToFab(mFabPaste, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_action_paste, mFabIconColor);
+        ResourceUtils.applyColorToFab(mFabPaste, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_action_paste, mFabIconColor);*/
+        mFabNewDirectory.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_file_type_folder, Color.WHITE));
+        mFabNewFile.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_file_type_file, Color.WHITE));
     }
 
     @Override
@@ -262,7 +263,8 @@ public abstract class StorageProviderFragment<
         if(actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_action_menu_drawer);
+            Drawable indicatorDrawable = ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_action_menu_drawer, Color.WHITE);
+            actionBar.setHomeAsUpIndicator(indicatorDrawable);
         }
     }
 
@@ -500,7 +502,7 @@ public abstract class StorageProviderFragment<
     @Override
     public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
         MenuUtils.showMenuItemIcon(menu);
-        ATE.applyMenu(getActivity(), mATEKey, menu);
+        // ATE.applyMenu(getActivity(), mATEKey, menu);
         DrawableCompat.setTint(materialCab.getToolbar().getNavigationIcon(), mToolbarContentColor);
         return true;
     }

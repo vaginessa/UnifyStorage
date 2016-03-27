@@ -8,8 +8,6 @@ import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.widget.Toolbar;
 
-import com.afollestad.appthemeengine.Config;
-import com.afollestad.appthemeengine.util.Util;
 import com.github.clans.fab.FloatingActionButton;
 
 public class ResourceUtils {
@@ -19,31 +17,6 @@ public class ResourceUtils {
         int green = Color.green(color);
         int blue = Color.blue(color);
         return Color.argb(alpha, red, green, blue);
-    }
-
-    public static int toolbarTextColor(Context context, String key, Toolbar toolbar) {
-        boolean isLightMode;
-        @Config.LightToolbarMode
-        final int lightToolbarMode = Config.lightToolbarMode(context, key, toolbar);
-        final int toolbarColor = Config.toolbarColor(context, key, toolbar);
-        switch (lightToolbarMode) {
-            case Config.LIGHT_TOOLBAR_ON:
-                isLightMode = true;
-                break;
-            case Config.LIGHT_TOOLBAR_OFF:
-                isLightMode = false;
-                break;
-            default:
-            case Config.LIGHT_TOOLBAR_AUTO:
-                isLightMode = Util.isColorLight(toolbarColor);
-                break;
-        }
-
-        return isLightMode ? Color.BLACK : Color.WHITE;
-    }
-
-    public static boolean isColorLight(int color) {
-        return Util.isColorLight(color);
     }
 
     public static int makeColorDarken(int color, float factor) {
