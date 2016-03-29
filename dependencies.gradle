@@ -1,7 +1,7 @@
 ext {
     junitVersion = '4.12'
     supportLibraryVersion = '23.2.1'
-    gsonVersion = '2.4'
+    gsonVersion = '2.6.1'
     rxVersion = '1.1.0'
     realmVersion = '0.87.0'
     butterknifeVersion = '7.0.1'
@@ -15,6 +15,7 @@ ext {
     dropboxVersion = '2.0-beta-4'
     commonsioVersion = '2.4'
     fabVersion = '1.6.2'
+    retrofitVersion = '2.0.0'
 
     libDependencies = [
             // Test
@@ -39,6 +40,8 @@ ext {
 
             // Network
             okhttp: "com.squareup.okhttp:okhttp:$okhttpVersion",
+            retrofit: "com.squareup.retrofit2:retrofit:$retrofitVersion",
+            gsonConverter: "com.squareup.retrofit2:converter-gson:$retrofitVersion",
 
             // Database
             realm: "io.realm:realm-android:$realmVersion",

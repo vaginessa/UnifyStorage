@@ -1,6 +1,7 @@
 package org.cryse.unifystorage.providers.dropbox;
 
 import android.support.v4.util.Pair;
+import android.util.Log;
 
 import com.dropbox.core.DbxDownloader;
 import com.dropbox.core.DbxException;
@@ -9,6 +10,9 @@ import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.http.OkHttpRequestor;
 import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.DbxFiles;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 import org.cryse.unifystorage.AbstractStorageProvider;
 import org.cryse.unifystorage.ConflictBehavior;
@@ -17,24 +21,41 @@ import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
+import org.cryse.unifystorage.providers.dropbox.model.DropboxRawFile;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.Path;
 import org.cryse.unifystorage.utils.ProgressCallback;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import retrofit2.Call;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile, DropboxCredential> {
     private DbxClientV2 mDropboxClient;
+    private DropboxCredential mDropboxCredential;
     private DropboxFile mRootFile;
+    private Gson gson = new Gson();
+    Retrofit retrofit = new Retrofit.Builder()
+            .baseUrl("https://api.dropboxapi.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build();
+
+    DropboxService dropboxService = retrofit.create(DropboxService.class);
+
 
     public DropboxStorageProvider(DbxClientV2 mDropboxClient) {
         this.mDropboxClient = mDropboxClient;
     }
 
     public DropboxStorageProvider(DropboxCredential credential, String clientIdentifier) {
+        mDropboxCredential = credential;
         if (mDropboxClient == null) {
             String userLocale = Locale.getDefault().toString();
             DbxRequestConfig requestConfig = new DbxRequestConfig(
@@ -64,6 +85,30 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         try {
             List<DropboxFile> list = new ArrayList<DropboxFile>();
             String parentPath = parent.getPath().equalsIgnoreCase("/") ? "" : parent.getPath();
+            JsonObject requestData = new JsonObject();
+            requestData.addProperty("path", parentPath);
+            requestData.addProperty("recursive", false);
+            requestData.addProperty("include_media_info", false);
+            requestData.addProperty("include_deleted", false);
+            Call<JsonObject> call = dropboxService.listFolders("Bearer " + mDropboxCredential.getAccessSecret(), requestData);
+            try {
+                Response<JsonObject> response = call.execute();
+                int responseCode = response.code();
+                JsonObject responseObject = response.body();
+                if(responseCode == 200) {
+                    if(responseObject.has("entries")) {
+                        List<DropboxRawFile> fileMetas = gson.fromJson(responseObject.get("entries"), new TypeToken<List<DropboxRawFile>>(){}.getType());
+                        for(DbxFiles.Metadata metadata : listFolderResult.entries) {
+                            list.add(new DropboxFile(metadata));
+                        }
+                    }
+                } else {
+                    // Failure here
+                }
+                //String resultString = responseObject.toString();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             DbxFiles.ListFolderResult listFolderResult = mDropboxClient.files.listFolder(parentPath);
             for(DbxFiles.Metadata metadata : listFolderResult.entries) {
                 list.add(new DropboxFile(metadata));

@@ -6,12 +6,13 @@ import org.cryse.unifystorage.FileDetail;
 import org.cryse.unifystorage.FilePermission;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.RemoteFile;
+import org.cryse.unifystorage.providers.dropbox.model.DropboxRawFile;
 import org.cryse.unifystorage.utils.Path;
 
 import java.util.Date;
 
 public class DropboxFile implements RemoteFile {
-    private DbxFiles.Metadata metadata;
+    private DropboxRawFile metadata;
     private String id;
     private String name;
     private String path;
@@ -28,15 +29,15 @@ public class DropboxFile implements RemoteFile {
         isDirectory = true;
     }
 
-    public DropboxFile(DbxFiles.Metadata metadata) {
+    public DropboxFile(DropboxRawFile metadata) {
         init(metadata);
     }
 
     private void init(
-            DbxFiles.Metadata metadata
+            DropboxRawFile metadata
     ) {
         this.metadata = metadata;
-        if(metadata instanceof DbxFiles.FileMetadata) {
+        if(metadata.type.compareTo("file") == 0) {
             DbxFiles.FileMetadata fileMetadata = (DbxFiles.FileMetadata)metadata;
             id = fileMetadata.id;
             name = fileMetadata.name;
@@ -44,7 +45,7 @@ public class DropboxFile implements RemoteFile {
             lastModified = fileMetadata.serverModified.getTime();
             size = fileMetadata.size;
             isDirectory = false;
-        } else if (metadata instanceof DbxFiles.FolderMetadata) {
+        } else if (metadata.type.compareTo("folder") == 0) {
             DbxFiles.FolderMetadata folderMetadata = (DbxFiles.FolderMetadata)metadata;
             id = folderMetadata.id;
             name = folderMetadata.name;

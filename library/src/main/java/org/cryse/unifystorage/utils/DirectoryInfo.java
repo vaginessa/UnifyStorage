@@ -7,6 +7,8 @@ import java.util.List;
 public class DirectoryInfo<RF extends RemoteFile, FL extends List<RF>> {
     public final RF directory;
     public final FL files;
+    public String cursor;
+    public boolean hasMore;
 
     public DirectoryInfo(RF directory, FL files) {
         this.directory = directory;

@@ -17,7 +17,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.dropbox.core.DbxRequestUtil;
-import com.dropbox.core.android.AuthActivity;
 import com.dropbox.core.android.FixedSecureRandom;
 
 import org.cryse.unifystorage.credential.Credential;
@@ -467,9 +466,9 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
         mAuthStateNonce = null;
         Intent resultIntent = new Intent();
         if(authResult != null) {
-            String token = authResult.getStringExtra(AuthActivity.EXTRA_ACCESS_TOKEN);
-            String secret = authResult.getStringExtra(AuthActivity.EXTRA_ACCESS_SECRET);
-            String uid = authResult.getStringExtra(AuthActivity.EXTRA_UID);
+            String token = authResult.getStringExtra(EXTRA_ACCESS_TOKEN);
+            String secret = authResult.getStringExtra(EXTRA_ACCESS_SECRET);
+            String uid = authResult.getStringExtra(EXTRA_UID);
             DropboxCredential credential = new DropboxCredential(mAccountName, mAccountType, token, secret, uid);
             resultIntent.putExtra(Credential.RESULT_KEY, credential);
             setResult(RESULT_OK, resultIntent);
