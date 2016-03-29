@@ -66,7 +66,10 @@ public class ItemRemoteFileViewModel<RF extends RemoteFile> extends BaseObservab
     }
 
     public String getDetail2() {
-        return DateUtils.formatDateTime(mContext, mRemoteFile.lastModified(), DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME);
+        if(mRemoteFile.getLastModifiedTimeDate() != null)
+            return DateUtils.formatDateTime(mContext, mRemoteFile.lastModified(), DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME);
+        else
+            return "";
     }
 
     public Drawable getIcon() {

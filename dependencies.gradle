@@ -11,7 +11,7 @@ ext {
     materialDialogVersion = '0.8.5.7'
     materialCabVersion = '0.1.6'
     easyPermissionVersion = '0.1.0'
-    okhttpVersion = '2.4.0'
+    okhttpVersion = '3.2.0'
     dropboxVersion = '2.0-beta-4'
     commonsioVersion = '2.4'
     fabVersion = '1.6.2'
@@ -39,7 +39,8 @@ ext {
             rxandroid: "io.reactivex:rxandroid:$rxVersion",
 
             // Network
-            okhttp: "com.squareup.okhttp:okhttp:$okhttpVersion",
+            okhttp: "com.squareup.okhttp3:okhttp:$okhttpVersion",
+            okhttp_logging: "com.squareup.okhttp3:logging-interceptor:$okhttpVersion",
             retrofit: "com.squareup.retrofit2:retrofit:$retrofitVersion",
             gsonConverter: "com.squareup.retrofit2:converter-gson:$retrofitVersion",
 

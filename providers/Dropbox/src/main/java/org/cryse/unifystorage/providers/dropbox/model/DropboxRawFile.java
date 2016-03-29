@@ -6,23 +6,23 @@ import java.util.Date;
 
 public class DropboxRawFile {
     @SerializedName(".tag")
-    public String type; // could be file or folder
+    protected String type; // could be file or folder
     @SerializedName("name")
-    public String name;
+    protected String name;
     @SerializedName("path_lower")
-    public String pathLower;
+    protected String pathLower;
     @SerializedName("path_display")
-    public String pathDisplay;
+    protected String pathDisplay;
     @SerializedName("id")
-    public String id;
+    protected String id;
     @SerializedName("client_modified")
-    public Date clientModified;
+    protected Date clientModified;
     @SerializedName("server_modified")
-    public Date serverModified;
+    protected Date serverModified;
     @SerializedName("rev")
-    public String revision;
+    protected String revision;
     @SerializedName("size")
-    public long size;
+    protected long size;
     @SerializedName("sharing_info")
-    public DropboxSharingInfo sharingInfo;
+    protected DropboxSharingInfo sharingInfo;
 }

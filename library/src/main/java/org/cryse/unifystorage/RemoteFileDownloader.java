@@ -1,6 +1,6 @@
 package org.cryse.unifystorage;
 
-import com.squareup.okhttp.OkHttpClient;
+import okhttp3.OkHttpClient;
 
 import org.cryse.unifystorage.io.ProgressInputStream;
 
