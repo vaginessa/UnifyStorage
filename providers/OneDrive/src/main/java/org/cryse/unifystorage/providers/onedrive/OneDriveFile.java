@@ -2,72 +2,25 @@ package org.cryse.unifystorage.providers.onedrive;
 
 import android.text.TextUtils;
 
-import com.google.gson.JsonObject;
-import com.onedrive.sdk.extensions.Item;
-
 import org.cryse.unifystorage.FileDetail;
 import org.cryse.unifystorage.FilePermission;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.RemoteFile;
+import org.cryse.unifystorage.providers.onedrive.model.Item;
 import org.cryse.unifystorage.utils.hash.Sha1HashAlgorithm;
 
 import java.util.Date;
 
-public class OneDriveFile implements RemoteFile {
+public class OneDriveFile extends Item implements RemoteFile {
     public static final String ROOT_PATH = "/drive/root:";
-    private String id;
-    private String name;
-    private String path;
-    private long size;
-    private String downloadUrl;
-    private String type;
-    private String hash;
-    private boolean isDirectory;
-    private Date lastModified;
-    private Date createTime;
-    private Item model;
 
     /**
      * Creates an instance of RemoteFile
      *
-     * @param oneDriveItem OneDrive item metadata.
      */
-    protected OneDriveFile(Item oneDriveItem) {
-        initializeValue(oneDriveItem);
+    protected OneDriveFile() {
     }
 
-    private boolean initializeValue(Item oneDriveItem) {
-        this.model = oneDriveItem;
-        this.id = oneDriveItem.id;
-        this.name = oneDriveItem.name;
-        if(this.name.equalsIgnoreCase("root") && !oneDriveItem.getRawObject().has("parentReference"))
-            this.path = "/";
-        else if(oneDriveItem.getRawObject().has("parentReference") ) {
-            JsonObject parentReference = oneDriveItem.getRawObject().getAsJsonObject("parentReference");
-            if (parentReference.has("path")) {
-                this.path = parentReference.get("path").getAsString();
-                if(!this.path.endsWith("/"))
-                    this.path = this.path + "/" + this.name;
-                if (path.startsWith("/drive/root:"))
-                    this.path = this.path.substring("/drive/root:".length());
-                if(!this.path.startsWith("/"))
-                    this.path = "/" + this.path;
-            }
-        }
-        if(TextUtils.isEmpty(this.path)) this.path = "name";
-        if(oneDriveItem.getRawObject().has("@content.downloadUrl"))
-            this.downloadUrl = oneDriveItem.getRawObject().get("@content.downloadUrl").getAsString();
-        if(oneDriveItem.file != null) {
-            if(!TextUtils.isEmpty(oneDriveItem.file.mimeType))
-                this.type = oneDriveItem.file.mimeType;
-            this.hash = oneDriveItem.file.hashes.sha1Hash;
-        }
-        this.isDirectory = oneDriveItem.folder != null;
-        this.size = oneDriveItem.size;
-        this.lastModified = oneDriveItem.lastModifiedDateTime.getTime();
-        this.createTime = oneDriveItem.createdDateTime.getTime();
-        return true;
-    }
 
     @Override
     public boolean needsDownload() {
@@ -81,12 +34,24 @@ public class OneDriveFile implements RemoteFile {
 
     @Override
     public String getPath() {
+        String path = null;
+        if (parentReference != null) {
+            path = parentReference.path;
+            if(!path.endsWith("/"))
+                path = path + "/" + name;
+            if (path.startsWith("/drive/root:"))
+                path = path.substring("/drive/root:".length());
+            if(!path.startsWith("/"))
+                path = "/" + path;
+        } else if(name.compareTo("root") == 0) {
+            path = "/";
+        }
         return path;
     }
 
     @Override
     public boolean isDirectory() {
-        return isDirectory;
+        return folder != null;
     }
 
     @Override
@@ -96,7 +61,10 @@ public class OneDriveFile implements RemoteFile {
 
     @Override
     public String getHash() {
-        return hash;
+        if(file != null && file.hashes != null) {
+            return file.hashes.sha1Hash;
+        }
+        return null;
     }
 
     @Override
@@ -106,37 +74,52 @@ public class OneDriveFile implements RemoteFile {
 
     @Override
     public String getFileType() {
-        return type;
+        if(file != null && !TextUtils.isEmpty(file.mimeType)) {
+            return file.mimeType;
+        }
+        return null;
     }
 
     @Override
     public long lastModified() {
-        return lastModified.getTime();
+        if(lastModifiedDateTime != null)
+            return lastModifiedDateTime.getTimeInMillis();
+        else
+            return 0;
     }
 
     @Override
     public Date getLastModifiedTimeDate() {
-        return lastModified;
+        if(lastModifiedDateTime != null)
+            return lastModifiedDateTime.getTime();
+        else
+            return null;
     }
 
     @Override
     public long getCreateTime() {
-        return createTime.getTime();
+        if(createdDateTime != null)
+            return createdDateTime.getTimeInMillis();
+        else
+            return 0;
     }
 
     @Override
     public Date getCreateTimeDate() {
-        return createTime;
+        if(createdDateTime != null)
+            return createdDateTime.getTime();
+        else
+            return null;
     }
 
     @Override
     public String getUrl() {
-        return downloadUrl;
+        return null;
     }
 
     public String getParentDirectoryPath() {
-        if(model.parentReference != null && !TextUtils.isEmpty(model.parentReference.path))
-            return model.parentReference.path;
+        if(parentReference != null && !TextUtils.isEmpty(parentReference.path))
+            return parentReference.path;
         else
             return ROOT_PATH;
     }

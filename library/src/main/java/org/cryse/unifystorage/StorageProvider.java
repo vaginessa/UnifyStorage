@@ -69,11 +69,13 @@ public interface StorageProvider<RF extends RemoteFile, CR extends Credential> {
 
     StorageUserInfo getUserInfo(boolean forceRefresh) throws StorageException;
 
-    CR getRefreshedCredential();
-
     RemoteFileDownloader<RF> download(RF file) throws StorageException;
 
-    boolean shouldRefreshCredential();
-
     HashAlgorithm getHashAlgorithm() throws StorageException;
+
+    void setOnTokenRefreshListener(OnTokenRefreshListener<CR> listener);
+
+    interface OnTokenRefreshListener<CR> {
+        void onTokenRefresh(CR refreshedCredential);
+    }
 }

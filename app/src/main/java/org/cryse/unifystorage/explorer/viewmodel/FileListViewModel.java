@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.databinding.ObservableField;
 import android.databinding.ObservableInt;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.v4.content.FileProvider;
 import android.support.v4.util.Pair;
 import android.util.Log;
@@ -68,6 +69,7 @@ public class FileListViewModel<
     private List<RF> mHiddenFiles;
     private DataListener<RF, CR> mDataListener;
     private Subscription mLoadFilesSubscription;
+    private Subscription mCreateFolderSubscription;
     private Subscription mDownloadFileSubscription;
 
     private RxStorageProvider<RF, CR, SP> mStorageProvider;
@@ -118,9 +120,25 @@ public class FileListViewModel<
                     @Override
                     public void onSuccess(SP storageProvider) {
                         mStorageProvider = new RxStorageProvider<>(storageProvider);
-                        if(mStorageProvider.shouldRefreshCredential() && mDataListener != null) {
-                                mDataListener.onCredentialRefreshed(storageProvider.getRefreshedCredential());
-                        }
+                        storageProvider.setOnTokenRefreshListener(new StorageProvider.OnTokenRefreshListener<CR>() {
+                            @Override
+                            public void onTokenRefresh(CR refreshedCredential) {
+                                if (mUnifyStorageDatabase != null) {
+                                    mStorageProviderRecord.setCredentialData(refreshedCredential.persist());
+                                    Handler mainHandler = new Handler(mContext.getMainLooper());
+
+                                    Runnable myRunnable = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            mUnifyStorageDatabase.updateStorageProviderRecord(mStorageProviderRecord);
+                                        }
+                                    };
+                                    mainHandler.post(myRunnable);
+                                }
+                                FileListViewModel.this.mCredential = refreshedCredential;
+                                mDataListener.onCredentialRefreshed(refreshedCredential);
+                            }
+                        });
                         if(mDataListener != null)
                             mDataListener.onStorageProviderReady();
                         loadFiles(null);
@@ -128,7 +146,7 @@ public class FileListViewModel<
 
                     @Override
                     public void onFailure(Throwable error) {
-
+                        Log.e("SSSS", error.getMessage());
                     }
                 }
         );
@@ -165,6 +183,35 @@ public class FileListViewModel<
                         handleFileSort(files);
                         handleHiddenFile(files);
                         FileListViewModel.this.mDirectory = files;
+                    }
+                });
+    }
+
+    public void createDirectory(RF parent, String name) {
+        RxSubscriptionUtils.checkAndUnsubscribe(mCreateFolderSubscription);
+        UnifyStorageApplication application = UnifyStorageApplication.get(mContext);
+        mCreateFolderSubscription = mStorageProvider.createDirectory(parent, name)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(application.defaultSubscribeScheduler())
+                .subscribe(new Subscriber<RF>() {
+                    @Override
+                    public void onCompleted() {
+                        if (mDataListener != null) mDataListener.onDirectoryChanged(mDirectory);
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                    }
+
+                    @Override
+                    public void onNext(RF newDirectory) {
+                        Log.i(TAG, "Files loaded " + newDirectory);
+                        // Here need some improvement.
+                        FileListViewModel.this.mDirectory.files.add(newDirectory);
+                        FileListViewModel.this.mDirectory.files.addAll(mHiddenFiles);
+                        mHiddenFiles.clear();
+                        handleFileSort(FileListViewModel.this.mDirectory);
+                        handleHiddenFile(FileListViewModel.this.mDirectory);
                     }
                 });
     }

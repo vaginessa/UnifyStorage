@@ -179,7 +179,7 @@ public abstract class StorageProviderFragment<
                         .input(null, null, false, new MaterialDialog.InputCallback() {
                             @Override
                             public void onInput(MaterialDialog dialog, CharSequence input) {
-                                mViewModel.getStorageProvider().getStorageProvider().createDirectory(mViewModel.getDirectory().directory, input.toString());
+                                mViewModel.createDirectory(mViewModel.getDirectory().directory, input.toString());
                             }
                         })
                         .show();

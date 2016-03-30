@@ -300,18 +300,8 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public LocalCredential getRefreshedCredential() {
-        return null;
-    }
-
-    @Override
     public RemoteFileDownloader<LocalStorageFile> download(LocalStorageFile file) throws StorageException {
         return null;
-    }
-
-    @Override
-    public boolean shouldRefreshCredential() {
-        return false;
     }
 
     @Override

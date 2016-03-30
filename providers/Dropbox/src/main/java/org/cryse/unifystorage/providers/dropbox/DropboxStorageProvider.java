@@ -40,18 +40,9 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     private String mAuthenticationHeader = "";
 
 
-    HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY);
-    OkHttpClient client = new OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .build();
-
-    Retrofit retrofit = new Retrofit.Builder()
-            .baseUrl("https:" + DropboxService.SUBDOMAIN_API)
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build();
-
-    DropboxService dropboxService = retrofit.create(DropboxService.class);
+    HttpLoggingInterceptor loggingInterceptor;
+    OkHttpClient client;
+    DropboxService dropboxService;
 
 
     /*public DropboxStorageProvider(DbxClientV2 mDropboxClient) {
@@ -62,6 +53,20 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         mDropboxCredential = credential;
         if (mDropboxCredential != null)
             mAuthenticationHeader = "Bearer " + mDropboxCredential.getAccessSecret();
+        loggingInterceptor = new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY);
+        client = new OkHttpClient.Builder()
+                .addInterceptor(loggingInterceptor)
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https:" + DropboxService.SUBDOMAIN_API)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        dropboxService = retrofit.create(DropboxService.class);
+
+
         /*if (mDropboxClient == null) {
             String userLocale = Locale.getDefault().toString();
             *//*DbxRequestConfig requestConfig = new DbxRequestConfig(
@@ -296,11 +301,6 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public DropboxCredential getRefreshedCredential() {
-        return null;
-    }
-
-    @Override
     public RemoteFileDownloader<DropboxFile> download(DropboxFile file) throws StorageException {
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .download(file.getPath())
@@ -321,11 +321,6 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         } catch (IOException ex) {
             throw new StorageException(ex);
         }
-    }
-
-    @Override
-    public boolean shouldRefreshCredential() {
-        return false;
     }
 
     @Override

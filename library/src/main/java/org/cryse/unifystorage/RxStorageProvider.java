@@ -475,14 +475,6 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public CR getRefreshedCredential() {
-        return mStorageProvider.getRefreshedCredential();
-    }
-
-    public boolean shouldRefreshCredential() {
-        return mStorageProvider.shouldRefreshCredential();
-    }
-
     public SP getStorageProvider() {
         return mStorageProvider;
     }

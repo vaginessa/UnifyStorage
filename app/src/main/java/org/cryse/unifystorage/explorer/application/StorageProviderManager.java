@@ -136,14 +136,14 @@ public class StorageProviderManager {
 
                         @Override
                         public void onNext(SP storageProvider) {
-                            if (storageProvider.shouldRefreshCredential() && id >= 0) {
+                            /*if (storageProvider.shouldRefreshCredential() && id >= 0) {
                                 StorageProviderRecord record = mUnifyStorageDatabase.getSavedStorageProvider(id);
                                 CR newCredential = storageProvider.getRefreshedCredential();
                                 if (mUnifyStorageDatabase != null) {
                                     record.setCredentialData(newCredential.persist());
                                     mUnifyStorageDatabase.updateStorageProviderRecord(record);
                                 }
-                            }
+                            }*/
                             mStorageProviderMap.put(id, storageProvider);
                             callback.onSuccess(storageProvider);
                         }

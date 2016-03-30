@@ -25,7 +25,11 @@ dependencies {
     testCompile libDependencies.junit
     compile project(':library')
 
-    compile libDependencies.gson
     compile libDependencies.msa_auth
     compile libDependencies.onedrive
+    compile libDependencies.okhttp
+    compile libDependencies.okhttp_logging
+    compile libDependencies.retrofit
+    compile libDependencies.gson
+    compile libDependencies.gsonConverter
 }

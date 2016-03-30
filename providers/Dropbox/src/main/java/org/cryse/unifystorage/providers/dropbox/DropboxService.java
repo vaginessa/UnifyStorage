@@ -10,8 +10,8 @@ import retrofit2.http.Headers;
 import retrofit2.http.POST;
 
 public interface DropboxService {
-    String SUBDOMAIN_API = "api.dropboxapi.com";
-    String SUBDOMAIN_CONTENT = "content.dropboxapi.com";
+    String SUBDOMAIN_API = "api.dropboxapi.com/";
+    String SUBDOMAIN_CONTENT = "content.dropboxapi.com/";
     @POST("2/files/list_folder")
     @Headers({
             "Content-Type: application/json"

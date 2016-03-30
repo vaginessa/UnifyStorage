@@ -89,6 +89,12 @@ public abstract class OAuth2Credential extends Credential {
         this.expiresIn = expiresIn;
     }
 
+    public boolean isExpired() {
+        if(expiresIn == null) return false;
+        if(new Date().after(expiresIn)) return true;
+        else return false;
+    }
+
     public void setScopes(Iterable<String> scopes) {
         final Iterable<String> oldValue = this.scopes;
 

@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.util.List;
 
 public abstract class AbstractStorageProvider<R extends RemoteFile, CR extends Credential> implements StorageProvider<R, CR> {
+    protected OnTokenRefreshListener<CR> mOnTokenRefreshListener = null;
+
     public abstract R getRootDirectory() throws StorageException;
 
     public abstract DirectoryInfo<R, List<R>> list(R parent) throws StorageException;
@@ -101,5 +103,9 @@ public abstract class AbstractStorageProvider<R extends RemoteFile, CR extends C
 
     public ConflictBehavior getDefaultConflictBehavior() {
         return ConflictBehavior.FAIL;
+    }
+
+    public void setOnTokenRefreshListener(OnTokenRefreshListener<CR> listener) {
+        this.mOnTokenRefreshListener = listener;
     }
 }

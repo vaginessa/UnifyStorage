@@ -60,7 +60,7 @@ public class OneDriveStorageFragment extends StorageProviderFragment<
                 new StorageProviderBuilder<OneDriveFile, OneDriveCredential, OneDriveStorageProvider>() {
                     @Override
                     public OneDriveStorageProvider buildStorageProvider(OneDriveCredential credential) {
-                        return new OneDriveStorageProvider(getActivity(), DataContract.CONST_ONEDRIVE_CLIENT_ID, credential);
+                        return new OneDriveStorageProvider(DataContract.CONST_ONEDRIVE_CLIENT_ID, "", "", credential);
                     }
                 },
                 this
