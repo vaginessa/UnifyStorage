@@ -3,17 +3,12 @@ package org.cryse.unifystorage.providers.dropbox;
 import android.os.Parcel;
 import android.text.TextUtils;
 
-import com.dropbox.core.android.Auth;
-
 import org.cryse.unifystorage.credential.OAuth2Credential;
 import org.cryse.unifystorage.utils.JsonUtils;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 
 public class DropboxCredential extends OAuth2Credential {
     private String accessSecret;

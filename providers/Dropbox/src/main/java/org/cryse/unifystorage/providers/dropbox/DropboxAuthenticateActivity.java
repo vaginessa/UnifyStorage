@@ -16,10 +16,9 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import com.dropbox.core.DbxRequestUtil;
-import com.dropbox.core.android.FixedSecureRandom;
-
 import org.cryse.unifystorage.credential.Credential;
+import org.cryse.unifystorage.providers.dropbox.utils.FixedSecureRandom;
+import org.cryse.unifystorage.utils.RequestUtils;
 
 import java.security.SecureRandom;
 import java.util.List;
@@ -116,7 +115,7 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
 
     /**
      * Provider of the local security needs of an AuthActivity.
-     * <p>
+     *
      * <p>
      * You shouldn't need to use this class directly in your app.  Instead,
      * simply configure {@code java.security}'s providers to match your preferences.
@@ -139,9 +138,7 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
     };
     private static final Object sSecurityProviderLock = new Object();
 
-    /**
-     * Used internally.
-     */
+    /** Used internally. */
     public static Intent result = null;
 
     // These instance variables need not be stored in savedInstanceState as onNewIntent()
@@ -164,14 +161,14 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
      * Create an intent which can be sent to this activity to start OAuth 2 authentication.
      *
      * @param context the source context
-     * @param appKey  the consumer key for the app
+     * @param appKey the consumer key for the app
      * @param webHost the host to use for web authentication, or null for the default
      * @param apiType an identifier for the type of API being supported, or null for
-     *                the default
+     *  the default
+     *
      * @return a newly created intent.
      */
-    public static Intent makeIntent(Context context, String appKey, String webHost,
-                                    String apiType) {
+    public static Intent makeIntent(Context context, String appKey, String webHost, String apiType) {
         if (appKey == null) throw new IllegalArgumentException("'appKey' can't be null");
         return new Intent(context, DropboxAuthenticateActivity.class);
     }
@@ -182,10 +179,11 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
      * If another app on the device is conflicting with this one,
      * the user will (optionally) be alerted and false will be returned.
      *
-     * @param context   the app context
-     * @param appKey    the consumer key for the app
+     * @param context the app context
+     * @param appKey the consumer key for the app
      * @param alertUser whether to alert the user for the case where
-     *                  multiple apps are conflicting.
+     *  multiple apps are conflicting.
+     *
      * @return {@code true} if this app is properly set up for authentication.
      */
     public static boolean checkAppBeforeAuth(Context context, String appKey, boolean alertUser) {
@@ -250,7 +248,7 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
      * Sets the SecurityProvider interface to use for all AuthActivity instances.
      * If set to null (or never set at all), default {@code java.security} providers
      * will be used instead.
-     * <p>
+     *
      * <p>
      * You shouldn't need to use this method directly in your app.  Instead,
      * simply configure {@code java.security}'s providers to match your preferences.
@@ -430,8 +428,7 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
                         secret = uri.getQueryParameter("oauth_token_secret");
                         uid = uri.getQueryParameter("uid");
                         state = uri.getQueryParameter("state");
-                    } catch (UnsupportedOperationException e) {
-                    }
+                    } catch (UnsupportedOperationException e) {}
                 }
             }
         }
@@ -530,7 +527,7 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
                 "api", mApiType,
                 "state", state};
 
-        String url = DbxRequestUtil.buildUrlWithParams(locale.toString(), mWebHost, path, params);
+        String url = RequestUtils.buildUrlWithParams(locale.toString(), mWebHost, path, params);
 
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         startActivity(intent);
@@ -577,7 +574,7 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
         StringBuilder sb = new StringBuilder();
         sb.append("oauth2:");
         for (int i = 0; i < NONCE_BYTES; ++i) {
-            sb.append(String.format("%02x", (randomBytes[i] & 0xff)));
+            sb.append(String.format("%02x", (randomBytes[i]&0xff)));
         }
         return sb.toString();
     }

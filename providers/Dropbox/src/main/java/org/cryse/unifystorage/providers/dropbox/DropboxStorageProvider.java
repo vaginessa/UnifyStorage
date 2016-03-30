@@ -227,6 +227,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
                 fileMetaData = gson.fromJson(responseObject, DropboxFile.class);
             } else {
                 // Failure here
+
             }
             //String resultString = responseObject.toString();
         } catch (IOException ex) {
