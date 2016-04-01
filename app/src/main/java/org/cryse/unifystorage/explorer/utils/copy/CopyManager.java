@@ -33,7 +33,7 @@ public class CopyManager {
         return mCurrentCopyTask != null;
     }
 
-    public <RF extends RemoteFile> void setCopyTask(CopyTask<RF> copyTask) {
+    public void setCopyTask(CopyTask copyTask) {
         this.mCurrentCopyTask = copyTask;
         RxEventBus.getInstance().sendEvent(new SelectCopyEvent());
     }

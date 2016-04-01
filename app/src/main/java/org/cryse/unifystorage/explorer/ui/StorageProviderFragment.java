@@ -1,28 +1,22 @@
 package org.cryse.unifystorage.explorer.ui;
 
-
 import android.os.Bundle;
 
+import org.cryse.unifystorage.StorageProvider;
+import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
-import org.cryse.unifystorage.explorer.ui.common.StorageProviderFragment;
+import org.cryse.unifystorage.explorer.ui.common.AbstractStorageProviderFragment;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
-import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
-import org.cryse.unifystorage.providers.dropbox.DropboxFile;
-import org.cryse.unifystorage.providers.dropbox.DropboxStorageProvider;
 
-public class DropboxStorageFragment extends StorageProviderFragment<
-        DropboxFile,
-        DropboxCredential,
-        DropboxStorageProvider
-        > {
-
-    public static DropboxStorageFragment newInstance(DropboxCredential credential, int storageProviderRecordId) {
-        DropboxStorageFragment fragment = new DropboxStorageFragment();
+public class StorageProviderFragment extends AbstractStorageProviderFragment {
+    public static StorageProviderFragment newInstance(Credential credential, int storageProviderRecordId, String...extraArgs) {
+        StorageProviderFragment fragment = new StorageProviderFragment();
         Bundle args = new Bundle();
         args.putParcelable(DataContract.ARG_CREDENTIAL, credential);
         args.putInt(DataContract.ARG_STORAGE_PROVIDER_RECORD_ID, storageProviderRecordId);
+        args.putStringArray(DataContract.ARG_EXTRAS, extraArgs);
         fragment.setArguments(args);
         return fragment;
     }
@@ -33,6 +27,7 @@ public class DropboxStorageFragment extends StorageProviderFragment<
         if (args.containsKey(DataContract.ARG_CREDENTIAL) && args.containsKey(DataContract.ARG_STORAGE_PROVIDER_RECORD_ID)) {
             mCredential = args.getParcelable(DataContract.ARG_CREDENTIAL);
             mStorageProviderRecordId = args.getInt(DataContract.ARG_STORAGE_PROVIDER_RECORD_ID);
+            mExtras = args.getStringArray(DataContract.ARG_EXTRAS);
         } else {
             throw new RuntimeException("Invalid credential.");
         }
@@ -40,30 +35,25 @@ public class DropboxStorageFragment extends StorageProviderFragment<
 
     @Override
     protected String getLogTag() {
-        return DropboxStorageFragment.class.getSimpleName();
+        return StorageProviderFragment.class.getSimpleName();
     }
 
     @Override
-    protected Class<DropboxFile> getRemoteFileClass() {
-        return DropboxFile.class;
-    }
-
-    @Override
-    protected FileListViewModel<DropboxFile, DropboxCredential, DropboxStorageProvider> buildViewModel(DropboxCredential credential) {
-        return new FileListViewModel<>(
+    protected FileListViewModel buildViewModel(Credential credential) {
+        return new FileListViewModel(
                 getContext(),
                 mStorageProviderRecordId,
                 credential,
-                new StorageProviderBuilder<DropboxFile, DropboxCredential, DropboxStorageProvider>() {
+                new StorageProviderBuilder() {
                     @Override
-                    public DropboxStorageProvider buildStorageProvider(DropboxCredential credential) {
-                        return (DropboxStorageProvider) StorageProviderManager
+                    public StorageProvider buildStorageProvider(Credential credential) {
+                        return StorageProviderManager
                                 .getInstance()
                                 .createStorageProvider(
                                         getActivity(),
                                         mStorageProviderRecordId,
                                         credential,
-                                        DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER
+                                        mExtras[0]
                                 );
                     }
                 },

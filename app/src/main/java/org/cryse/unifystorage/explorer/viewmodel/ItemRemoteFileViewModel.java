@@ -12,14 +12,14 @@ import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.utils.FileSizeUtils;
 
-public class ItemRemoteFileViewModel<RF extends RemoteFile> extends BaseObservable implements ViewModel {
+public class ItemRemoteFileViewModel extends BaseObservable implements ViewModel {
 
     protected Context mContext;
-    protected RF mRemoteFile;
+    protected RemoteFile mRemoteFile;
     protected int mAdapterPosition;
-    private FileAdapter.OnFileClickListener<RF> mOnFileClickListener;
+    private FileAdapter.OnFileClickListener mOnFileClickListener;
 
-    public ItemRemoteFileViewModel(Context context, int adapterPosition, RF remoteFile) {
+    public ItemRemoteFileViewModel(Context context, int adapterPosition, RemoteFile remoteFile) {
         this.mContext = context;
         this.mAdapterPosition = adapterPosition;
         this.mRemoteFile = remoteFile;
@@ -29,11 +29,11 @@ public class ItemRemoteFileViewModel<RF extends RemoteFile> extends BaseObservab
         return mContext;
     }
 
-    public void setRemoteFile(RF remoteFile) {
+    public void setRemoteFile(RemoteFile remoteFile) {
         this.mRemoteFile = remoteFile;
     }
 
-    public RF getRemoteFile() {
+    public RemoteFile getRemoteFile() {
         return mRemoteFile;
     }
 
@@ -93,7 +93,7 @@ public class ItemRemoteFileViewModel<RF extends RemoteFile> extends BaseObservab
         return true;
     }
 
-    public void setOnFileClickListener(FileAdapter.OnFileClickListener<RF> onFileClickListener) {
+    public void setOnFileClickListener(FileAdapter.OnFileClickListener onFileClickListener) {
         this.mOnFileClickListener = onFileClickListener;
     }
 

@@ -1,81 +1,78 @@
 package org.cryse.unifystorage;
 
-import android.support.v4.util.Pair;
-
 import org.cryse.unifystorage.credential.Credential;
-import org.cryse.unifystorage.io.StreamProgressListener;
+import org.cryse.unifystorage.utils.OperationResult;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.ProgressCallback;
 
 import java.io.InputStream;
-import java.util.List;
 
-public interface StorageProvider<RF extends RemoteFile, CR extends Credential> {
+public interface StorageProvider {
     String getStorageProviderName();
 
-    RF getRootDirectory() throws StorageException;
+    RemoteFile getRootDirectory() throws StorageException;
 
-    DirectoryInfo<RF, List<RF>> list(RF parent) throws StorageException;
+    DirectoryInfo list(RemoteFile parent) throws StorageException;
 
-    DirectoryInfo<RF, List<RF>> list() throws StorageException;
+    DirectoryInfo list() throws StorageException;
 
-    RF createDirectory(RF parent, String name) throws StorageException;
+    RemoteFile createDirectory(RemoteFile parent, String name) throws StorageException;
 
-    RF createDirectory(String name) throws StorageException;
+    RemoteFile createDirectory(String name) throws StorageException;
 
-    RF createFile(RF parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException;
+    RemoteFile createFile(RemoteFile parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException;
 
-    RF createFile(RF parent, String name, InputStream input) throws StorageException;
+    RemoteFile createFile(RemoteFile parent, String name, InputStream input) throws StorageException;
 
-    RF createFile(String name, InputStream input) throws StorageException;
+    RemoteFile createFile(String name, InputStream input) throws StorageException;
 
-    RF createFile(RF parent, String name, LocalFile file, ConflictBehavior behavior) throws StorageException;
+    RemoteFile createFile(RemoteFile parent, String name, LocalFile file, ConflictBehavior behavior) throws StorageException;
 
-    RF createFile(RF parent, String name, LocalFile file) throws StorageException;
+    RemoteFile createFile(RemoteFile parent, String name, LocalFile file) throws StorageException;
 
-    RF createFile(String name, LocalFile file) throws StorageException;
+    RemoteFile createFile(String name, LocalFile file) throws StorageException;
 
-    boolean exists(RF parent, String name) throws StorageException;
+    boolean exists(RemoteFile parent, String name) throws StorageException;
 
     boolean exists(String name) throws StorageException;
 
-    RF getFile(RF parent, String name) throws StorageException;
+    RemoteFile getFile(RemoteFile parent, String name) throws StorageException;
 
-    RF getFile(String name) throws StorageException;
+    RemoteFile getFile(String name) throws StorageException;
 
-    RF getFileById(String id) throws StorageException;
+    RemoteFile getFileById(String id) throws StorageException;
 
-    RF updateFile(RF remote, InputStream input, FileUpdater updater) throws StorageException;
+    RemoteFile updateFile(RemoteFile remote, InputStream input, FileUpdater updater) throws StorageException;
 
-    RF updateFile(RF remote, InputStream input) throws StorageException;
+    RemoteFile updateFile(RemoteFile remote, InputStream input) throws StorageException;
 
-    RF updateFile(RF remote, LocalFile local, FileUpdater updater) throws StorageException;
+    RemoteFile updateFile(RemoteFile remote, LocalFile local, FileUpdater updater) throws StorageException;
 
-    RF updateFile(RF remote, LocalFile local) throws StorageException;
+    RemoteFile updateFile(RemoteFile remote, LocalFile local) throws StorageException;
 
-    Pair<RF, Boolean> deleteFile(RF file);
+    OperationResult deleteFile(RemoteFile file);
 
-    void copyFile(RF target, final ProgressCallback callback, RF...files);
+    void copyFile(RemoteFile target, final ProgressCallback callback, RemoteFile...files);
 
-    void moveFile(RF target, final ProgressCallback callback, RF...files);
+    void moveFile(RemoteFile target, final ProgressCallback callback, RemoteFile...files);
 
-    RF getFileDetail(RF file) throws StorageException;
+    RemoteFile getFileDetail(RemoteFile file) throws StorageException;
 
-    RF getFilePermission(RF file) throws StorageException;
+    RemoteFile getFilePermission(RemoteFile file) throws StorageException;
 
-    RF updateFilePermission(RF file) throws StorageException;
+    RemoteFile updateFilePermission(RemoteFile file) throws StorageException;
 
     StorageUserInfo getUserInfo() throws StorageException;
 
     StorageUserInfo getUserInfo(boolean forceRefresh) throws StorageException;
 
-    RemoteFileDownloader<RF> download(RF file) throws StorageException;
+    RemoteFileDownloader download(RemoteFile file) throws StorageException;
 
     HashAlgorithm getHashAlgorithm() throws StorageException;
 
-    void setOnTokenRefreshListener(OnTokenRefreshListener<CR> listener);
+    void setOnTokenRefreshListener(OnTokenRefreshListener listener);
 
-    interface OnTokenRefreshListener<CR> {
-        void onTokenRefresh(CR refreshedCredential);
+    interface OnTokenRefreshListener {
+        void onTokenRefresh(Credential refreshedCredential);
     }
 }

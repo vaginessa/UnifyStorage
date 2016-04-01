@@ -5,15 +5,15 @@ import org.cryse.unifystorage.utils.DirectoryInfo;
 
 import java.util.List;
 
-public class BrowserState<RF extends RemoteFile> {
-    public DirectoryInfo<RF, List<RF>> directory;
+public class BrowserState {
+    public DirectoryInfo directory;
     public CollectionViewState collectionViewState;
 
     public BrowserState() {
 
     }
 
-    public BrowserState(DirectoryInfo<RF, List<RF>> directory, CollectionViewState collectionViewState, List<RF> hiddenFiles) {
+    public BrowserState(DirectoryInfo directory, CollectionViewState collectionViewState, List<RemoteFile> hiddenFiles) {
         this.directory = directory;
         this.collectionViewState = collectionViewState;
         this.directory.files.addAll(hiddenFiles);

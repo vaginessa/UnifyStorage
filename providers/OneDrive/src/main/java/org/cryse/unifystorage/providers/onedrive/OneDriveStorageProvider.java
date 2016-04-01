@@ -8,6 +8,7 @@ import com.google.gson.reflect.TypeToken;
 
 import org.cryse.unifystorage.AbstractStorageProvider;
 import org.cryse.unifystorage.ConflictBehavior;
+import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
@@ -15,6 +16,7 @@ import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
 import org.cryse.unifystorage.providers.onedrive.model.RefreshToken;
 import org.cryse.unifystorage.utils.DirectoryInfo;
+import org.cryse.unifystorage.utils.OperationResult;
 import org.cryse.unifystorage.utils.Path;
 import org.cryse.unifystorage.utils.ProgressCallback;
 import org.cryse.unifystorage.utils.hash.Sha1HashAlgorithm;
@@ -32,7 +34,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFile, OneDriveCredential> {
+public class OneDriveStorageProvider extends AbstractStorageProvider {
     public static final String NAME = OneDriveConst.NAME_STORAGE_PROVIDER;
     private String mClientId;
     private OneDriveFile mRootFile;
@@ -128,7 +130,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public OneDriveFile getRootDirectory() throws StorageException {
+    public RemoteFile getRootDirectory() throws StorageException {
         if(mRootFile == null) {
             checkCredential();
             Call<JsonObject> call = mOneDriveService.getDriveRoot(mAuthenticationHeader);
@@ -151,7 +153,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public DirectoryInfo<OneDriveFile, List<OneDriveFile>> list(OneDriveFile parent) throws StorageException {
+    public DirectoryInfo list(RemoteFile parent) throws StorageException {
         /*List<Item> children = mOneDriveClient
                 .getDrive()
                 .getItems(parent.getId())
@@ -159,7 +161,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
                 .buildRequest()
                 .get()
                 .getCurrentPage();*/
-        List<OneDriveFile> list = new ArrayList<OneDriveFile>();
+        List<RemoteFile> list = new ArrayList<RemoteFile>();
         /*for (final Item childItem : children) {
             list.add(new OneDriveFile(childItem));
         }*/
@@ -203,7 +205,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public OneDriveFile createDirectory(OneDriveFile parent, String name) throws StorageException {
+    public RemoteFile createDirectory(RemoteFile parent, String name) throws StorageException {
         OneDriveFile fileMetaData = null;
         JsonObject requestData = new RequestDataBuilder()
                 .createFolder(name, "fail")
@@ -227,7 +229,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public OneDriveFile createFile(OneDriveFile parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException {
+    public RemoteFile createFile(RemoteFile parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException {
         try {
             /*final Option option = new QueryOption("@name.conflictBehavior", conflictBehaviorToString(behavior));
             Item newItem = mOneDriveClient
@@ -245,7 +247,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public boolean exists(OneDriveFile parent, String name) throws StorageException {
+    public boolean exists(RemoteFile parent, String name) throws StorageException {
         OneDriveFile fileMetaData = null;
         Call<JsonObject> call = mOneDriveService.getMetaDataByPath(mAuthenticationHeader, Path.combine(parent.getPath(), name));
         try {
@@ -266,7 +268,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public OneDriveFile getFile(OneDriveFile parent, String name) throws StorageException {
+    public RemoteFile getFile(RemoteFile parent, String name) throws StorageException {
         OneDriveFile fileMetaData = null;
         Call<JsonObject> call = mOneDriveService.getMetaDataByPath(mAuthenticationHeader, Path.combine(parent.getPath(), name));
         try {
@@ -301,7 +303,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public OneDriveFile updateFile(OneDriveFile remote, InputStream input, FileUpdater updater) throws StorageException {
+    public OneDriveFile updateFile(RemoteFile remote, InputStream input, FileUpdater updater) throws StorageException {
         try {
             /*final Option option = new QueryOption("@name.conflictBehavior", conflictBehaviorToString(ConflictBehavior.REPLACE));
             Item newItem = mOneDriveClient
@@ -319,7 +321,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public Pair<OneDriveFile, Boolean> deleteFile(OneDriveFile file) {
+    public OperationResult deleteFile(RemoteFile file) {
         OneDriveFile fileMetaData = null;
         Call<JsonObject> call = mOneDriveService.deleteById(mAuthenticationHeader, file.getId());
         try {
@@ -327,10 +329,10 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
             int responseCode = response.code();
             JsonObject responseObject = response.body();
             if (responseCode == 204) {
-                return Pair.create(file, true);
+                return OperationResult.create(file, true);
             } else {
                 // Failure here
-                return Pair.create(file, false);
+                return OperationResult.create(file, false);
             }
             //String resultString = responseObject.toString();
         } catch (IOException ex) {
@@ -339,7 +341,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public void copyFile(OneDriveFile target, final ProgressCallback callback, OneDriveFile...files) throws StorageException {
+    public void copyFile(RemoteFile target, final ProgressCallback callback, RemoteFile...files) throws StorageException {
         /*final ItemReference parentReference = new ItemReference();
         parentReference.id = target.getId();
 
@@ -389,22 +391,22 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public void moveFile(OneDriveFile targe, final ProgressCallback callback, OneDriveFile...files) throws StorageException {
+    public void moveFile(RemoteFile targe, final ProgressCallback callback, RemoteFile...files) throws StorageException {
 
     }
 
     @Override
-    public OneDriveFile getFileDetail(OneDriveFile file) throws StorageException {
+    public RemoteFile getFileDetail(RemoteFile file) throws StorageException {
         return null;
     }
 
     @Override
-    public OneDriveFile getFilePermission(OneDriveFile file) throws StorageException {
+    public RemoteFile getFilePermission(RemoteFile file) throws StorageException {
         return null;
     }
 
     @Override
-    public OneDriveFile updateFilePermission(OneDriveFile file) throws StorageException {
+    public RemoteFile updateFilePermission(RemoteFile file) throws StorageException {
         return null;
     }
 
@@ -439,7 +441,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
     }
 
     @Override
-    public RemoteFileDownloader<OneDriveFile> download(OneDriveFile file) throws StorageException {
+    public RemoteFileDownloader download(RemoteFile file) throws StorageException {
         checkCredential();
         Call<ResponseBody> call = mOneDriveService.downloadById(mAuthenticationHeader, file.getId());
         try {
@@ -447,7 +449,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider<OneDriveFil
             int responseCode = response.code();
             ResponseBody responseBody = response.body();
             if (responseCode == 200) {
-                return new RemoteFileDownloader<>(file, responseBody.byteStream());
+                return new RemoteFileDownloader(file, responseBody.byteStream());
             } else {
                 // Failure here
                 throw new StorageException();

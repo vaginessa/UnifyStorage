@@ -1,18 +1,18 @@
 package org.cryse.unifystorage.providers.dropbox;
 
-import android.support.v4.util.Pair;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import org.cryse.unifystorage.AbstractStorageProvider;
 import org.cryse.unifystorage.ConflictBehavior;
+import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
+import org.cryse.unifystorage.utils.OperationResult;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.Path;
 import org.cryse.unifystorage.utils.ProgressCallback;
@@ -30,7 +30,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile, DropboxCredential> {
+public class DropboxStorageProvider extends AbstractStorageProvider {
     // private DbxClientV2 mDropboxClient;
     private DropboxCredential mDropboxCredential;
     private DropboxFile mRootFile;
@@ -95,7 +95,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public DropboxFile getRootDirectory() throws StorageException {
+    public RemoteFile getRootDirectory() throws StorageException {
         if (mRootFile == null) {
             mRootFile = new DropboxFile();
         }
@@ -103,9 +103,9 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public DirectoryInfo<DropboxFile, List<DropboxFile>> list(DropboxFile parent) throws StorageException {
+    public DirectoryInfo list(RemoteFile parent) throws StorageException {
         /*try {*/
-        List<DropboxFile> list = new ArrayList<DropboxFile>();
+        List<RemoteFile> list = new ArrayList<RemoteFile>();
         String parentPath = getPathString(parent);
 
         JsonObject requestData = new DropboxRequestDataBuilder()
@@ -153,7 +153,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public DropboxFile createDirectory(DropboxFile parent, String name) throws StorageException {
+    public DropboxFile createDirectory(RemoteFile parent, String name) throws StorageException {
         DropboxFile fileMetaData = null;
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .createFolder(Path.combine(parent.getPath(), name))
@@ -176,12 +176,12 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public DropboxFile createFile(DropboxFile parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException {
+    public DropboxFile createFile(RemoteFile parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException {
         return null;
     }
 
     @Override
-    public boolean exists(DropboxFile parent, String name) throws StorageException {
+    public boolean exists(RemoteFile parent, String name) throws StorageException {
         DropboxFile fileMetaData = null;
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .getMetaData(Path.combine(parent.getPath(), name))
@@ -205,7 +205,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public DropboxFile getFile(DropboxFile parent, String name) throws StorageException {
+    public DropboxFile getFile(RemoteFile parent, String name) throws StorageException {
         DropboxFile fileMetaData = null;
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .getMetaData(Path.combine(parent.getPath(), name))
@@ -252,12 +252,12 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public DropboxFile updateFile(DropboxFile remote, InputStream input, FileUpdater updater) throws StorageException {
+    public DropboxFile updateFile(RemoteFile remote, InputStream input, FileUpdater updater) throws StorageException {
         return null;
     }
 
     @Override
-    public Pair<DropboxFile, Boolean> deleteFile(DropboxFile file) {
+    public OperationResult deleteFile(RemoteFile file) {
         DropboxFile fileMetaData = null;
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .delete(file.getPath())
@@ -271,37 +271,37 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
                 fileMetaData = gson.fromJson(responseObject, DropboxFile.class);
             } else {
                 // Failure here
-                return Pair.create(file, false);
+                return OperationResult.create((RemoteFile) file, false);
             }
             //String resultString = responseObject.toString();
         } catch (IOException ex) {
             throw new StorageException(ex);
         }
-        return Pair.create(file, null != fileMetaData);
+        return OperationResult.create((RemoteFile) file, null != fileMetaData);
     }
 
     @Override
-    public void copyFile(DropboxFile target, ProgressCallback callback, DropboxFile... files) {
-
-    }
-
-    @Override
-    public void moveFile(DropboxFile target, ProgressCallback callback, DropboxFile... files) {
+    public void copyFile(RemoteFile target, ProgressCallback callback, RemoteFile... files) {
 
     }
 
     @Override
-    public DropboxFile getFileDetail(DropboxFile file) throws StorageException {
+    public void moveFile(RemoteFile target, ProgressCallback callback, RemoteFile... files) {
+
+    }
+
+    @Override
+    public DropboxFile getFileDetail(RemoteFile file) throws StorageException {
         return null;
     }
 
     @Override
-    public DropboxFile getFilePermission(DropboxFile file) throws StorageException {
+    public DropboxFile getFilePermission(RemoteFile file) throws StorageException {
         return null;
     }
 
     @Override
-    public DropboxFile updateFilePermission(DropboxFile file) throws StorageException {
+    public DropboxFile updateFilePermission(RemoteFile file) throws StorageException {
         return null;
     }
 
@@ -311,7 +311,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     }
 
     @Override
-    public RemoteFileDownloader<DropboxFile> download(DropboxFile file) throws StorageException {
+    public RemoteFileDownloader download(RemoteFile file) throws StorageException {
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .download(file.getPath())
                 .build();
@@ -321,7 +321,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
             int responseCode = response.code();
             ResponseBody responseBody = response.body();
             if (responseCode == 200) {
-                return new RemoteFileDownloader<>(file, responseBody.byteStream());
+                return new RemoteFileDownloader(file, responseBody.byteStream());
             } else {
                 // Failure here
                 throw new StorageException();
@@ -337,7 +337,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         return null;
     }
 
-    private static String getPathString(DropboxFile file) {
+    private static String getPathString(RemoteFile file) {
         if(file == null) return "";
         else if(file.getPath() == null) return "";
         else return file.getPath().equalsIgnoreCase("/") ? "" : file.getPath();

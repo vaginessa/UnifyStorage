@@ -268,22 +268,33 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     public void navigateToInternalStorage() {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(Environment.getExternalStorageDirectory().getAbsolutePath(), DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE);
+        LocalStorageFragment fragment = LocalStorageFragment.newInstance(
+                DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE,
+                Environment.getExternalStorageDirectory().getAbsolutePath()
+        );
         switchContentFragment(fragment, null);
     }
 
     public void navigateToOtherLocalStorage(String path, int storageProviderRecordId) {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(path, storageProviderRecordId);
+        LocalStorageFragment fragment = LocalStorageFragment.newInstance(storageProviderRecordId, path);
         switchContentFragment(fragment, null);
     }
 
     public void navigateToOneDriveStorage(OneDriveCredential credential, int storageProviderRecordId) {
-        OneDriveStorageFragment fragment = OneDriveStorageFragment.newInstance(credential, storageProviderRecordId);
+        StorageProviderFragment fragment = StorageProviderFragment.newInstance(
+                credential,
+                storageProviderRecordId,
+                DataContract.CONST_ONEDRIVE_CLIENT_ID
+        );
         switchContentFragment(fragment, null);
     }
 
     public void navigateToDropboxStorage(DropboxCredential credential, int storageProviderRecordId) {
-        DropboxStorageFragment fragment = DropboxStorageFragment.newInstance(credential, storageProviderRecordId);
+        StorageProviderFragment fragment = StorageProviderFragment.newInstance(
+                credential,
+                storageProviderRecordId,
+                DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER
+        );
         switchContentFragment(fragment, null);
     }
 

@@ -1,7 +1,6 @@
 package org.cryse.unifystorage.explorer.utils;
 
 import org.apache.commons.io.FileUtils;
-import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.io.ProgressInputStream;
 import org.cryse.unifystorage.io.StreamProgressListener;
@@ -16,7 +15,7 @@ import rx.Subscriber;
 
 public class DownloadUtils {
     public static final String TAG = DownloadUtils.class.getCanonicalName();
-    public static <RF extends RemoteFile> Observable<Long> download(final RemoteFileDownloader<RF> downloader, final String targetPath) {
+    public static Observable<Long> download(final RemoteFileDownloader downloader, final String targetPath) {
         return Observable.create(new Observable.OnSubscribe<Long>() {
             @Override
             public void call(final Subscriber<? super Long> subscriber) {

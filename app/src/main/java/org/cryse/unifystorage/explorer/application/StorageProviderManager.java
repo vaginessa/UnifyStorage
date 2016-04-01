@@ -9,12 +9,10 @@ import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
-import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
 import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
 import org.cryse.unifystorage.providers.dropbox.DropboxStorageProvider;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
-import org.cryse.unifystorage.providers.onedrive.OneDriveConst;
 import org.cryse.unifystorage.providers.onedrive.OneDriveCredential;
 import org.cryse.unifystorage.providers.onedrive.OneDriveStorageProvider;
 import org.cryse.unifystorage.utils.Path;
@@ -26,24 +24,13 @@ import java.util.Map;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
-import rx.Observable;
-import rx.Subscriber;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
-import rx.subscriptions.CompositeSubscription;
 
 public class StorageProviderManager {
     private static StorageProviderManager instance;
     HttpLoggingInterceptor mLoggingInterceptor;
     OkHttpClient mOkHttpClient;
 
-
-    Map<Integer, StorageProvider> mStorageProviderMap = new Hashtable<>();
     private UnifyStorageDatabase mUnifyStorageDatabase;
-    private CompositeSubscription mBuildProviderSubscriptions = new CompositeSubscription();
 
     public static void init(Context context) {
         if (instance == null) {
@@ -113,15 +100,6 @@ public class StorageProviderManager {
         return mUnifyStorageDatabase.getSavedStorageProviders();
     }
 
-    public <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
-    SP loadStorageProvider(final int id) {
-        if (mStorageProviderMap.containsKey(id)) {
-            return (SP) mStorageProviderMap.get(id);
-        } else {
-            return null;
-        }
-    }
-
     public StorageProvider createStorageProvider(Context context, int id, Credential credential, Object...extra) {
         if(id < 0) {
             return new LocalStorageProvider(context, (String)extra[0]);
@@ -151,73 +129,11 @@ public class StorageProviderManager {
         }
     }
 
-    public <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
-    void loadStorageProvider(
-            final int id,
-            final StorageProviderBuilder<RF, CR, SP> builder,
-            final CR credential,
-            final OnLoadStorageProviderCallback<RF, CR, SP> callback
-    ) {
-        if (mStorageProviderMap.containsKey(id)) {
-            callback.onSuccess((SP) mStorageProviderMap.get(id));
-        } else {
-            Subscription subscription = Observable.create(new Observable.OnSubscribe<SP>() {
-                @Override
-                public void call(Subscriber<? super SP> subscriber) {
-                    try {
-                        SP storageProvider = builder.buildStorageProvider(credential);
-                        subscriber.onNext(storageProvider);
-                        subscriber.onCompleted();
-                    } catch (Throwable throwable) {
-                        subscriber.onError(throwable);
-                    }
-                }
-            })
-                    .subscribeOn(Schedulers.computation())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Subscriber<SP>() {
-                        @Override
-                        public void onCompleted() {
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            callback.onFailure(e);
-                        }
-
-                        @Override
-                        public void onNext(SP storageProvider) {
-                            /*if (storageProvider.shouldRefreshCredential() && id >= 0) {
-                                StorageProviderRecord record = mUnifyStorageDatabase.getSavedStorageProvider(id);
-                                CR newCredential = storageProvider.getRefreshedCredential();
-                                if (mUnifyStorageDatabase != null) {
-                                    record.setCredentialData(newCredential.persist());
-                                    mUnifyStorageDatabase.updateStorageProviderRecord(record);
-                                }
-                            }*/
-                            mStorageProviderMap.put(id, storageProvider);
-                            callback.onSuccess(storageProvider);
-                        }
-                    });
-            mBuildProviderSubscriptions.add(subscription);
-        }
-
-    }
-
     private void destroyManager() {
-        if(mBuildProviderSubscriptions.hasSubscriptions() && !mBuildProviderSubscriptions.isUnsubscribed())
-            mBuildProviderSubscriptions.unsubscribe();
-        mStorageProviderMap.clear();
     }
 
     public static void destroy() {
         if(instance != null)
             instance.destroyManager();
-    }
-
-    public interface OnLoadStorageProviderCallback<RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>> {
-        void onSuccess(SP storageProvider);
-
-        void onFailure(Throwable error);
     }
 }

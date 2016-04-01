@@ -1,22 +1,23 @@
 package org.cryse.unifystorage.explorer.service;
 
 import org.cryse.unifystorage.RemoteFile;
+import org.cryse.unifystorage.credential.Credential;
 
-public class FileOperation<RF extends RemoteFile> {
+public class FileOperation {
     public enum FileOperationCode {
         COPY, MOVE, DELETE, RENAME, UPLOAD, DOWNLOAD, COMPRESS, UNCOMPRESS
     }
 
     private FileOperationCode mCode;
     private int mOperationId;
-    private int mStorageProviderId;
-    private RF mTarget;
-    private RF[] mFiles;
+    private StorageProviderInfo mStorageProviderInfo;
+    private RemoteFile mTarget;
+    private RemoteFile[] mFiles;
 
-    public FileOperation(FileOperationCode code, int operationId, int storageProviderId, RF target, RF...files) {
+    public FileOperation(FileOperationCode code, int operationId, StorageProviderInfo storageProviderInfo, RemoteFile target, RemoteFile...files) {
         this.mCode = code;
         this.mOperationId = operationId;
-        this.mStorageProviderId = storageProviderId;
+        this.mStorageProviderInfo = storageProviderInfo;
         this.mTarget = target;
         this.mFiles = files;
     }
@@ -29,15 +30,27 @@ public class FileOperation<RF extends RemoteFile> {
         return mOperationId;
     }
 
-    public int getStorageProviderId() {
-        return mStorageProviderId;
+    public StorageProviderInfo getStorageProviderInfo() {
+        return mStorageProviderInfo;
     }
 
-    public RF getTarget() {
+    public RemoteFile getTarget() {
         return mTarget;
     }
 
-    public RF[] getFiles() {
+    public RemoteFile[] getFiles() {
         return mFiles;
+    }
+
+    public static class StorageProviderInfo {
+        public int id;
+        public Credential credential;
+        public String[] extras;
+
+        public StorageProviderInfo(int id, Credential credential, String[] extras) {
+            this.id = id;
+            this.credential = credential;
+            this.extras = extras;
+        }
     }
 }
