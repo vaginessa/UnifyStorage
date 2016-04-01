@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.DataContract;
+import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.ui.common.StorageProviderFragment;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
@@ -60,7 +61,15 @@ public class OneDriveStorageFragment extends StorageProviderFragment<
                 new StorageProviderBuilder<OneDriveFile, OneDriveCredential, OneDriveStorageProvider>() {
                     @Override
                     public OneDriveStorageProvider buildStorageProvider(OneDriveCredential credential) {
-                        return new OneDriveStorageProvider(DataContract.CONST_ONEDRIVE_CLIENT_ID, "", "", credential);
+
+                        return (OneDriveStorageProvider) StorageProviderManager
+                                .getInstance()
+                                .createStorageProvider(
+                                        getActivity(),
+                                        mStorageProviderRecordId,
+                                        credential,
+                                        DataContract.CONST_ONEDRIVE_CLIENT_ID
+                                );
                     }
                 },
                 this

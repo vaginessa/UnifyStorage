@@ -10,7 +10,13 @@ import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
+import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
+import org.cryse.unifystorage.providers.dropbox.DropboxStorageProvider;
+import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
+import org.cryse.unifystorage.providers.onedrive.OneDriveConst;
+import org.cryse.unifystorage.providers.onedrive.OneDriveCredential;
+import org.cryse.unifystorage.providers.onedrive.OneDriveStorageProvider;
 import org.cryse.unifystorage.utils.Path;
 
 import java.util.ArrayList;
@@ -18,6 +24,10 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
 import rx.Subscriber;
 import rx.Subscription;
@@ -27,6 +37,10 @@ import rx.subscriptions.CompositeSubscription;
 
 public class StorageProviderManager {
     private static StorageProviderManager instance;
+    HttpLoggingInterceptor mLoggingInterceptor;
+    OkHttpClient mOkHttpClient;
+
+
     Map<Integer, StorageProvider> mStorageProviderMap = new Hashtable<>();
     private UnifyStorageDatabase mUnifyStorageDatabase;
     private CompositeSubscription mBuildProviderSubscriptions = new CompositeSubscription();
@@ -47,6 +61,10 @@ public class StorageProviderManager {
 
     protected StorageProviderManager(Context context) {
         mUnifyStorageDatabase = UnifyStorageDatabase.getInstance();
+        mLoggingInterceptor = new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY);
+        mOkHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(mLoggingInterceptor)
+                .build();
     }
 
     public void addStorageProviderRecord(String displayName, String userName, int providerType, String credentialData, String extraData) {
@@ -87,6 +105,10 @@ public class StorageProviderManager {
         return localList;
     }
 
+    public StorageProviderRecord loadStorageProviderRecord(int id) {
+        return mUnifyStorageDatabase.getSavedStorageProvider(id);
+    }
+
     public List<StorageProviderRecord> loadStorageProviderRecords() {
         return mUnifyStorageDatabase.getSavedStorageProviders();
     }
@@ -97,6 +119,35 @@ public class StorageProviderManager {
             return (SP) mStorageProviderMap.get(id);
         } else {
             return null;
+        }
+    }
+
+    public StorageProvider createStorageProvider(Context context, int id, Credential credential, Object...extra) {
+        if(id < 0) {
+            return new LocalStorageProvider(context, (String)extra[0]);
+            // Local Storage Provider
+            /*if(id == DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE) {
+                // Internal Storage
+                return new LocalStorageProvider(context, (String)extra[0]);
+            } else if(id < DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START) {
+                // External Storage or Other Local Storage
+                return new LocalStorageProvider(context, (String)extra[0]);
+            }*/
+        } else {
+            // Other StorageProvider
+            StorageProvider storageProvider = null;
+            StorageProviderRecord record = mUnifyStorageDatabase.getSavedStorageProvider(id);
+            switch (record.getProviderType()) {
+                case StorageProviderRecord.PROVIDER_DROPBOX:
+                    storageProvider = new DropboxStorageProvider(mOkHttpClient, (DropboxCredential) credential, (String)extra[0]);
+                    break;
+                case StorageProviderRecord.PROVIDER_ONE_DRIVE:
+                    storageProvider = new OneDriveStorageProvider(mOkHttpClient, (OneDriveCredential) credential, (String)extra[0]);
+                    break;
+                case StorageProviderRecord.PROVIDER_GOOGLE_DRIVE:
+                    break;
+            }
+            return storageProvider;
         }
     }
 

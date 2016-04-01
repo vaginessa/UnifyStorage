@@ -112,44 +112,30 @@ public class FileListViewModel<
         mRecyclerViewVisibility.set(View.INVISIBLE);
         mInfoMessageVisibility.set(View.INVISIBLE);
 
-        StorageProviderManager.getInstance().loadStorageProvider(
-                mStorageProviderRecordId,
-                mProviderBuilder,
-                mCredential,
-                new StorageProviderManager.OnLoadStorageProviderCallback<RF, CR, SP>() {
-                    @Override
-                    public void onSuccess(SP storageProvider) {
-                        mStorageProvider = new RxStorageProvider<>(storageProvider);
-                        storageProvider.setOnTokenRefreshListener(new StorageProvider.OnTokenRefreshListener<CR>() {
-                            @Override
-                            public void onTokenRefresh(CR refreshedCredential) {
-                                if (mUnifyStorageDatabase != null) {
-                                    mStorageProviderRecord.setCredentialData(refreshedCredential.persist());
-                                    Handler mainHandler = new Handler(mContext.getMainLooper());
+        StorageProvider storageProvider = mProviderBuilder.buildStorageProvider(mCredential);
+        mStorageProvider = new RxStorageProvider<>(storageProvider);
+        storageProvider.setOnTokenRefreshListener(new StorageProvider.OnTokenRefreshListener<CR>() {
+            @Override
+            public void onTokenRefresh(CR refreshedCredential) {
+                if (mUnifyStorageDatabase != null) {
+                    mStorageProviderRecord.setCredentialData(refreshedCredential.persist());
+                    Handler mainHandler = new Handler(mContext.getMainLooper());
 
-                                    Runnable myRunnable = new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            mUnifyStorageDatabase.updateStorageProviderRecord(mStorageProviderRecord);
-                                        }
-                                    };
-                                    mainHandler.post(myRunnable);
-                                }
-                                FileListViewModel.this.mCredential = refreshedCredential;
-                                mDataListener.onCredentialRefreshed(refreshedCredential);
-                            }
-                        });
-                        if(mDataListener != null)
-                            mDataListener.onStorageProviderReady();
-                        loadFiles(null);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable error) {
-                        Log.e("SSSS", error.getMessage());
-                    }
+                    Runnable myRunnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            mUnifyStorageDatabase.updateStorageProviderRecord(mStorageProviderRecord);
+                        }
+                    };
+                    mainHandler.post(myRunnable);
                 }
-        );
+                FileListViewModel.this.mCredential = refreshedCredential;
+                mDataListener.onCredentialRefreshed(refreshedCredential);
+            }
+        });
+        if(mDataListener != null)
+            mDataListener.onStorageProviderReady();
+        loadFiles(null);
     }
 
     public void loadFiles(RF parent) {

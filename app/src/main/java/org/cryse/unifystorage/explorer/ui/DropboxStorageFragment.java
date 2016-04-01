@@ -4,6 +4,7 @@ package org.cryse.unifystorage.explorer.ui;
 import android.os.Bundle;
 
 import org.cryse.unifystorage.explorer.DataContract;
+import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.ui.common.StorageProviderFragment;
 import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
@@ -56,7 +57,14 @@ public class DropboxStorageFragment extends StorageProviderFragment<
                 new StorageProviderBuilder<DropboxFile, DropboxCredential, DropboxStorageProvider>() {
                     @Override
                     public DropboxStorageProvider buildStorageProvider(DropboxCredential credential) {
-                        return new DropboxStorageProvider(credential, DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER);
+                        return (DropboxStorageProvider) StorageProviderManager
+                                .getInstance()
+                                .createStorageProvider(
+                                        getActivity(),
+                                        mStorageProviderRecordId,
+                                        credential,
+                                        DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER
+                                );
                     }
                 },
                 this

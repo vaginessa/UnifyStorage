@@ -1,7 +1,6 @@
 package org.cryse.unifystorage.providers.dropbox;
 
 import android.support.v4.util.Pair;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -22,11 +21,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
-import okhttp3.logging.HttpLoggingInterceptor;
+
 import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -39,17 +37,17 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
     private Gson gson = new Gson();
     private String mAuthenticationHeader = "";
 
+    public static final String NAME = DropboxConst.NAME_STORAGE_PROVIDER;
 
-    HttpLoggingInterceptor loggingInterceptor;
-    OkHttpClient client;
-    DropboxService dropboxService;
+    Retrofit mRetrofit;
+    DropboxService mDropboxService;
 
 
     /*public DropboxStorageProvider(DbxClientV2 mDropboxClient) {
         this.mDropboxClient = mDropboxClient;
     }*/
 
-    public DropboxStorageProvider(DropboxCredential credential, String clientIdentifier) {
+    /*public DropboxStorageProvider(DropboxCredential credential, String clientIdentifier) {
         mDropboxCredential = credential;
         if (mDropboxCredential != null)
             mAuthenticationHeader = "Bearer " + mDropboxCredential.getAccessSecret();
@@ -67,15 +65,28 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         dropboxService = retrofit.create(DropboxService.class);
 
 
-        /*if (mDropboxClient == null) {
+        *//*if (mDropboxClient == null) {
             String userLocale = Locale.getDefault().toString();
-            *//*DbxRequestConfig requestConfig = new DbxRequestConfig(
+            *//**//*DbxRequestConfig requestConfig = new DbxRequestConfig(
                     clientIdentifier,
                     userLocale,
                     OkHttpRequestor.Instance);
 
-            mDropboxClient = new DbxClientV2(requestConfig, credential.getAccessToken(), DbxHost.Default);*//*
-        }*/
+            mDropboxClient = new DbxClientV2(requestConfig, credential.getAccessToken(), DbxHost.Default);*//**//*
+        }*//*
+    }*/
+
+    public DropboxStorageProvider(OkHttpClient okHttpClient, DropboxCredential credential, String clientIdentifier) {
+        this.mDropboxCredential = credential;
+        if (this.mDropboxCredential != null)
+            this.mAuthenticationHeader = "Bearer " + this.mDropboxCredential.getAccessSecret();
+
+        this.mRetrofit = new Retrofit.Builder()
+                .baseUrl("https:" + DropboxService.SUBDOMAIN_API)
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        this.mDropboxService = mRetrofit.create(DropboxService.class);
     }
 
     @Override
@@ -100,7 +111,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .listFolder(parentPath)
                 .build();
-        Call<JsonObject> call = dropboxService.listFolders(mAuthenticationHeader, requestData);
+        Call<JsonObject> call = mDropboxService.listFolders(mAuthenticationHeader, requestData);
         try {
             Response<JsonObject> response = call.execute();
             int responseCode = response.code();
@@ -115,7 +126,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
                     JsonObject requestMoreData = new DropboxRequestDataBuilder()
                             .listFolderContinue(responseObject.get("cursor").getAsString())
                             .build();
-                    Call<JsonObject> moreCall = dropboxService.listFoldersContinue(mAuthenticationHeader, requestMoreData);
+                    Call<JsonObject> moreCall = mDropboxService.listFoldersContinue(mAuthenticationHeader, requestMoreData);
                     Response<JsonObject> moreResponse = moreCall.execute();
                     if (moreResponse.code() == 200) {
                         responseObject = response.body();
@@ -147,7 +158,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .createFolder(Path.combine(parent.getPath(), name))
                 .build();
-        Call<JsonObject> call = dropboxService.createFolder(mAuthenticationHeader, requestData);
+        Call<JsonObject> call = mDropboxService.createFolder(mAuthenticationHeader, requestData);
         try {
             Response<JsonObject> response = call.execute();
             int responseCode = response.code();
@@ -175,7 +186,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .getMetaData(Path.combine(parent.getPath(), name))
                 .build();
-        Call<JsonObject> call = dropboxService.getMetaData(mAuthenticationHeader, requestData);
+        Call<JsonObject> call = mDropboxService.getMetaData(mAuthenticationHeader, requestData);
         try {
             Response<JsonObject> response = call.execute();
             int responseCode = response.code();
@@ -185,7 +196,6 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
                 return true;
             } else {
                 // Failure here
-                Log.e("aaaa", responseObject.toString());
             }
             //String resultString = responseObject.toString();
         } catch (IOException ex) {
@@ -200,7 +210,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .getMetaData(Path.combine(parent.getPath(), name))
                 .build();
-        Call<JsonObject> call = dropboxService.getMetaData(mAuthenticationHeader, requestData);
+        Call<JsonObject> call = mDropboxService.getMetaData(mAuthenticationHeader, requestData);
         try {
             Response<JsonObject> response = call.execute();
             int responseCode = response.code();
@@ -223,7 +233,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .getMetaData(id)
                 .build();
-        Call<JsonObject> call = dropboxService.getMetaData(mAuthenticationHeader, requestData);
+        Call<JsonObject> call = mDropboxService.getMetaData(mAuthenticationHeader, requestData);
         try {
             Response<JsonObject> response = call.execute();
             int responseCode = response.code();
@@ -252,7 +262,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .delete(file.getPath())
                 .build();
-        Call<JsonObject> call = dropboxService.delete(mAuthenticationHeader, requestData);
+        Call<JsonObject> call = mDropboxService.delete(mAuthenticationHeader, requestData);
         try {
             Response<JsonObject> response = call.execute();
             int responseCode = response.code();
@@ -305,8 +315,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider<DropboxFile,
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .download(file.getPath())
                 .build();
-        Log.e("abababab", requestData.toString());
-        Call<ResponseBody> call = dropboxService.download(mAuthenticationHeader, requestData.toString());
+        Call<ResponseBody> call = mDropboxService.download(mAuthenticationHeader, requestData.toString());
         try {
             Response<ResponseBody> response = call.execute();
             int responseCode = response.code();

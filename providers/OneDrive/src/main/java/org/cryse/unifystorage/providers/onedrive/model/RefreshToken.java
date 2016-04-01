@@ -6,7 +6,7 @@ public class RefreshToken {
     @SerializedName("token_type")
     public String tokenType;
     @SerializedName("expires_in")
-    public long expiresIn;
+    public int expiresIn;
     @SerializedName("scope")
     public String scope;
     @SerializedName("access_token")
