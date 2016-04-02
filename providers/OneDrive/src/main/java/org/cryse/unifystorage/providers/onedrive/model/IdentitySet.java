@@ -1,7 +1,6 @@
 package org.cryse.unifystorage.providers.onedrive.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.onedrive.sdk.extensions.Identity;
 
 public class IdentitySet {
     /**

@@ -3,7 +3,7 @@ ext {
     supportLibraryVersion = '23.2.1'
     gsonVersion = '2.6.1'
     rxVersion = '1.1.0'
-    realmVersion = '0.87.0'
+    realmVersion = '0.88.2'
     butterknifeVersion = '7.0.1'
     oneDriveSdkVersion = '1.0.2'
     msaAuthVersion = '0.8.4'
@@ -12,7 +12,6 @@ ext {
     materialCabVersion = '0.1.6'
     easyPermissionVersion = '0.1.0'
     okhttpVersion = '3.2.0'
-    dropboxVersion = '2.0-beta-4'
     commonsioVersion = '2.4'
     fabVersion = '1.6.2'
     retrofitVersion = '2.0.0'
@@ -45,7 +44,7 @@ ext {
             gsonConverter: "com.squareup.retrofit2:converter-gson:$retrofitVersion",
 
             // Database
-            realm: "io.realm:realm-android:$realmVersion",
+            realm: "io.realm:realm-android-library:$realmVersion",
 
             // IO
             commons_io: "commons-io:commons-io:$commonsioVersion",
@@ -56,7 +55,6 @@ ext {
             // Cloud Drive dependencies
             onedrive: "com.onedrive.sdk:onedrive-sdk-android:$oneDriveSdkVersion",
             msa_auth: "com.microsoft.services.msa:msa-auth:$msaAuthVersion",
-            dropbox: "com.dropbox.core:dropbox-core-sdk:$dropboxVersion",
 
             // UI Elements
             materialdrawer: "com.mikepenz:materialdrawer:$materialDrawerVersion@aar",
