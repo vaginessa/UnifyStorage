@@ -100,17 +100,15 @@ if (propFile.canRead()){
     def KEY_ALIAS = 'KEY_ALIAS'
     def KEY_PASSWORD = 'KEY_PASSWORD'
     if (props != null) {
-        if(android.signingConfigs.hasProperty(debugConfigName)) {
-            android.signingConfigs.debug.storeFile = file(props[STORE_FILE + debugConfigName])
-            android.signingConfigs.debug.storePassword = props[STORE_PASSWORD + debugConfigName]
-            android.signingConfigs.debug.keyAlias = props[KEY_ALIAS + debugConfigName]
-            android.signingConfigs.debug.keyPassword = props[KEY_PASSWORD + debugConfigName]
-        } else if(android.signingConfigs.hasProperty(releaseConfigName)) {
-            android.signingConfigs.release.storeFile = file(props[STORE_FILE + releaseConfigName])
-            android.signingConfigs.release.storePassword = props[STORE_PASSWORD + releaseConfigName]
-            android.signingConfigs.release.keyAlias = props[KEY_ALIAS + releaseConfigName]
-            android.signingConfigs.release.keyPassword = props[KEY_PASSWORD + releaseConfigName]
-        }
+        android.signingConfigs.debug.storeFile = file(props[STORE_FILE + debugConfigName])
+        android.signingConfigs.debug.storePassword = props[STORE_PASSWORD + debugConfigName]
+        android.signingConfigs.debug.keyAlias = props[KEY_ALIAS + debugConfigName]
+        android.signingConfigs.debug.keyPassword = props[KEY_PASSWORD + debugConfigName]
+
+        android.signingConfigs.release.storeFile = file(props[STORE_FILE + releaseConfigName])
+        android.signingConfigs.release.storePassword = props[STORE_PASSWORD + releaseConfigName]
+        android.signingConfigs.release.keyAlias = props[KEY_ALIAS + releaseConfigName]
+        android.signingConfigs.release.keyPassword = props[KEY_PASSWORD + releaseConfigName]
     } else {
         println 'signing.properties found but some entries are missing'
         android.buildTypes.debug.signingConfig = null

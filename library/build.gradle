@@ -30,5 +30,4 @@ dependencies {
     compile libDependencies.rxjava
     compile libDependencies.rxandroid
     compile libDependencies.okhttp
-    compile libDependencies.commons_io
 }

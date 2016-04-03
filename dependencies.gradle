@@ -6,7 +6,6 @@ ext {
     realmVersion = '0.88.2'
     butterknifeVersion = '7.0.1'
     oneDriveSdkVersion = '1.0.2'
-    msaAuthVersion = '0.8.4'
     materialDrawerVersion = '5.1.6'
     materialDialogVersion = '0.8.5.7'
     materialCabVersion = '0.1.6'
@@ -53,8 +52,6 @@ ext {
             butterknife: "com.jakewharton:butterknife:$butterknifeVersion",
 
             // Cloud Drive dependencies
-            onedrive: "com.onedrive.sdk:onedrive-sdk-android:$oneDriveSdkVersion",
-            msa_auth: "com.microsoft.services.msa:msa-auth:$msaAuthVersion",
 
             // UI Elements
             materialdrawer: "com.mikepenz:materialdrawer:$materialDrawerVersion@aar",

@@ -1,8 +1,9 @@
-package org.cryse.unifystorage.utils;
+package org.cryse.unifystorage.io;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -14,7 +15,10 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.channels.FileChannel;
+import java.nio.channels.Selector;
 import java.util.Locale;
 
 @SuppressWarnings("UnusedDeclaration")
@@ -215,6 +219,62 @@ public final class IOUtils {
                 input.close();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    public static void closeQuietly(Reader input) {
+        closeQuietly((Closeable) input);
+    }
+
+    public static void closeQuietly(Writer output) {
+        closeQuietly((Closeable) output);
+    }
+
+    public static void closeQuietly(InputStream input) {
+        closeQuietly((Closeable) input);
+    }
+
+    public static void closeQuietly(OutputStream output) {
+        closeQuietly((Closeable) output);
+    }
+
+    public static void closeQuietly(Closeable closeable) {
+        try {
+            if (closeable != null) {
+                closeable.close();
+            }
+        } catch (IOException ioe) {
+            // ignore
+        }
+    }
+
+    public static void closeQuietly(Socket sock) {
+        if (sock != null) {
+            try {
+                sock.close();
+            } catch (IOException ioe) {
+                // ignored
+            }
+        }
+    }
+
+    public static void closeQuietly(Selector selector) {
+        if (selector != null) {
+            try {
+                selector.close();
+            } catch (IOException ioe) {
+                // ignored
+            }
+        }
+    }
+
+    public static void closeQuietly(ServerSocket sock) {
+        if (sock != null) {
+            try {
+                sock.close();
+            } catch (IOException ioe) {
+                // ignored
             }
         }
     }

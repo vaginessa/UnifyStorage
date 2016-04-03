@@ -1,10 +1,10 @@
 package org.cryse.unifystorage.explorer.utils;
 
-import org.apache.commons.io.FileUtils;
 import org.cryse.unifystorage.RemoteFileDownloader;
+import org.cryse.unifystorage.io.FileUtils;
 import org.cryse.unifystorage.io.ProgressInputStream;
 import org.cryse.unifystorage.io.StreamProgressListener;
-import org.cryse.unifystorage.utils.IOUtils;
+import org.cryse.unifystorage.io.IOUtils;
 import org.cryse.unifystorage.utils.Path;
 
 import java.io.File;
