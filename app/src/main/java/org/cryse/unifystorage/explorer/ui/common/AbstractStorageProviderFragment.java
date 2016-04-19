@@ -2,6 +2,7 @@ package org.cryse.unifystorage.explorer.ui.common;
 
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
+import android.databinding.Observable;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -365,13 +366,13 @@ public abstract class AbstractStorageProviderFragment extends AbstractFragment i
 
     @Override
     public void onStorageProviderReady() {
-
-    }
-
-    @Override
-    public void onDirectoryChanged(DirectoryInfo directory) {
-        mCollectionAdapter.replaceWith(directory.files);
-        updateBreadcrumb(directory.directory.getPath());
+        mViewModel.mDirectory.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() {
+            @Override
+            public void onPropertyChanged(Observable observable, int i) {
+                mCollectionAdapter.replaceWith( mViewModel.mDirectory.get().files);
+                updateBreadcrumb( mViewModel.mDirectory.get().directory.getPath());
+            }
+        });
     }
 
     @Override

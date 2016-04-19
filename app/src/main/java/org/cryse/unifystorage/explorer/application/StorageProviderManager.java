@@ -1,6 +1,7 @@
 package org.cryse.unifystorage.explorer.application;
 
 import android.content.Context;
+import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageProvider;
@@ -27,9 +28,9 @@ import okhttp3.logging.HttpLoggingInterceptor;
 
 public class StorageProviderManager {
     private static StorageProviderManager instance;
-    HttpLoggingInterceptor mLoggingInterceptor;
-    OkHttpClient mOkHttpClient;
-
+    private HttpLoggingInterceptor mLoggingInterceptor;
+    private OkHttpClient mOkHttpClient;
+    private Handler mHandler;
     private UnifyStorageDatabase mUnifyStorageDatabase;
 
     public static void init(Context context) {
@@ -47,6 +48,7 @@ public class StorageProviderManager {
     }
 
     protected StorageProviderManager(Context context) {
+        mHandler = new Handler(context.getMainLooper());
         mUnifyStorageDatabase = UnifyStorageDatabase.getInstance();
         mLoggingInterceptor = new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY);
         mOkHttpClient = new OkHttpClient.Builder()
@@ -56,6 +58,17 @@ public class StorageProviderManager {
 
     public void addStorageProviderRecord(String displayName, String userName, int providerType, String credentialData, String extraData) {
         mUnifyStorageDatabase.addNewProvider(displayName, userName, providerType, credentialData, extraData);
+    }
+
+    public void updateStorageProviderRecord(final StorageProviderRecord record, boolean ensureOnMainThread) {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                mUnifyStorageDatabase.updateStorageProviderRecord(record);
+            }
+        };
+        if(ensureOnMainThread) mHandler.post(runnable);
+        else runnable.run();
     }
 
     public void removeStorageProviderRecord(int id) {
