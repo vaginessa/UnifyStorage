@@ -13,6 +13,11 @@ public class BrowserState {
 
     }
 
+    public BrowserState(DirectoryInfo directory, CollectionViewState collectionViewState) {
+        this.directory = directory;
+        this.collectionViewState = collectionViewState;
+    }
+
     public BrowserState(DirectoryInfo directory, CollectionViewState collectionViewState, List<RemoteFile> hiddenFiles) {
         this.directory = directory;
         this.collectionViewState = collectionViewState;

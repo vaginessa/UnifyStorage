@@ -31,4 +31,6 @@
 
     <dimen name="content_inset">16dp</dimen>
     <dimen name="content_inset_half">8dp</dimen>
+
+    <dimen name="list_item_padding">8dp</dimen>
 </resources>

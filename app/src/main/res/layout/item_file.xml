@@ -14,15 +14,16 @@
         android:selected="@{itemSelected}"
         android:onLongClick="@{viewModel.onItemLongClick}">
         <ImageView
+            android:id="@+id/item_file_icon"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:src="@{viewModel.icon}">
+            android:layout_marginBottom="8dp">
         </ImageView>
         <TextView
+            android:id="@+id/item_file_name"
             android:layout_marginLeft="72dp"
             android:layout_marginStart="72dp"
             android:layout_marginTop="8dp"
@@ -32,10 +33,10 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="@{viewModel.fileName}"
             android:textSize="@dimen/text_size_body2"
             android:tag="text_color|primary_text"/>
         <TextView
+            android:id="@+id/item_file_detail1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="72dp"
@@ -46,10 +47,10 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:text="@{viewModel.detail}"
             android:textSize="@dimen/text_size_super_tiny"
             android:tag="text_color|secondary_text"/>
         <TextView
+            android:id="@+id/item_file_detail2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="72dp"
@@ -60,7 +61,6 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:text="@{viewModel.detail2}"
             android:textSize="@dimen/text_size_super_tiny"
             android:tag="text_color|secondary_text"/>
     </RelativeLayout>
