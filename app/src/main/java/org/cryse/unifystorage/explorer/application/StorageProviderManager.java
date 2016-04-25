@@ -3,6 +3,8 @@ package org.cryse.unifystorage.explorer.application;
 import android.content.Context;
 import android.os.Handler;
 
+import com.facebook.stetho.okhttp3.StethoInterceptor;
+
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
@@ -53,6 +55,7 @@ public class StorageProviderManager {
         mLoggingInterceptor = new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY);
         mOkHttpClient = new OkHttpClient.Builder()
                 .addInterceptor(mLoggingInterceptor)
+                .addNetworkInterceptor(new StethoInterceptor())
                 .build();
     }
 

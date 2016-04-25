@@ -3,6 +3,8 @@ package org.cryse.unifystorage.explorer.application;
 import android.app.Application;
 import android.content.Context;
 
+import com.facebook.stetho.Stetho;
+
 import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
 import org.cryse.utils.preference.Prefs;
@@ -16,6 +18,7 @@ public class UnifyStorageApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        Stetho.initializeWithDefaults(this);
         Prefs.with(this).useDefault().init();
         UnifyStorageDatabase.init(this);
         StorageProviderManager.init(this);

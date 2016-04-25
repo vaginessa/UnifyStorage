@@ -1,5 +1,7 @@
 package org.cryse.unifystorage.explorer.files;
 
+import android.support.annotation.Nullable;
+
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.base.BasePresenter;
@@ -17,7 +19,7 @@ public interface FilesContract {
 
         void setLoadingIndicator(boolean active);
 
-        void showFiles(DirectoryInfo directory);
+        void showFiles(DirectoryInfo directory, @Nullable CollectionViewState collectionViewState);
 
         void showAddFile();
 
@@ -28,11 +30,11 @@ public interface FilesContract {
         void showAllFilter();
 
         void onCredentialRefreshed(Credential credential);
-
-        void onCollectionViewStateRestore(CollectionViewState collectionViewState);
     }
 
     interface Presenter extends BasePresenter {
+        boolean showWatchChanges();
+
         void result(int requestCode, int resultCode);
 
         boolean isAtTopPath();

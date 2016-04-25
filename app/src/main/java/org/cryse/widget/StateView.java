@@ -45,6 +45,7 @@ public class StateView extends LinearLayout {
     }
 
     private void initializeViews(Context context) {
+        this.setOrientation(VERTICAL);
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.widget_state_view, this);

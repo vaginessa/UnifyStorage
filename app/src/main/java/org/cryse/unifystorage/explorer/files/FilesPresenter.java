@@ -22,6 +22,7 @@ import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.OpenFileUtils;
 import org.cryse.unifystorage.io.comparator.NameFileComparator;
+import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,6 +81,15 @@ public class FilesPresenter implements FilesContract.Presenter {
     }
 
     @Override
+    public boolean showWatchChanges() {
+        return isLocalStorage();
+    }
+
+    private boolean isLocalStorage() {
+        return mRxStorageProvider.getStorageProvider() instanceof LocalStorageProvider;
+    }
+
+    @Override
     public void result(int requestCode, int resultCode) {
 
     }
@@ -94,13 +104,19 @@ public class FilesPresenter implements FilesContract.Presenter {
         for (int i = 0; i < mBackwardStack.size(); i++) {
             if (mBackwardStack.get(i).directory.directory.getPath().equals(targetPath)) {
                 this.mDirectory = mBackwardStack.get(i).directory;
-                // mDataListener.onDirectoryChanged(mBackwardStack.get(i).directory);
-                mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
-                mFilesView.showFiles(mDirectory);
-                // toggleRecyclerViewsSuccessState();
 
+                if(isLocalStorage()) {
+                    loadFiles(mDirectory.directory, true, false, mBackwardStack.get(i).collectionViewState);
+                } else {
+                    mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
+                    mFilesView.showFiles(mDirectory, mBackwardStack.get(i).collectionViewState);
+                    // mFilesView.onCollectionViewStateRestore(mBackwardStack.get(i).collectionViewState);
+                }
+
+                /*mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
+                mFilesView.showFiles(mDirectory);
                 mFilesView.setLoadingIndicator(false);
-                mFilesView.onCollectionViewStateRestore(mBackwardStack.get(i).collectionViewState);
+                mFilesView.onCollectionViewStateRestore(mBackwardStack.get(i).collectionViewState);*/
                 break;
             }
         }
@@ -110,12 +126,13 @@ public class FilesPresenter implements FilesContract.Presenter {
         if (!mBackwardStack.empty()) {
             BrowserState currentState = mBackwardStack.pop();
             mDirectory = currentState.directory;
-            mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
-            mFilesView.showFiles(mDirectory);
-            mFilesView.onCollectionViewStateRestore(currentState.collectionViewState);
-            //mDirectory.notifyChange();
-            // this.mDataListener.onDirectoryChanged(mDirectory.get());
-            //toggleRecyclerViewsSuccessState();
+            if(isLocalStorage()) {
+                loadFiles(mDirectory.directory, true, false, currentState.collectionViewState);
+            } else {
+                mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
+                mFilesView.showFiles(mDirectory, currentState.collectionViewState);
+                // mFilesView.onCollectionViewStateRestore(currentState.collectionViewState);
+            }
             return true;
         } else {
             return false;
@@ -129,11 +146,11 @@ public class FilesPresenter implements FilesContract.Presenter {
 
     @Override
     public void loadFiles(RemoteFile parent, boolean forceUpdate) {
-        loadFiles(parent, forceUpdate || mFirstLoad, true);
+        loadFiles(parent, forceUpdate || mFirstLoad, true, null);
         mFirstLoad = false;
     }
 
-    private void loadFiles(RemoteFile parent, boolean forceUpdate, final boolean showLoadingUI) {
+    private void loadFiles(RemoteFile parent, boolean forceUpdate, final boolean showLoadingUI, final CollectionViewState state) {
         if(!forceUpdate) return;
         if (showLoadingUI) {
             mFilesView.setLoadingIndicator(true);
@@ -158,7 +175,7 @@ public class FilesPresenter implements FilesContract.Presenter {
                         super.onNext(singleResponseValue);
                         mDirectory = singleResponseValue.getValue();
                         mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
-                        mFilesView.showFiles(mDirectory);
+                        mFilesView.showFiles(mDirectory, state);
                     }
                 }
         );
@@ -197,7 +214,7 @@ public class FilesPresenter implements FilesContract.Presenter {
         if(mDirectory != null) {
             mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
             // mDirectory.notifyChange();
-            mFilesView.showFiles(mDirectory);
+            mFilesView.showFiles(mDirectory, null);
             // if (mDataListener != null) mDataListener.onDirectoryChanged(mDirectory.get());
         }
     }

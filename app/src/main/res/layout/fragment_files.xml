@@ -103,6 +103,7 @@
         android:id="@+id/fragment_files_state_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         />
 
     <ProgressBar

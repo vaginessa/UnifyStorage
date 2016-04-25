@@ -519,7 +519,7 @@ public class DropboxAuthenticateActivity extends AppCompatActivity {
         // Web Auth currently does not support desiredUid and only one alreadyAuthUid (param n).
         // We use first alreadyAuthUid arbitrarily.
         // Note that the API treats alreadyAuthUid of 0 and not present equivalently.
-        String alreadyAuthedUid = (mAlreadyAuthedUids.length > 0) ? mAlreadyAuthedUids[0] : "0";
+        String alreadyAuthedUid = mAlreadyAuthedUids == null ? "" : (mAlreadyAuthedUids.length > 0) ? mAlreadyAuthedUids[0] : "0";
 
         String[] params = {
                 "k", mAppKey,

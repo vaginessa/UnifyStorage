@@ -63,6 +63,9 @@ dependencies {
     compile libDependencies.cardview
     compile libDependencies.recyclerview
 
+    compile libDependencies.stetho
+    compile libDependencies.stetho_okhttp3
+
     compile libDependencies.easypermission
 
     compile libDependencies.rxjava

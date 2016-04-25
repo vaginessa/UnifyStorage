@@ -1,6 +1,5 @@
 package org.cryse.unifystorage.explorer.files;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -19,9 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
@@ -32,39 +29,29 @@ import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
-import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
-import org.cryse.unifystorage.explorer.application.StorageProviderManager;
-import org.cryse.unifystorage.explorer.base.BasePresenter;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.event.FileDeleteResultEvent;
-import org.cryse.unifystorage.explorer.service.FileOperation;
-import org.cryse.unifystorage.explorer.service.LongOperationService;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
-import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.explorer.ui.common.AbstractFragment;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.MenuUtils;
-import org.cryse.unifystorage.explorer.utils.RandomUtils;
 import org.cryse.unifystorage.explorer.utils.ResourceUtils;
-import org.cryse.unifystorage.explorer.utils.StorageProviderBuilder;
 import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
-import org.cryse.unifystorage.explorer.utils.copy.CopyTask;
 import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
+import org.cryse.utils.file.OnFileChangedListener;
 import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
 import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 import org.cryse.widget.StateView;
 
 import java.io.File;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import butterknife.Bind;
@@ -89,6 +76,7 @@ public class FilesFragment extends AbstractFragment implements
     private FilesContract.Presenter mPresenter;
     private FilesAdapter mCollectionAdapter;
     private OpenFileUtils mOpenFileUtils;
+    private LocalFileWatcher mFileWatcher;
 
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
@@ -139,6 +127,7 @@ public class FilesFragment extends AbstractFragment implements
         mCollectionAdapter.setOnFileClickListener(this);
         mCollectionAdapter.setOnSelectionListener(this);
         mOpenFileUtils = new AndroidOpenFileUtils(getActivity());
+        setupFileWatcher();
         // mViewModel = buildViewModel(mCredential);
         // mViewModel.buildStorageProvider();
         mShowHiddenFilesPrefs = Prefs.getBooleanPrefs(
@@ -267,6 +256,49 @@ public class FilesFragment extends AbstractFragment implements
         mCollectionView.setAdapter(mCollectionAdapter);
     }
 
+    protected void setupFileWatcher() {
+        mFileWatcher = new LocalFileWatcher();
+        mFileWatcher.setOnFileChangeListener(new OnFileChangedListener() {
+            @Override
+            public boolean onFileCreate(String path, String file) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true);
+                    }
+                });
+                return true;
+            }
+
+            @Override
+            public boolean onFileDelete(String path, String file) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true);
+                    }
+                });
+                return true;
+            }
+
+            @Override
+            public boolean onFileModify(String path, String file) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true);
+                    }
+                });
+                return true;
+            }
+
+            @Override
+            public boolean onFileEvent(int event, String path, String file) {
+                return false;
+            }
+        });
+    }
+
     public void updateBreadcrumb(String path) {
         if (path == null || TextUtils.isEmpty(mBreadCrumbLayout.getTopPath())) {
             // Initial directory
@@ -339,6 +371,16 @@ public class FilesFragment extends AbstractFragment implements
     public void onResume() {
         super.onResume();
         mPresenter.start();
+        if(mPresenter.showWatchChanges()) {
+            if(mPresenter.getDirectory() != null && mPresenter.getDirectory().directory != null)
+                mFileWatcher.startWatching(mPresenter.getDirectory().directory.getPath());
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mFileWatcher.destroy();
     }
 
     @Override
@@ -355,10 +397,20 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     @Override
-    public void showFiles(DirectoryInfo directory) {
-        if(directory != null && directory.files != null && directory.files.size() > 0) {
-            hideStateView();
+    public void showFiles(DirectoryInfo directory, @Nullable CollectionViewState collectionViewState) {
+        if(directory != null && directory.files != null) {
+            if(mPresenter.showWatchChanges())
+                mFileWatcher.startWatching(directory.directory.getPath());
             mCollectionAdapter.replaceWith(directory.files);
+            if(directory.files.size() > 0) {
+                hideStateView();
+                if(collectionViewState != null) {
+                    LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getLayoutManager();
+                    manager.scrollToPositionWithOffset(collectionViewState.position, (int) collectionViewState.offset);
+                }
+            } else {
+                showNoFilesView();
+            }
             updateBreadcrumb(directory.directory.getPath());
         } else {
             showNoFilesView();
@@ -390,28 +442,22 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     @Override
-    public void onCollectionViewStateRestore(CollectionViewState collectionViewState) {
-        LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getLayoutManager();
-        manager.scrollToPositionWithOffset(collectionViewState.position, (int) collectionViewState.offset);
-    }
-
-    @Override
     public void setPresenter(FilesContract.Presenter presenter) {
         this.mPresenter = presenter;
     }
 
     private void showNoFilesView() {
-        mCollectionView.setVisibility(View.INVISIBLE);
+        // mCollectionView.setVisibility(View.INVISIBLE);
         mStateView.showEmptyViewByRes(R.drawable.ic_action_copy, R.string.info_message_empty_directory);
     }
 
     private void hideStateView() {
-        mCollectionView.setVisibility(View.VISIBLE);
+        // mCollectionView.setVisibility(View.VISIBLE);
         mStateView.hide();
     }
 
     private void showRetryView(int errorMessageResId) {
-        mCollectionView.setVisibility(View.INVISIBLE);
+        // mCollectionView.setVisibility(View.INVISIBLE);
         mStateView.showErrorViewByRes(R.drawable.ic_action_info, errorMessageResId, R.string.label_refresh);
     }
 
