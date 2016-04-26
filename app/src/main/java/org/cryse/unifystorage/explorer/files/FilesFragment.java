@@ -128,13 +128,10 @@ public class FilesFragment extends AbstractFragment implements
         mCollectionAdapter.setOnSelectionListener(this);
         mOpenFileUtils = new AndroidOpenFileUtils(getActivity());
         setupFileWatcher();
-        // mViewModel = buildViewModel(mCredential);
-        // mViewModel.buildStorageProvider();
         mShowHiddenFilesPrefs = Prefs.getBooleanPrefs(
                 PrefsConst.PREFS_SHOW_HIDDEN_FILES,
                 PrefsConst.PREFS_SHOW_HIDDEN_FILES_VALUE
         );
-        // mViewModel.setShowHiddenFiles(mShowHiddenFilesPrefs.get());
     }
 
     @Nullable
@@ -249,6 +246,8 @@ public class FilesFragment extends AbstractFragment implements
                 menuPasteFile();
             }
         });
+        mFabNewDirectory.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_file_type_folder, Color.WHITE));
+        mFabNewFile.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_file_type_file, Color.WHITE));
     }
 
     private void setupRecyclerView() {
