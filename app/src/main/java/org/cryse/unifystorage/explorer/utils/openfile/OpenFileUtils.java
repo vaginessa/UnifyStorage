@@ -1,10 +1,6 @@
 package org.cryse.unifystorage.explorer.utils.openfile;
 
-
-import org.cryse.unifystorage.explorer.base.IContext;
-
-
-public interface OpenFileUtils<C, IC extends IContext<C>> {
+public interface OpenFileUtils {
 
     void openFileByPath(String filePath, boolean useSystemSelector);
 

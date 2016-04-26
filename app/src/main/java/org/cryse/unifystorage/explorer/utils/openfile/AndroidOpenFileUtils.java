@@ -10,20 +10,15 @@ import android.webkit.MimeTypeMap;
 import com.afollestad.materialdialogs.MaterialDialog;
 
 import org.cryse.unifystorage.explorer.R;
-import org.cryse.unifystorage.explorer.base.AndroidContext;
 
 import java.io.File;
 import java.util.List;
 
-public class AndroidOpenFileUtils implements OpenFileUtils<Context, AndroidContext> {
-    private AndroidContext mContextWrapper;
+public class AndroidOpenFileUtils implements OpenFileUtils {
+    private Context mContext;
 
     public AndroidOpenFileUtils(Context context) {
-        this(new AndroidContext(context));
-    }
-
-    public AndroidOpenFileUtils(AndroidContext iContext) {
-        this.mContextWrapper = iContext;
+        this.mContext = context;
     }
 
     @Override
@@ -33,7 +28,6 @@ public class AndroidOpenFileUtils implements OpenFileUtils<Context, AndroidConte
 
     @Override
     public void openFileByUri(String uriString, boolean useSystemSelector) {
-        Context context = mContextWrapper.context();
         Uri uri = Uri.parse(uriString);
         MimeTypeMap mimeMap = MimeTypeMap.getSingleton();
         String extension = MimeTypeMap.getFileExtensionFromUrl(uri.getPath());
@@ -44,12 +38,12 @@ public class AndroidOpenFileUtils implements OpenFileUtils<Context, AndroidConte
 
         if (mime != null) {
             intent.setDataAndType(uri, mime);
-            List<ResolveInfo> resolveInfos = context.getPackageManager().queryIntentActivities(intent, 0);
+            List<ResolveInfo> resolveInfos = mContext.getPackageManager().queryIntentActivities(intent, 0);
             if (!resolveInfos.isEmpty()) {
                 if (useSystemSelector)
-                    context.startActivity(intent);
+                    mContext.startActivity(intent);
                 else {
-                    buildCustomOpenChooser(context, uri, resolveInfos);
+                    buildCustomOpenChooser(mContext, uri, resolveInfos);
                 }
                 return;
             }
@@ -58,7 +52,7 @@ public class AndroidOpenFileUtils implements OpenFileUtils<Context, AndroidConte
     }
 
     private void openUnknownFile(Uri uri) {
-        new MaterialDialog.Builder(mContextWrapper.context())
+        new MaterialDialog.Builder(mContext)
                 .title(R.string.dialog_title_open_as_type)
                 .items(R.array.array_open_as_type)
                 .itemsCallback(new MaterialDialog.ListCallback() {

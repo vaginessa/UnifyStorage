@@ -383,11 +383,6 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     @Override
-    public OpenFileUtils openFileUtils() {
-        return mOpenFileUtils;
-    }
-
-    @Override
     public void setLoadingIndicator(boolean active) {
         if (getView() == null) {
             return;
@@ -443,7 +438,13 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     @Override
-    public void onCredentialRefreshed(Credential credential) {
+    public void openFileByPath(String filePath, boolean useSystemSelector) {
+        mOpenFileUtils.openFileByPath(filePath, useSystemSelector);
+    }
+
+    @Override
+    public void openFileByUri(String uriString, boolean useSystemSelector) {
+        mOpenFileUtils.openFileByUri(uriString, useSystemSelector);
     }
 
     @Override

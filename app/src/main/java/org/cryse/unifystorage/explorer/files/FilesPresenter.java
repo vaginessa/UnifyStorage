@@ -20,11 +20,9 @@ import org.cryse.unifystorage.explorer.interactor.UseCase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
-import org.cryse.unifystorage.explorer.utils.OpenFileUtils;
 import org.cryse.unifystorage.io.comparator.NameFileComparator;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 import org.cryse.unifystorage.utils.DirectoryInfo;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.List;
@@ -74,7 +72,6 @@ public class FilesPresenter implements FilesContract.Presenter {
                 StorageProviderManager.getInstance().updateStorageProviderRecord(mStorageProviderRecord, true);
 
                 FilesPresenter.this.mCredential = refreshedCredential;
-                mFilesView.onCredentialRefreshed(refreshedCredential);
             }
         });
         this.mFilesView.setPresenter(this);
@@ -254,7 +251,7 @@ public class FilesPresenter implements FilesContract.Presenter {
     }
 
     private void openFile(RemoteFile file) {
-        mFilesView.openFileUtils().openFileByPath(file.getPath(), true);
+        mFilesView.openFileByPath(file.getPath(), true);
     }
 
     private void downloadFile(final RemoteFile file) {

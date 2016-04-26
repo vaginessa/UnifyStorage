@@ -15,7 +15,6 @@ import java.util.List;
 
 public interface FilesContract {
     interface View extends BaseView<Presenter> {
-        OpenFileUtils openFileUtils();
 
         void setLoadingIndicator(boolean active);
 
@@ -31,7 +30,9 @@ public interface FilesContract {
 
         void showAllFilter();
 
-        void onCredentialRefreshed(Credential credential);
+        void openFileByPath(String filePath, boolean useSystemSelector);
+
+        void openFileByUri(String uriString, boolean useSystemSelector);
     }
 
     interface Presenter extends BasePresenter {
