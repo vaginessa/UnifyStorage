@@ -1,68 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/item_file_root_container"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:background="@drawable/selector_file_item">
 
-    <data>
-        <variable name="viewModel" type="org.cryse.unifystorage.explorer.viewmodel.ItemRemoteFileViewModel" />
-        <variable name="itemSelected" type="boolean" />
-    </data>
-    <RelativeLayout
-        android:id="@+id/item_file_root_container"
+    <ImageView
+        android:id="@+id/item_file_icon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="8dp"
+        tools:ignore="contentDescription"/>
+
+    <TextView
+        android:id="@+id/item_file_name"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="@drawable/selector_file_item"
-        android:onClick="@{viewModel.onItemClick}"
-        android:selected="@{itemSelected}"
-        android:onLongClick="@{viewModel.onItemLongClick}">
-        <ImageView
-            android:id="@+id/item_file_icon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp">
-        </ImageView>
-        <TextView
-            android:id="@+id/item_file_name"
-            android:layout_marginLeft="72dp"
-            android:layout_marginStart="72dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textSize="@dimen/text_size_body2"
-            android:tag="text_color|primary_text"/>
-        <TextView
-            android:id="@+id/item_file_detail1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="72dp"
-            android:layout_marginStart="72dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:textSize="@dimen/text_size_super_tiny"
-            android:tag="text_color|secondary_text"/>
-        <TextView
-            android:id="@+id/item_file_detail2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="72dp"
-            android:layout_marginStart="72dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="8dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:textSize="@dimen/text_size_super_tiny"
-            android:tag="text_color|secondary_text"/>
-    </RelativeLayout>
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginLeft="72dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginStart="72dp"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="@dimen/text_size_body2" />
 
-</layout>
+    <TextView
+        android:id="@+id/item_file_detail1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginLeft="72dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginStart="72dp"
+        android:textSize="@dimen/text_size_super_tiny" />
+
+    <TextView
+        android:id="@+id/item_file_detail2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginLeft="72dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginStart="72dp"
+        android:textSize="@dimen/text_size_super_tiny" />
+</RelativeLayout>

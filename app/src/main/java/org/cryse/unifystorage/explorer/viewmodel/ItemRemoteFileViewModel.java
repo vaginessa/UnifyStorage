@@ -74,9 +74,9 @@ public class ItemRemoteFileViewModel extends BaseObservable implements ViewModel
 
     public Drawable getIcon() {
         if(mRemoteFile.isDirectory())
-            return ResourcesCompat.getDrawable(mContext.getResources(), R.drawable.ic_file_type_folder, null);
+            return ResourcesCompat.getDrawable(mContext.getResources(), R.drawable.ic_format_folder, null);
         else {
-            return ResourcesCompat.getDrawable(mContext.getResources(), R.drawable.ic_file_type_file, null);
+            return ResourcesCompat.getDrawable(mContext.getResources(), R.drawable.ic_format_file, null);
         }
     }
 

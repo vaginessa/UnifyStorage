@@ -29,7 +29,6 @@ import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
@@ -246,8 +245,8 @@ public class FilesFragment extends AbstractFragment implements
                 menuPasteFile();
             }
         });
-        mFabNewDirectory.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_file_type_folder, Color.WHITE));
-        mFabNewFile.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_file_type_file, Color.WHITE));
+        mFabNewDirectory.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_format_folder, Color.WHITE));
+        mFabNewFile.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_format_file, Color.WHITE));
     }
 
     private void setupRecyclerView() {
@@ -454,7 +453,7 @@ public class FilesFragment extends AbstractFragment implements
 
     private void showNoFilesView() {
         // mCollectionView.setVisibility(View.INVISIBLE);
-        mStateView.showEmptyViewByRes(R.drawable.ic_action_copy, R.string.info_message_empty_directory);
+        mStateView.showEmptyViewByRes(R.drawable.ic_icon_empty_folder, R.string.info_message_empty_directory);
     }
 
     private void hideStateView() {
@@ -464,7 +463,7 @@ public class FilesFragment extends AbstractFragment implements
 
     private void showRetryView(int errorMessageResId) {
         // mCollectionView.setVisibility(View.INVISIBLE);
-        mStateView.showErrorViewByRes(R.drawable.ic_action_info, errorMessageResId, R.string.label_refresh);
+        mStateView.showErrorViewByRes(R.drawable.ic_icon_error, errorMessageResId, R.string.label_refresh);
     }
 
     private CollectionViewState getCollectionViewState() {

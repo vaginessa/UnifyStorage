@@ -39,52 +39,6 @@ public class MainViewModel implements ViewModel {
 
     private void buildDrawerItems() {
         List<IDrawerItem> drawerItems = new ArrayList<>();
-
-
-        /*// Firstly get all local storage devices:
-        String[] externalStoragePaths = LocalStorageUtils.getStorageDirectories(mContext);
-        int[] externalStorageTypes = DrawerItemUtils.getStorageDirectoryTypes(mContext, externalStoragePaths);
-
-        // Secondly get all saved storage providers
-        List<StorageProviderRecord> savedStorageProviders = mUnifyStorageDatabase.getSavedStorageProviders();
-        int otherStorageProvidersCount = savedStorageProviders.size();
-
-        // Finally the const items count
-        int constDrawerItemsCount = 5;
-        mDrawerItems = new IDrawerItem[externalStoragePaths.length + otherStorageProvidersCount + constDrawerItemsCount];
-
-        // First insert all local storage devices
-        for (int i = 0; i < externalStoragePaths.length; i++) {
-            String path = externalStoragePaths[i];
-            int type = externalStorageTypes[i];
-            switch (type) {
-                case DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE:
-                    drawerItems.add(new PrimaryDrawerItem().withName(mContext.getString(R.string.drawer_local_internal_storage))
-                            .withTag(path)
-                            .withIcon(R.drawable.ic_drawer_internal_storage)
-                            .withIdentifier(type)
-                            .withSelectable(true));
-                    break;
-                default:
-                    drawerItems.add(new PrimaryDrawerItem().withName(Path.getFileName(path))
-                            .withTag(path)
-                            .withIcon(R.drawable.ic_drawer_sdcard)
-                            .withIdentifier(type)
-                            .withSelectable(true));
-                    break;
-            }
-        }
-        // Then the saved providers
-        for (StorageProviderRecord record : savedStorageProviders) {
-            drawerItems.add(new PrimaryDrawerItem()
-                    .withName(record.getDisplayName())
-                    .withDescription(record.getUserName())
-                    .withTag(record)
-                    .withIcon(R.drawable.ic_drawer_sdcard)
-                    .withIdentifier(record.getId())
-                    .withSelectable(true));
-        }*/
-
         List<StorageProviderRecord> storageProviderRecords = StorageProviderManager.getInstance().loadStorageProviderRecordsWithLocal(mContext);
         for(StorageProviderRecord record : storageProviderRecords) {
             PrimaryDrawerItem item = new PrimaryDrawerItem();
@@ -99,8 +53,20 @@ public class MainViewModel implements ViewModel {
                                 .withIcon(R.drawable.ic_drawer_sdcard);
                     } else {
                         item.withTag(record)
-                                .withIcon(R.drawable.ic_file_type_folder);
+                                .withIcon(R.drawable.ic_format_folder);
                     }
+                    break;
+                case StorageProviderRecord.PROVIDER_DROPBOX:
+                    item.withTag(record)
+                            .withIcon(R.drawable.ic_icon_dropbox);
+                    break;
+                case StorageProviderRecord.PROVIDER_ONE_DRIVE:
+                    item.withTag(record)
+                            .withIcon(R.drawable.ic_icon_onedrive);
+                    break;
+                case StorageProviderRecord.PROVIDER_GOOGLE_DRIVE:
+                    item.withTag(record)
+                            .withIcon(R.drawable.ic_icon_googledrive);
                     break;
                 default:
                     item.withTag(record)

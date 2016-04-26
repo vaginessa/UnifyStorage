@@ -1,7 +1,6 @@
 package org.cryse.unifystorage.explorer.files;
 
 import android.content.Context;
-import android.databinding.DataBindingUtil;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
@@ -12,8 +11,6 @@ import android.widget.TextView;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.R;
-import org.cryse.unifystorage.explorer.databinding.ItemFileBinding;
-import org.cryse.unifystorage.explorer.ui.adapter.FileAdapter;
 import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 
@@ -52,7 +49,7 @@ public class FilesAdapter extends SelectableRecyclerViewAdapter<
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
         final RemoteFile file = getItems().get(position);
-        holder.mIconView.setImageResource(file.isDirectory() ? R.drawable.ic_file_type_folder : R.drawable.ic_file_type_file);
+        holder.mIconView.setImageResource(file.isDirectory() ? R.drawable.ic_format_folder : R.drawable.ic_format_file);
         holder.mNameView.setText(file.getName());
         holder.mDetail1View.setText(getDetail(file));
         holder.mDetail2View.setText(getDetail2(file));

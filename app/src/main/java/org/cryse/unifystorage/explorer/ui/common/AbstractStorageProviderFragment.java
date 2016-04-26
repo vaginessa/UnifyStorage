@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -51,7 +50,6 @@ import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
 import org.cryse.unifystorage.explorer.utils.copy.CopyTask;
 import org.cryse.unifystorage.explorer.viewmodel.FileListViewModel;
-import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
@@ -212,11 +210,11 @@ public abstract class AbstractStorageProviderFragment extends AbstractFragment i
         mFabMenu.setMenuButtonColorPressed(colorDarken);
         mFabMenu.setMenuButtonColorRipple(colorDarken2);
         mFabMenu.getMenuIconView().setColorFilter(mFabIconColor, PorterDuff.Mode.SRC_ATOP);
-        ResourceUtils.applyColorToFab(mFabNewDirectory, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_folder, mFabIconColor);
-        ResourceUtils.applyColorToFab(mFabNewFile, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_file_type_file, mFabIconColor);
+        ResourceUtils.applyColorToFab(mFabNewDirectory, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_format_folder, mFabIconColor);
+        ResourceUtils.applyColorToFab(mFabNewFile, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_format_file, mFabIconColor);
         ResourceUtils.applyColorToFab(mFabPaste, mAccentColor, colorDarken, colorDarken2, R.drawable.ic_action_paste, mFabIconColor);*/
-        mFabNewDirectory.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_file_type_folder, Color.WHITE));
-        mFabNewFile.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_file_type_file, Color.WHITE));
+        mFabNewDirectory.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_format_folder, Color.WHITE));
+        mFabNewFile.setImageDrawable(ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_format_file, Color.WHITE));
     }
 
     @Override
