@@ -280,6 +280,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .credential(null)
                 .threadExecutor(new JobExecutor())
                 .postExecutionThread(new UIThread())
+                .extras(new String[] {Environment.getExternalStorageDirectory().getAbsolutePath()})
                 .storageProvider(StorageProviderManager
                         .getInstance()
                         .createStorageProvider(
@@ -293,7 +294,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     public void navigateToOtherLocalStorage(int storageProviderRecordId, String path) {
-        // LocalStorageFragment fragment = LocalStorageFragment.newInstance(storageProviderRecordId, path);
         FilesFragment filesFragment = FilesFragment.newInstance();
         new FilesPresenter.Builder()
                 .view(filesFragment)
@@ -301,6 +301,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .credential(null)
                 .threadExecutor(new JobExecutor())
                 .postExecutionThread(new UIThread())
+                .extras(new String[] {path})
                 .storageProvider(StorageProviderManager
                         .getInstance()
                         .createStorageProvider(
@@ -321,6 +322,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .credential(credential)
                 .threadExecutor(new JobExecutor())
                 .postExecutionThread(new UIThread())
+                .extras(new String[] {DataContract.CONST_ONEDRIVE_CLIENT_ID})
                 .storageProvider(StorageProviderManager
                         .getInstance()
                         .createStorageProvider(
@@ -341,6 +343,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .credential(credential)
                 .threadExecutor(new JobExecutor())
                 .postExecutionThread(new UIThread())
+                .extras(new String[] {DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER})
                 .storageProvider(StorageProviderManager
                         .getInstance()
                         .createStorageProvider(

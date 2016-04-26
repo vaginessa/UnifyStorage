@@ -35,12 +35,16 @@ import org.cryse.unifystorage.explorer.event.AbstractEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.event.FileDeleteResultEvent;
+import org.cryse.unifystorage.explorer.service.FileOperation;
+import org.cryse.unifystorage.explorer.service.FileOperationTaskEvent;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.common.AbstractFragment;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.MenuUtils;
+import org.cryse.unifystorage.explorer.utils.RandomUtils;
 import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
+import org.cryse.unifystorage.explorer.utils.copy.CopyTask;
 import org.cryse.unifystorage.explorer.utils.exception.ExceptionUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
@@ -264,7 +268,7 @@ public class FilesFragment extends AbstractFragment implements
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true);
+                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true, false, getCollectionViewState());
                     }
                 });
                 return true;
@@ -275,7 +279,7 @@ public class FilesFragment extends AbstractFragment implements
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true);
+                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true, false, getCollectionViewState());
                     }
                 });
                 return true;
@@ -286,7 +290,7 @@ public class FilesFragment extends AbstractFragment implements
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true);
+                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true, false, getCollectionViewState());
                     }
                 });
                 return true;
@@ -511,51 +515,45 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     protected void menuCopyFile() {
-        /*RemoteFile[] files = mCollectionAdapter.getSelectionItems(RemoteFile.class);
+        RemoteFile[] files = mCollectionAdapter.getSelectionItems(RemoteFile.class);
         mCollectionAdapter.clearSelection();
-        CopyManager.getInstance().setCopyTask(new CopyTask(mStorageProviderRecordId, files));*/
+        CopyManager.getInstance().setCopyTask(new CopyTask(mPresenter.getStorageProviderInfo(), files));
     }
 
     protected void menuPasteFile() {
-        /*if (CopyManager.getInstance().hasCopyTask()) {
+        if (CopyManager.getInstance().hasCopyTask()) {
             CopyTask task = CopyManager.getInstance().getCurrentCopyTask();
             RemoteFile[] files = task.fileToCopy;
             Toast.makeText(getContext(), "Paste!", Toast.LENGTH_SHORT).show();
             CopyManager.getInstance().cancelCopyTask();
-            LongOperationService.LongOperationBinder longOperationBinder = getMainActivity().getLongOperationBinder();
-            longOperationBinder.doOperation(
-                    new FileOperation(
-                            FileOperation.FileOperationCode.COPY,
-                            RandomUtils.nextInt(),
-                            new FileOperation.StorageProviderInfo(
-                                    mStorageProviderRecordId,
-                                    mCredential,
-                                    mExtras
-                            ),
-                            mPresenter.getDirectory().directory,
-                            files
+            mEventBus.sendEvent(
+                    new FileOperationTaskEvent(
+                            new FileOperation(
+                                    FileOperation.FileOperationCode.COPY,
+                                    RandomUtils.nextInt(),
+                                    mPresenter.getStorageProviderInfo(),
+                                    mPresenter.getDirectory().directory,
+                                    files
+                            )
                     )
             );
-        }*/
+        }
     }
 
     protected void menuDeleteFile() {
-        /*RemoteFile[] files = mCollectionAdapter.getSelectionItems(RemoteFile.class);
+        RemoteFile[] files = mCollectionAdapter.getSelectionItems(RemoteFile.class);
         mCollectionAdapter.clearSelection();
-        LongOperationService.LongOperationBinder longOperationBinder = getMainActivity().getLongOperationBinder();
-        longOperationBinder.doOperation(
-                new FileOperation(
-                        FileOperation.FileOperationCode.DELETE,
-                        RandomUtils.nextInt(),
-                        new FileOperation.StorageProviderInfo(
-                                mStorageProviderRecordId,
-                                mCredential,
-                                mExtras
-                        ),
-                        mPresenter.getDirectory().directory,
-                        files
+        mEventBus.sendEvent(
+                new FileOperationTaskEvent(
+                        new FileOperation(
+                                FileOperation.FileOperationCode.DELETE,
+                                RandomUtils.nextInt(),
+                                mPresenter.getStorageProviderInfo(),
+                                mPresenter.getDirectory().directory,
+                                files
+                        )
                 )
-        );*/
+        );
     }
 
     protected MainActivity getMainActivity() {
@@ -661,22 +659,26 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     protected void onFileDeleteEvent(FileDeleteEvent fileDeleteEvent) {
-        /*if(fileDeleteEvent.providerId == this.mStorageProviderRecordId) {
+        if(isCurrentStorageProvider(fileDeleteEvent.providerId)) {
             if (fileDeleteEvent.success) {
                 mPresenter.onDeleteFileEvent(fileDeleteEvent);
             } else {
                 Toast.makeText(getContext(), "Delete: " + fileDeleteEvent.fileName + " failed.", Toast.LENGTH_SHORT).show();
             }
 
-        }*/
+        }
     }
 
     protected void onFileDeleteResultEvent(FileDeleteResultEvent fileDeleteResultEvent) {
-        /*if(fileDeleteResultEvent.providerId == this.mStorageProviderRecordId) {
+        if(isCurrentStorageProvider(fileDeleteResultEvent.providerId)) {
             if(fileDeleteResultEvent.succes) {
             } else {
                 Toast.makeText(getContext(), fileDeleteResultEvent.errorMessage, Toast.LENGTH_SHORT).show();
             }
-        }*/
+        }
+    }
+
+    protected boolean isCurrentStorageProvider(int id) {
+        return mPresenter.getStorageProviderInfo().getStorageProviderId() == id;
     }
 }

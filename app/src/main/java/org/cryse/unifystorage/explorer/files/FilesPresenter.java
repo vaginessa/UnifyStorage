@@ -17,6 +17,7 @@ import org.cryse.unifystorage.explorer.interactor.CreateFolderUseCase;
 import org.cryse.unifystorage.explorer.interactor.DefaultSubscriber;
 import org.cryse.unifystorage.explorer.interactor.GetFilesUseCase;
 import org.cryse.unifystorage.explorer.interactor.UseCase;
+import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
@@ -31,8 +32,10 @@ import java.util.Stack;
 
 public class FilesPresenter implements FilesContract.Presenter {
     private final FilesContract.View mFilesView;
-    private int mStorageProviderRecordId = DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID;
-    private Credential mCredential;
+    // private int mStorageProviderRecordId = DataContract.CONST_EMPTY_STORAGE_PROVIDER_RECORD_ID;
+    // private Credential mCredential;
+    private StorageProviderInfo mStorageProviderInfo;
+
     private StorageProviderRecord mStorageProviderRecord;
 
     private final RxStorageProvider mRxStorageProvider;
@@ -52,13 +55,13 @@ public class FilesPresenter implements FilesContract.Presenter {
             Credential credential,
             StorageProvider storageProvider,
             ThreadExecutor threadExecutor,
-            PostExecutionThread postExecutionThread
+            PostExecutionThread postExecutionThread,
+            String[] extras
     ) {
         this.mFilesView = filesView;
         this.mRxStorageProvider = new RxStorageProvider(storageProvider);
-        this.mCredential = credential;
-        this.mStorageProviderRecordId = storageProviderRecordId;
-        this.mStorageProviderRecord = StorageProviderManager.getInstance().loadStorageProviderRecord(mStorageProviderRecordId);
+        this.mStorageProviderInfo = new StorageProviderInfo(storageProviderRecordId, credential, extras);
+        this.mStorageProviderRecord = StorageProviderManager.getInstance().loadStorageProviderRecord(storageProviderRecordId);
         this.mThreadExecutor = threadExecutor;
         this.mPostExecutionThread = postExecutionThread;
         this.mFileComparator = NameFileComparator.NAME_INSENSITIVE_COMPARATOR;
@@ -72,7 +75,7 @@ public class FilesPresenter implements FilesContract.Presenter {
                 mStorageProviderRecord.setCredentialData(refreshedCredential.persist());
                 StorageProviderManager.getInstance().updateStorageProviderRecord(mStorageProviderRecord, true);
 
-                FilesPresenter.this.mCredential = refreshedCredential;
+                FilesPresenter.this.mStorageProviderInfo.setCredential(refreshedCredential);
             }
         });
         this.mFilesView.setPresenter(this);
@@ -81,6 +84,11 @@ public class FilesPresenter implements FilesContract.Presenter {
     @Override
     public boolean showWatchChanges() {
         return isLocalStorage();
+    }
+
+    @Override
+    public StorageProviderInfo getStorageProviderInfo() {
+        return mStorageProviderInfo;
     }
 
     private boolean isLocalStorage() {
@@ -152,7 +160,8 @@ public class FilesPresenter implements FilesContract.Presenter {
         mFirstLoad = false;
     }
 
-    private void loadFiles(final RemoteFile parent, boolean forceUpdate, final boolean showLoadingUI, final CollectionViewState state) {
+    @Override
+    public void loadFiles(final RemoteFile parent, boolean forceUpdate, final boolean showLoadingUI, final CollectionViewState state) {
         if(!forceUpdate) return;
         if (showLoadingUI) {
             mFilesView.setLoadingIndicator(true);
@@ -277,6 +286,7 @@ public class FilesPresenter implements FilesContract.Presenter {
         private StorageProvider storageProvider;
         private ThreadExecutor threadExecutor;
         private PostExecutionThread postExecutionThread;
+        private String[] extras;
 
         public Builder() {
 
@@ -290,7 +300,8 @@ public class FilesPresenter implements FilesContract.Presenter {
                     credential,
                     storageProvider,
                     threadExecutor,
-                    postExecutionThread
+                    postExecutionThread,
+                    extras
             );
         }
 
@@ -326,6 +337,9 @@ public class FilesPresenter implements FilesContract.Presenter {
             return this;
         }
 
-
+        public Builder extras(String[] extras) {
+            this.extras = extras;
+            return this;
+        }
     }
 }

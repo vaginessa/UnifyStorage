@@ -7,6 +7,7 @@ import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.base.BasePresenter;
 import org.cryse.unifystorage.explorer.base.BaseView;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
+import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
@@ -40,6 +41,8 @@ public interface FilesContract {
     interface Presenter extends BasePresenter {
         boolean showWatchChanges();
 
+        StorageProviderInfo getStorageProviderInfo();
+
         void result(int requestCode, int resultCode);
 
         boolean isAtTopPath();
@@ -53,6 +56,8 @@ public interface FilesContract {
         void setShowHiddenFiles(boolean show);
 
         void loadFiles(RemoteFile parent, boolean forceUpdate);
+
+        void loadFiles(RemoteFile parent, boolean forceUpdate, boolean showLoadingUI, CollectionViewState collectionViewState);
 
         void createFile();
 
