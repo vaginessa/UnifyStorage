@@ -1,10 +1,13 @@
 package org.cryse.unifystorage.credential;
 
 import android.os.Parcel;
+import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public abstract class OAuth2Credential extends Credential {
@@ -87,6 +90,18 @@ public abstract class OAuth2Credential extends Credential {
 
     public void setExpiresIn(Date expiresIn) {
         this.expiresIn = expiresIn;
+    }
+
+    public boolean isExpired() {
+        if(expiresIn == null) return false;
+        return new Date().after(expiresIn);
+    }
+
+    public void setScopes(String scopes, String spliter) {
+        String[] scopesArray = scopes.split(spliter);
+        List<String> scopesList = new ArrayList<String>();
+        Collections.addAll(scopesList, scopesArray);
+        setScopes(scopesList);
     }
 
     public void setScopes(Iterable<String> scopes) {

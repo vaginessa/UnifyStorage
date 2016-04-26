@@ -2,27 +2,21 @@ package org.cryse.unifystorage;
 
 import android.support.v4.util.Pair;
 
-import org.apache.commons.io.FileUtils;
-import org.cryse.unifystorage.credential.Credential;
+import org.cryse.unifystorage.utils.OperationResult;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.ProgressCallback;
 
 import java.io.InputStream;
 
-import java.util.Iterator;
-import java.util.List;
-
 
 import rx.Observable;
 import rx.Subscriber;
-import rx.functions.Action0;
-import rx.functions.Action1;
 
 
-public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>> {
-    private SP mStorageProvider;
+public class RxStorageProvider {
+    private StorageProvider mStorageProvider;
 
-    public RxStorageProvider(SP storageProvider) {
+    public RxStorageProvider(StorageProvider storageProvider) {
         this.mStorageProvider = storageProvider;
     }
 
@@ -30,10 +24,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         return mStorageProvider.getStorageProviderName();
     }
 
-    public Observable<RF> getRootDirectory() {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> getRootDirectory() {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.getRootDirectory());
                     subscriber.onCompleted();
@@ -44,10 +38,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public Observable<DirectoryInfo<RF, List<RF>>> list(final RF parent) {
-        return Observable.create(new Observable.OnSubscribe<DirectoryInfo<RF, List<RF>>>() {
+    public Observable<DirectoryInfo> list(final RemoteFile parent) {
+        return Observable.create(new Observable.OnSubscribe<DirectoryInfo>() {
             @Override
-            public void call(Subscriber<? super DirectoryInfo<RF, List<RF>>> subscriber) {
+            public void call(Subscriber<? super DirectoryInfo> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.list(parent));
                     subscriber.onCompleted();
@@ -58,10 +52,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public Observable<DirectoryInfo<RF, List<RF>>> list() {
-        return Observable.create(new Observable.OnSubscribe<DirectoryInfo<RF, List<RF>>>() {
+    public Observable<DirectoryInfo> list() {
+        return Observable.create(new Observable.OnSubscribe<DirectoryInfo>() {
             @Override
-            public void call(Subscriber<? super DirectoryInfo<RF, List<RF>>> subscriber) {
+            public void call(Subscriber<? super DirectoryInfo> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.list());
                     subscriber.onCompleted();
@@ -72,10 +66,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public Observable<RF> createDirectory(final RF parent, final String name) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> createDirectory(final RemoteFile parent, final String name) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.createDirectory(parent, name));
                     subscriber.onCompleted();
@@ -86,10 +80,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public Observable<RF> createDirectory(final String name) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> createDirectory(final String name) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.createDirectory(name));
                     subscriber.onCompleted();
@@ -100,10 +94,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public Observable<RF> createFile(final RF parent, final String name, final InputStream input, final ConflictBehavior behavior) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> createFile(final RemoteFile parent, final String name, final InputStream input, final ConflictBehavior behavior) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.createFile(parent, name, input, behavior));
                     subscriber.onCompleted();
@@ -115,10 +109,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> createFile(final RF parent, final String name, final InputStream input) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> createFile(final RemoteFile parent, final String name, final InputStream input) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.createFile(parent, name, input));
                     subscriber.onCompleted();
@@ -130,10 +124,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> createFile(final String name, final InputStream input) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> createFile(final String name, final InputStream input) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.createFile(name, input));
                     subscriber.onCompleted();
@@ -145,10 +139,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> createFile(final RF parent, final String name, final LocalFile file, final ConflictBehavior behavior) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> createFile(final RemoteFile parent, final String name, final LocalFile file, final ConflictBehavior behavior) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.createFile(parent, name, file, behavior));
                     subscriber.onCompleted();
@@ -160,10 +154,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> createFile(final RF parent, final String name, final LocalFile file) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> createFile(final RemoteFile parent, final String name, final LocalFile file) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.createFile(parent, name, file));
                     subscriber.onCompleted();
@@ -175,10 +169,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> createFile(final String name, final LocalFile file) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> createFile(final String name, final LocalFile file) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.createFile(name, file));
                     subscriber.onCompleted();
@@ -190,7 +184,7 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<Boolean> exists(final RF parent, final String name) {
+    public Observable<Boolean> exists(final RemoteFile parent, final String name) {
         return Observable.create(new Observable.OnSubscribe<Boolean>() {
             @Override
             public void call(Subscriber<? super Boolean> subscriber) {
@@ -220,10 +214,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> getFile(final RF parent, final String name) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> getFile(final RemoteFile parent, final String name) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.getFile(parent, name));
                     subscriber.onCompleted();
@@ -235,10 +229,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> getFile(final String name) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> getFile(final String name) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.getFile(name));
                     subscriber.onCompleted();
@@ -250,10 +244,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> getFileById(final String id) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> getFileById(final String id) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.getFileById(id));
                     subscriber.onCompleted();
@@ -265,10 +259,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> updateFile(final RF remote, final InputStream input, final FileUpdater updater) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> updateFile(final RemoteFile remote, final InputStream input, final FileUpdater updater) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.updateFile(remote, input, updater));
                     subscriber.onCompleted();
@@ -280,10 +274,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> updateFile(final RF remote, final InputStream input) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> updateFile(final RemoteFile remote, final InputStream input) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.updateFile(remote, input));
                     subscriber.onCompleted();
@@ -295,10 +289,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> updateFile(final RF remote, final LocalFile local, final FileUpdater updater) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> updateFile(final RemoteFile remote, final LocalFile local, final FileUpdater updater) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.updateFile(remote, local, updater));
                     subscriber.onCompleted();
@@ -310,10 +304,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> updateFile(final RF remote, final LocalFile local) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> updateFile(final RemoteFile remote, final LocalFile local) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.updateFile(remote, local));
                     subscriber.onCompleted();
@@ -325,12 +319,12 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<Pair<RF, Boolean>> deleteFile(final RF...files) {
-        return Observable.create(new Observable.OnSubscribe<Pair<RF, Boolean>>() {
+    public Observable<OperationResult> deleteFile(final RemoteFile...files) {
+        return Observable.create(new Observable.OnSubscribe<OperationResult>() {
             @Override
-            public void call(Subscriber<? super Pair<RF, Boolean>> subscriber) {
+            public void call(Subscriber<? super OperationResult> subscriber) {
                 try {
-                    for(RF file : files) {
+                    for(RemoteFile file : files) {
                         subscriber.onNext(mStorageProvider.deleteFile(file));
                     }
                     subscriber.onCompleted();
@@ -342,13 +336,13 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<Pair<RF, Boolean>> copyFiles(final RF target, final RF...files) {
-        return Observable.create(new Observable.OnSubscribe<Pair<RF, Boolean>>() {
+    public Observable<OperationResult> copyFiles(final RemoteFile target, final RemoteFile...files) {
+        return Observable.create(new Observable.OnSubscribe<OperationResult>() {
             @Override
-            public void call(final Subscriber<? super Pair<RF, Boolean>> subscriber) {
+            public void call(final Subscriber<? super OperationResult> subscriber) {
                 try {
                     long totalSize = 0;
-                    for (RF file : files) {
+                    for (RemoteFile file : files) {
                         totalSize += file.size();
                     }
                     final int totalFileCount = files.length;
@@ -383,10 +377,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> getFileDetail(final RF file) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> getFileDetail(final RemoteFile file) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.getFileDetail(file));
                     subscriber.onCompleted();
@@ -399,10 +393,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> getFilePermission(final RF file) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> getFilePermission(final RemoteFile file) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.getFilePermission(file));
                     subscriber.onCompleted();
@@ -415,10 +409,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
     }
 
 
-    public Observable<RF> updateFilePermission(final RF file) {
-        return Observable.create(new Observable.OnSubscribe<RF>() {
+    public Observable<RemoteFile> updateFilePermission(final RemoteFile file) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
-            public void call(Subscriber<? super RF> subscriber) {
+            public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.updateFilePermission(file));
                     subscriber.onCompleted();
@@ -461,10 +455,10 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public Observable<RemoteFileDownloader<RF>> download(final RF file) throws StorageException {
-        return Observable.create(new Observable.OnSubscribe<RemoteFileDownloader<RF>>() {
+    public Observable<RemoteFileDownloader> download(final RemoteFile file) throws StorageException {
+        return Observable.create(new Observable.OnSubscribe<RemoteFileDownloader>() {
             @Override
-            public void call(Subscriber<? super RemoteFileDownloader<RF>> subscriber) {
+            public void call(Subscriber<? super RemoteFileDownloader> subscriber) {
                 try {
                     subscriber.onNext(mStorageProvider.download(file));
                     subscriber.onCompleted();
@@ -475,15 +469,7 @@ public class RxStorageProvider<RF extends RemoteFile, CR extends Credential, SP 
         });
     }
 
-    public CR getRefreshedCredential() {
-        return mStorageProvider.getRefreshedCredential();
-    }
-
-    public boolean shouldRefreshCredential() {
-        return mStorageProvider.shouldRefreshCredential();
-    }
-
-    public SP getStorageProvider() {
+    public StorageProvider getStorageProvider() {
         return mStorageProvider;
     }
 

@@ -29,7 +29,12 @@ import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.AppPermissions;
+import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.databinding.ActivityMainBinding;
+import org.cryse.unifystorage.explorer.executor.JobExecutor;
+import org.cryse.unifystorage.explorer.executor.UIThread;
+import org.cryse.unifystorage.explorer.files.FilesFragment;
+import org.cryse.unifystorage.explorer.files.FilesPresenter;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.service.LongOperationService;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
@@ -268,23 +273,84 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     public void navigateToInternalStorage() {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(Environment.getExternalStorageDirectory().getAbsolutePath(), DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE);
-        switchContentFragment(fragment, null);
+        FilesFragment filesFragment = FilesFragment.newInstance();
+        new FilesPresenter.Builder()
+                .view(filesFragment)
+                .providerId(DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE)
+                .credential(null)
+                .threadExecutor(new JobExecutor())
+                .postExecutionThread(new UIThread())
+                .storageProvider(StorageProviderManager
+                        .getInstance()
+                        .createStorageProvider(
+                                this,
+                                DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE,
+                                null,
+                                Environment.getExternalStorageDirectory().getAbsolutePath()
+                        )
+                ).build();
+        switchContentFragment(filesFragment, null);
     }
 
-    public void navigateToOtherLocalStorage(String path, int storageProviderRecordId) {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(path, storageProviderRecordId);
-        switchContentFragment(fragment, null);
+    public void navigateToOtherLocalStorage(int storageProviderRecordId, String path) {
+        // LocalStorageFragment fragment = LocalStorageFragment.newInstance(storageProviderRecordId, path);
+        FilesFragment filesFragment = FilesFragment.newInstance();
+        new FilesPresenter.Builder()
+                .view(filesFragment)
+                .providerId(storageProviderRecordId)
+                .credential(null)
+                .threadExecutor(new JobExecutor())
+                .postExecutionThread(new UIThread())
+                .storageProvider(StorageProviderManager
+                        .getInstance()
+                        .createStorageProvider(
+                                this,
+                                storageProviderRecordId,
+                                null,
+                                path
+                        )
+                ).build();
+        switchContentFragment(filesFragment, null);
     }
 
-    public void navigateToOneDriveStorage(OneDriveCredential credential, int storageProviderRecordId) {
-        OneDriveStorageFragment fragment = OneDriveStorageFragment.newInstance(credential, storageProviderRecordId);
-        switchContentFragment(fragment, null);
+    public void navigateToOneDriveStorage(int storageProviderRecordId, OneDriveCredential credential) {
+        FilesFragment filesFragment = FilesFragment.newInstance();
+        new FilesPresenter.Builder()
+                .view(filesFragment)
+                .providerId(storageProviderRecordId)
+                .credential(credential)
+                .threadExecutor(new JobExecutor())
+                .postExecutionThread(new UIThread())
+                .storageProvider(StorageProviderManager
+                        .getInstance()
+                        .createStorageProvider(
+                                this,
+                                storageProviderRecordId,
+                                credential,
+                                DataContract.CONST_ONEDRIVE_CLIENT_ID
+                        )
+                ).build();
+        switchContentFragment(filesFragment, null);
     }
 
-    public void navigateToDropboxStorage(DropboxCredential credential, int storageProviderRecordId) {
-        DropboxStorageFragment fragment = DropboxStorageFragment.newInstance(credential, storageProviderRecordId);
-        switchContentFragment(fragment, null);
+    public void navigateToDropboxStorage(int storageProviderRecordId, DropboxCredential credential) {
+        FilesFragment filesFragment = FilesFragment.newInstance();
+        new FilesPresenter.Builder()
+                .view(filesFragment)
+                .providerId(storageProviderRecordId)
+                .credential(credential)
+                .threadExecutor(new JobExecutor())
+                .postExecutionThread(new UIThread())
+                .storageProvider(StorageProviderManager
+                        .getInstance()
+                        .createStorageProvider(
+                                this,
+                                storageProviderRecordId,
+                                credential,
+                                DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER
+                        )
+                ).build();
+        switchContentFragment(filesFragment, null);
     }
 
     public Drawer getNavigationDrawer() {
@@ -366,17 +432,17 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                     StorageProviderRecord record = (StorageProviderRecord) drawerItem.getTag();
                     switch (record.getProviderType()) {
                         case StorageProviderRecord.PROVIDER_LOCAL_STORAGE:
-                            navigateToOtherLocalStorage(record.getExtraData(), record.getId());
+                            navigateToOtherLocalStorage(record.getId(), record.getExtraData());
                             break;
                         case StorageProviderRecord.PROVIDER_ONE_DRIVE:
-                            navigateToOneDriveStorage(new OneDriveCredential(record.getCredentialData()), record.getId());
+                            navigateToOneDriveStorage(record.getId(), new OneDriveCredential(record.getCredentialData()));
                             break;
                         case StorageProviderRecord.PROVIDER_DROPBOX:
-                            navigateToDropboxStorage(new DropboxCredential(record.getCredentialData()), record.getId());
+                            navigateToDropboxStorage(record.getId(), new DropboxCredential(record.getCredentialData()));
                             break;
                     }
                 } else if(drawerItem.getIdentifier() <= DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
-                    navigateToOtherLocalStorage((String) drawerItem.getTag(), (int)drawerItem.getIdentifier());
+                    navigateToOtherLocalStorage((int)drawerItem.getIdentifier(), (String) drawerItem.getTag());
         }
     }
 

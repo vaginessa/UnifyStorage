@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 package org.cryse.unifystorage.io;
+
 import java.io.Serializable;
+
 /**
  * Enumeration of IO case sensitivity.
  * <p>

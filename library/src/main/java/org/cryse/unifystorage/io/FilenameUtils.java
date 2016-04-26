@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 package org.cryse.unifystorage.io;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Stack;
+
 /**
  * General filename and filepath manipulation utilities.
  * <p>

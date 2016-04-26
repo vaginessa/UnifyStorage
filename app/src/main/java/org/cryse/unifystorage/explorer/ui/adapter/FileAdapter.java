@@ -16,14 +16,13 @@ import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileAdapter<RF extends RemoteFile>
-        extends SelectableRecyclerViewAdapter<
-        RF,
-        List<RF>,
+public class FileAdapter extends SelectableRecyclerViewAdapter<
+        RemoteFile,
+        List<RemoteFile>,
         FileAdapter.BindingHolder
         > {
     private Context mContext;
-    private OnFileClickListener<RF> mOnFileClickListener;
+    private OnFileClickListener mOnFileClickListener;
 
     public FileAdapter(Context context) {
         this.mContext = context;
@@ -31,7 +30,7 @@ public class FileAdapter<RF extends RemoteFile>
     }
 
     @Override
-    public List<RF> buildItemsCollection() {
+    public List<RemoteFile> buildItemsCollection() {
         return new ArrayList<>();
     }
 
@@ -48,9 +47,9 @@ public class FileAdapter<RF extends RemoteFile>
     @Override
     public void onBindViewHolder(BindingHolder holder, int position) {
         ItemFileBinding fileBinding = holder.binding;
-        ItemRemoteFileViewModel<RF> viewModel = fileBinding.getViewModel();
+        ItemRemoteFileViewModel viewModel = fileBinding.getViewModel();
         if (viewModel == null) {
-            viewModel = new ItemRemoteFileViewModel<>(mContext, position, getItems().get(position));
+            viewModel = new ItemRemoteFileViewModel(mContext, position, getItems().get(position));
             viewModel.setOnFileClickListener(this.mOnFileClickListener);
             fileBinding.setViewModel(viewModel);
         } else {
@@ -72,12 +71,12 @@ public class FileAdapter<RF extends RemoteFile>
         }
     }
 
-    public void setOnFileClickListener(OnFileClickListener<RF> onFileClickListener) {
+    public void setOnFileClickListener(OnFileClickListener onFileClickListener) {
         this.mOnFileClickListener = onFileClickListener;
     }
 
-    public interface OnFileClickListener<RF> {
-        void onFileClick(View view, int position, RF file);
-        void onFileLongClick(View view, int position, RF file);
+    public interface OnFileClickListener {
+        void onFileClick(View view, int position, RemoteFile file);
+        void onFileLongClick(View view, int position, RemoteFile file);
     }
 }

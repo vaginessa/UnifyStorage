@@ -46,6 +46,13 @@
     <string name="storage_provider_name_dropbox">Dropbox</string>
     <string name="storage_provider_name_google_drive">Google Drive</string>
 
+
+    <string name="label_no_files_all">You have no Files!</string>
+    <string name="label_no_files_active">You have no active files!</string>
+    <string name="label_no_files_completed">You have no completed files!</string>
+    <string name="label_no_files_add">Add a file +</string>
+    <string name="label_refresh">Refresh</string>
+
     <string name="toast_double_click_to_exit">Please click BACK again to exit</string>
 
     <string name="notification_title_deleting_files">Deleting files…</string>

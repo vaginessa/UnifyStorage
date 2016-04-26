@@ -2,8 +2,8 @@ package org.cryse.unifystorage.explorer.ui.common;
 
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
+import android.databinding.Observable;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
@@ -32,7 +32,6 @@ import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
@@ -59,19 +58,14 @@ import org.cryse.utils.preference.Prefs;
 import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 
 import java.io.File;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public abstract class StorageProviderFragment<
-        RF extends RemoteFile,
-        CR extends Credential,
-        SP extends StorageProvider<RF, CR>
-        > extends AbstractFragment implements
-        FileAdapter.OnFileClickListener<RF>,
-        FileListViewModel.DataListener<RF, CR>,
+public abstract class AbstractStorageProviderFragment extends AbstractFragment implements
+        FileAdapter.OnFileClickListener,
+        FileListViewModel.DataListener,
         SelectableRecyclerViewAdapter.OnSelectionListener,
         MaterialCab.Callback {
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
@@ -84,11 +78,12 @@ public abstract class StorageProviderFragment<
         }
     };
     protected int mStorageProviderRecordId;
-    protected CR mCredential;
+    protected Credential mCredential;
+    protected String[] mExtras;
 
     protected FragmentStorageProviderBinding mBinding;
-    protected FileListViewModel<RF, CR, SP> mViewModel;
-    protected FileAdapter<RF> mCollectionAdapter;
+    protected FileListViewModel mViewModel;
+    protected FileAdapter mCollectionAdapter;
     protected MaterialDialog mDownloadDialog;
 
     protected BooleanPrefs mShowHiddenFilesPrefs;
@@ -127,7 +122,7 @@ public abstract class StorageProviderFragment<
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         readArguments();
-        mCollectionAdapter = new FileAdapter<>(getActivity());
+        mCollectionAdapter = new FileAdapter(getActivity());
         mCollectionAdapter.setOnFileClickListener(this);
         mCollectionAdapter.setOnSelectionListener(this);
         mViewModel = buildViewModel(mCredential);
@@ -142,8 +137,6 @@ public abstract class StorageProviderFragment<
     protected void readArguments() {
 
     }
-
-    protected abstract Class<RF> getRemoteFileClass();
 
     protected abstract String getLogTag();
 
@@ -179,7 +172,7 @@ public abstract class StorageProviderFragment<
                         .input(null, null, false, new MaterialDialog.InputCallback() {
                             @Override
                             public void onInput(MaterialDialog dialog, CharSequence input) {
-                                mViewModel.getStorageProvider().getStorageProvider().createDirectory(mViewModel.getDirectory().directory, input.toString());
+                                mViewModel.createDirectory(mViewModel.getDirectory().directory, input.toString());
                             }
                         })
                         .show();
@@ -201,8 +194,9 @@ public abstract class StorageProviderFragment<
     }
 
     private void applyColorToViews() {
+        mPrimaryColor = ResourceUtils.primaryColor(getContext());
+        mToolbarContentColor = ResourceUtils.toolbarTextColor(getContext());
         /*mPrimaryColor = Config.primaryColor(getContext(), mATEKey);
-        mToolbarContentColor = ResourceUtils.toolbarTextColor(getContext(), mATEKey, mToolbar);
         int textColorHint = ResourceUtils.adjustAlpha(mToolbarContentColor, 0.54f);
         int arrowColor = ResourceUtils.adjustAlpha(mToolbarContentColor, 1.0f);
         mBreadCrumbLayout.setCrumbActiveColor(mToolbarContentColor);
@@ -237,8 +231,8 @@ public abstract class StorageProviderFragment<
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (keyCode == KeyEvent.KEYCODE_BACK) {
                         if(mCollectionAdapter.isInSelection() || !mViewModel.isAtTopPath()) {
-                            if (!StorageProviderFragment.this.mDoubleBackPressedOnce.get()) {
-                                StorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
+                            if (!AbstractStorageProviderFragment.this.mDoubleBackPressedOnce.get()) {
+                                AbstractStorageProviderFragment.this.mDoubleBackPressedOnce.set(true);
                                 mHandler.postDelayed(mBackPressdRunnable, 400);
                                 if (mCollectionAdapter.isInSelection()) {
                                     mCollectionAdapter.clearSelection();
@@ -342,10 +336,10 @@ public abstract class StorageProviderFragment<
         mCollectionView.setAdapter(mCollectionAdapter);
     }
 
-    protected abstract FileListViewModel<RF, CR, SP> buildViewModel(CR credential);
+    protected abstract FileListViewModel buildViewModel(Credential credential);
 
     @Override
-    public void onFileClick(View view, int position, RF file) {
+    public void onFileClick(View view, int position, RemoteFile file) {
         if(mCollectionAdapter.isInSelection()) {
             mCollectionAdapter.toggleSelection(position);
         } else {
@@ -354,7 +348,7 @@ public abstract class StorageProviderFragment<
     }
 
     @Override
-    public void onFileLongClick(View view, int position, RF file) {
+    public void onFileLongClick(View view, int position, RemoteFile file) {
         mCollectionAdapter.toggleSelection(position);
         mViewModel.onFileLongClick(file);
     }
@@ -372,13 +366,13 @@ public abstract class StorageProviderFragment<
 
     @Override
     public void onStorageProviderReady() {
-
-    }
-
-    @Override
-    public void onDirectoryChanged(DirectoryInfo<RF, List<RF>> directory) {
-        mCollectionAdapter.replaceWith(directory.files);
-        updateBreadcrumb(directory.directory.getPath());
+        mViewModel.mDirectory.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() {
+            @Override
+            public void onPropertyChanged(Observable observable, int i) {
+                mCollectionAdapter.replaceWith( mViewModel.mDirectory.get().files);
+                updateBreadcrumb( mViewModel.mDirectory.get().directory.getPath());
+            }
+        });
     }
 
     @Override
@@ -393,7 +387,7 @@ public abstract class StorageProviderFragment<
     }
 
     @Override
-    public void onCredentialRefreshed(CR credential) {
+    public void onCredentialRefreshed(Credential credential) {
         this.mCredential = credential;
     }
 
@@ -503,7 +497,7 @@ public abstract class StorageProviderFragment<
     public boolean onCabCreated(MaterialCab materialCab, Menu menu) {
         MenuUtils.showMenuItemIcon(menu);
         // ATE.applyMenu(getActivity(), mATEKey, menu);
-        DrawableCompat.setTint(materialCab.getToolbar().getNavigationIcon(), mToolbarContentColor);
+        //DrawableCompat.setTint(materialCab.getToolbar().getNavigationIcon(), mToolbarContentColor);
         return true;
     }
 
@@ -532,43 +526,49 @@ public abstract class StorageProviderFragment<
     }
 
     protected void menuDeleteFile() {
-        RF[] files = mCollectionAdapter.getSelectionItems(getRemoteFileClass());
+        RemoteFile[] files = mCollectionAdapter.getSelectionItems(RemoteFile.class);
         mCollectionAdapter.clearSelection();
         LongOperationService.LongOperationBinder longOperationBinder = getMainActivity().getLongOperationBinder();
-        longOperationBinder.<RF, CR, SP>doOperation(
-                new FileOperation<>(
+        longOperationBinder.doOperation(
+                new FileOperation(
                         FileOperation.FileOperationCode.DELETE,
                         RandomUtils.nextInt(),
-                        mStorageProviderRecordId,
+                        new FileOperation.StorageProviderInfo(
+                                mStorageProviderRecordId,
+                                mCredential,
+                                mExtras
+                        ),
                         mViewModel.getDirectory().directory,
                         files
-                ),
-                getRemoteFileClass()
+                )
         );
     }
 
     protected void menuCopyFile() {
-        RF[] files = mCollectionAdapter.getSelectionItems(getRemoteFileClass());
+        RemoteFile[] files = mCollectionAdapter.getSelectionItems(RemoteFile.class);
         mCollectionAdapter.clearSelection();
-        CopyManager.getInstance().setCopyTask(new CopyTask<RF>(mStorageProviderRecordId, files, getRemoteFileClass()));
+        CopyManager.getInstance().setCopyTask(new CopyTask(mStorageProviderRecordId, files));
     }
 
     protected void menuPasteFile() {
         if (CopyManager.getInstance().hasCopyTask()) {
-            CopyTask<RF> task = CopyManager.getInstance().getCurrentCopyTask();
-            RF[] files = task.fileToCopy;
+            CopyTask task = CopyManager.getInstance().getCurrentCopyTask();
+            RemoteFile[] files = task.fileToCopy;
             Toast.makeText(getContext(), "Paste!", Toast.LENGTH_SHORT).show();
             CopyManager.getInstance().cancelCopyTask();
             LongOperationService.LongOperationBinder longOperationBinder = getMainActivity().getLongOperationBinder();
-            longOperationBinder.<RF, CR, SP>doOperation(
-                    new FileOperation<>(
+            longOperationBinder.doOperation(
+                    new FileOperation(
                             FileOperation.FileOperationCode.COPY,
                             RandomUtils.nextInt(),
-                            mStorageProviderRecordId,
+                            new FileOperation.StorageProviderInfo(
+                                    mStorageProviderRecordId,
+                                    mCredential,
+                                    mExtras
+                            ),
                             mViewModel.getDirectory().directory,
                             files
-                    ),
-                    getRemoteFileClass()
+                    )
             );
         }
     }

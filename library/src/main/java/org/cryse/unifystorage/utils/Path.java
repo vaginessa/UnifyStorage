@@ -4,6 +4,8 @@ import android.util.Log;
 
 import org.cryse.unifystorage.RemoteFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 
 public final class Path {
@@ -27,6 +29,21 @@ public final class Path {
             return p1 + p2;
         else
             return p1 + SEPARATOR + p2;
+    }
+
+    public static String getLocalCanonicalPath(String path) {
+        File file = new File(path);
+        return getLocalCanonicalPath(file);
+    }
+
+    public static String getLocalCanonicalPath(File file) {
+        String cleanedPath;
+        try {
+            cleanedPath = file.getCanonicalPath();
+        } catch (IOException e) {
+            cleanedPath = file.getAbsolutePath();
+        }
+        return cleanedPath;
     }
 
     /**

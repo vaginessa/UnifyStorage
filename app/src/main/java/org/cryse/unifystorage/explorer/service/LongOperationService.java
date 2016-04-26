@@ -7,19 +7,17 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.util.Pair;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
-import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RxStorageProvider;
 import org.cryse.unifystorage.StorageProvider;
-import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.event.FileDeleteResultEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
+import org.cryse.unifystorage.utils.OperationResult;
 
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -41,47 +39,50 @@ public class LongOperationService extends Service {
         return new LongOperationBinder(this);
     }
 
-    public <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
-    void doOperation(FileOperation<RF> fileOperation, Class<RF> rfClass) {
+    public void doOperation(FileOperation fileOperation) {
         FileOperation.FileOperationCode code = fileOperation.getCode();
         switch (code) {
             case COPY:
-                doCopy(fileOperation, rfClass);
+                doCopy(fileOperation);
                 break;
             case MOVE:
-                doMove(fileOperation, rfClass);
+                doMove(fileOperation);
                 break;
             case DELETE:
-                doDelete(fileOperation, rfClass);
+                doDelete(fileOperation);
                 break;
             case RENAME:
-                doRename(fileOperation, rfClass);
+                doRename(fileOperation);
                 break;
             case UPLOAD:
-                doUpload(fileOperation, rfClass);
+                doUpload(fileOperation);
                 break;
             case DOWNLOAD:
-                doDownload(fileOperation, rfClass);
+                doDownload(fileOperation);
                 break;
             case COMPRESS:
-                doCompress(fileOperation, rfClass);
+                doCompress(fileOperation);
                 break;
             case UNCOMPRESS:
-                doUncompress(fileOperation, rfClass);
+                doUncompress(fileOperation);
                 break;
         }
     }
-    private <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
-    void doCopy(final FileOperation<RF> fileOperation, Class<RF> rfClass) {
-        SP storageProvider = StorageProviderManager.getInstance().<RF, CR, SP>loadStorageProvider(fileOperation.getStorageProviderId());
+    private void doCopy(final FileOperation fileOperation) {
+        StorageProvider storageProvider = StorageProviderManager.getInstance().createStorageProvider(
+                this,
+                fileOperation.getStorageProviderInfo().id,
+                fileOperation.getStorageProviderInfo().credential,
+                fileOperation.getStorageProviderInfo().extras
+        );
         if(storageProvider == null) throw new IllegalStateException("Cannot get StorageProvider instance");
-        RxStorageProvider<RF, CR, SP> rxStorageProvider = new RxStorageProvider<>(storageProvider);
+        RxStorageProvider rxStorageProvider = new RxStorageProvider(storageProvider);
         final int fileCount = fileOperation.getFiles().length;
         final int[] currentProgress = new int[]{0};
 
         rxStorageProvider.copyFiles(fileOperation.getTarget(), fileOperation.getFiles()).observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
-                .subscribe(new Subscriber<Pair<RF, Boolean>>() {
+                .subscribe(new Subscriber<OperationResult>() {
                     @Override
                     public void onCompleted() {
                     }
@@ -93,7 +94,7 @@ public class LongOperationService extends Service {
                     }
 
                     @Override
-                    public void onNext(Pair<RF, Boolean> result) {
+                    public void onNext(OperationResult result) {
                         String resultToast = String.format("Copy %s %s", result.first.getName(), result.second ? "success" : "failed");
                         Log.e("CopyFile", resultToast);
                         currentProgress[0]++;
@@ -101,12 +102,16 @@ public class LongOperationService extends Service {
                 });
     }
 
-    private <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
-    void doDelete(final FileOperation<RF> fileOperation, Class<RF> rfClass) {
+    private void doDelete(final FileOperation fileOperation) {
         final NotificationCompat.Builder deleteNotificationBuilder = new NotificationCompat.Builder(this);
-        SP storageProvider = StorageProviderManager.getInstance().<RF, CR, SP>loadStorageProvider(fileOperation.getStorageProviderId());
+        StorageProvider storageProvider = StorageProviderManager.getInstance().createStorageProvider(
+                this,
+                fileOperation.getStorageProviderInfo().id,
+                fileOperation.getStorageProviderInfo().credential,
+                fileOperation.getStorageProviderInfo().extras
+        );
         if(storageProvider == null) throw new IllegalStateException("Cannot get StorageProvider instance");
-        RxStorageProvider<RF, CR, SP> rxStorageProvider = new RxStorageProvider<>(storageProvider);
+        RxStorageProvider rxStorageProvider = new RxStorageProvider(storageProvider);
         final int fileCount = fileOperation.getFiles().length;
         final int[] currentProgress = new int[]{0};
         deleteNotificationBuilder.setContentTitle(getResources().getString(R.string.notification_title_deleting_files))
@@ -118,13 +123,13 @@ public class LongOperationService extends Service {
 
         rxStorageProvider.deleteFile(fileOperation.getFiles()).observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
-                .subscribe(new Subscriber<Pair<RF, Boolean>>() {
+                .subscribe(new Subscriber<OperationResult>() {
                     @Override
                     public void onCompleted() {
                         mNotificationManager.cancel(fileOperation.getOperationId());
                         stopForeground(true);
                         mEventBus.sendEvent(new FileDeleteResultEvent(
-                                fileOperation.getStorageProviderId(),
+                                fileOperation.getStorageProviderInfo().id,
                                 fileOperation.getTarget().getId(),
                                 true,
                                 "",
@@ -139,7 +144,7 @@ public class LongOperationService extends Service {
                         mNotificationManager.cancel(fileOperation.getOperationId());
                         stopForeground(true);
                         mEventBus.sendEvent(new FileDeleteResultEvent(
-                                fileOperation.getStorageProviderId(),
+                                fileOperation.getStorageProviderInfo().id,
                                 fileOperation.getTarget().getId(),
                                 false,
                                 "",
@@ -148,11 +153,11 @@ public class LongOperationService extends Service {
                     }
 
                     @Override
-                    public void onNext(Pair<RF, Boolean> result) {
+                    public void onNext(OperationResult result) {
                         String resultToast = String.format("Delete %s %s", result.first.getName(), result.second ? "success" : "failed");
                         Log.e("DeleteFile", resultToast);
                         mEventBus.sendEvent(new FileDeleteEvent(
-                                fileOperation.getStorageProviderId(),
+                                fileOperation.getStorageProviderInfo().id,
                                 fileOperation.getTarget().getId(),
                                 currentProgress[0],
                                 fileCount,
@@ -169,27 +174,27 @@ public class LongOperationService extends Service {
                 });
     }
 
-    private <RF extends RemoteFile> void doMove(FileOperation fileOperation, Class<RF> rfClass) {
+    private void doMove(FileOperation fileOperation) {
 
     }
 
-    private <RF extends RemoteFile> void doRename(FileOperation fileOperation, Class<RF> rfClass) {
+    private void doRename(FileOperation fileOperation) {
 
     }
 
-    private <RF extends RemoteFile> void doUpload(FileOperation fileOperation, Class<RF> rfClass) {
+    private void doUpload(FileOperation fileOperation) {
 
     }
 
-    private <RF extends RemoteFile> void doDownload(FileOperation fileOperation, Class<RF> rfClass) {
+    private void doDownload(FileOperation fileOperation) {
 
     }
 
-    private <RF extends RemoteFile> void doCompress(FileOperation fileOperation, Class<RF> rfClass) {
+    private void doCompress(FileOperation fileOperation) {
 
     }
 
-    private <RF extends RemoteFile> void doUncompress(FileOperation fileOperation, Class<RF> rfClass) {
+    private void doUncompress(FileOperation fileOperation) {
 
     }
 
@@ -199,9 +204,8 @@ public class LongOperationService extends Service {
             this.mService = service;
         }
 
-        public <RF extends RemoteFile, CR extends Credential, SP extends StorageProvider<RF, CR>>
-        void doOperation(FileOperation<RF> fileOperation, Class<RF> rfClass) {
-            mService.doOperation(fileOperation, rfClass);
+        public void doOperation(FileOperation fileOperation) {
+            mService.doOperation(fileOperation);
         }
     }
 }
