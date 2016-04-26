@@ -22,6 +22,8 @@ public interface FilesContract {
 
         void showFiles(DirectoryInfo directory, @Nullable CollectionViewState collectionViewState);
 
+        void showError(DirectoryInfo directory, Throwable throwable);
+
         void showAddFile();
 
         void showFileDetailsUi(String fileId);

@@ -100,7 +100,7 @@ public class StateView extends LinearLayout {
         mButton.setVisibility(VISIBLE);
         mImageView.setImageDrawable(drawable);
         mTextView.setText(text);
-        mTextView.setText(buttonText);
+        mButton.setText(buttonText);
         if(mOnStateChangeListener != null)
             mOnStateChangeListener.onStateChange(mState);
     }
@@ -113,7 +113,7 @@ public class StateView extends LinearLayout {
         mButton.setVisibility(VISIBLE);
         mImageView.setImageResource(imageId);
         mTextView.setText(textId);
-        mTextView.setText(buttonTextId);
+        mButton.setText(buttonTextId);
         if(mOnStateChangeListener != null)
             mOnStateChangeListener.onStateChange(mState);
     }

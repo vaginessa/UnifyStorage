@@ -41,6 +41,7 @@ import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.MenuUtils;
 import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
+import org.cryse.unifystorage.explorer.utils.exception.ExceptionUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
@@ -143,6 +144,7 @@ public class FilesFragment extends AbstractFragment implements
         setupRecyclerView();
         setupBreadCrumb();
         setupFab();
+        setupStateView();
         return fragmentView;
     }
 
@@ -297,6 +299,23 @@ public class FilesFragment extends AbstractFragment implements
         });
     }
 
+    protected void setupStateView() {
+        mStateView.setOnStateChangeListener(new StateView.OnStateChangeListener() {
+            @Override
+            public void onStateChange(StateView.State state) {
+
+            }
+
+            @Override
+            public void onButtonClick(StateView.State state) {
+                if(state == StateView.State.ERROR) {
+                    if(mPresenter.getDirectory() != null)
+                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true);
+                }
+            }
+        });
+    }
+
     public void updateBreadcrumb(String path) {
         if (path == null || TextUtils.isEmpty(mBreadCrumbLayout.getTopPath())) {
             // Initial directory
@@ -386,6 +405,7 @@ public class FilesFragment extends AbstractFragment implements
         if (getView() == null) {
             return;
         }
+        hideStateView();
         mLoadingProgress.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
     }
 
@@ -414,6 +434,15 @@ public class FilesFragment extends AbstractFragment implements
         } else {
             showNoFilesView();
         }
+    }
+
+    @Override
+    public void showError(DirectoryInfo directory, Throwable throwable) {
+        if(directory.directory != null) {
+            updateBreadcrumb(directory.directory.getPath());
+        }
+        mCollectionAdapter.replaceWith(directory.files);
+        showRetryView(ExceptionUtils.exceptionToStringRes(throwable));
     }
 
     @Override

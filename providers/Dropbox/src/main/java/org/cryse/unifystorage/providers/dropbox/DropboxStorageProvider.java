@@ -42,40 +42,6 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
     Retrofit mRetrofit;
     DropboxService mDropboxService;
 
-
-    /*public DropboxStorageProvider(DbxClientV2 mDropboxClient) {
-        this.mDropboxClient = mDropboxClient;
-    }*/
-
-    /*public DropboxStorageProvider(DropboxCredential credential, String clientIdentifier) {
-        mDropboxCredential = credential;
-        if (mDropboxCredential != null)
-            mAuthenticationHeader = "Bearer " + mDropboxCredential.getAccessSecret();
-        loggingInterceptor = new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()
-                .addInterceptor(loggingInterceptor)
-                .build();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https:" + DropboxService.SUBDOMAIN_API)
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        dropboxService = retrofit.create(DropboxService.class);
-
-
-        *//*if (mDropboxClient == null) {
-            String userLocale = Locale.getDefault().toString();
-            *//**//*DbxRequestConfig requestConfig = new DbxRequestConfig(
-                    clientIdentifier,
-                    userLocale,
-                    OkHttpRequestor.Instance);
-
-            mDropboxClient = new DbxClientV2(requestConfig, credential.getAccessToken(), DbxHost.Default);*//**//*
-        }*//*
-    }*/
-
     public DropboxStorageProvider(OkHttpClient okHttpClient, DropboxCredential credential, String clientIdentifier) {
         this.mDropboxCredential = credential;
         if (this.mDropboxCredential != null)
@@ -142,14 +108,10 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
             } else {
                 // Failure here
             }
-            //String resultString = responseObject.toString();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new StorageException(e);
         }
         return DirectoryInfo.create(parent, list);
-        /*} catch (DbxException ex) {
-            throw new StorageException(ex);
-        }*/
     }
 
     @Override

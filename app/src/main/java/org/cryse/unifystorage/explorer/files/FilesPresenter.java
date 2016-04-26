@@ -24,6 +24,7 @@ import org.cryse.unifystorage.io.comparator.NameFileComparator;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
@@ -151,7 +152,7 @@ public class FilesPresenter implements FilesContract.Presenter {
         mFirstLoad = false;
     }
 
-    private void loadFiles(RemoteFile parent, boolean forceUpdate, final boolean showLoadingUI, final CollectionViewState state) {
+    private void loadFiles(final RemoteFile parent, boolean forceUpdate, final boolean showLoadingUI, final CollectionViewState state) {
         if(!forceUpdate) return;
         if (showLoadingUI) {
             mFilesView.setLoadingIndicator(true);
@@ -169,6 +170,8 @@ public class FilesPresenter implements FilesContract.Presenter {
                     public void onError(Throwable e) {
                         super.onError(e);
                         mFilesView.setLoadingIndicator(false);
+                        mDirectory = DirectoryInfo.create(parent, Collections.<RemoteFile>emptyList());
+                        mFilesView.showError(mDirectory, e);
                     }
 
                     @Override

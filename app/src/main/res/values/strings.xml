@@ -47,6 +47,9 @@
     <string name="storage_provider_name_google_drive">Google Drive</string>
 
 
+    <string name="label_error_something_wrong">Something is wrong</string>
+    <string name="label_error_network_error">Network Error</string>
+    <string name="label_error_access_denied">Access Denied</string>
     <string name="label_no_files_all">You have no Files!</string>
     <string name="label_no_files_active">You have no active files!</string>
     <string name="label_no_files_completed">You have no completed files!</string>
