@@ -273,15 +273,23 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     public void navigateToInternalStorage() {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(
-                DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE,
-                Environment.getExternalStorageDirectory().getAbsolutePath()
-        );
-        switchContentFragment(fragment, null);
-        navigateToOtherLocalStorage(
-                DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE,
-                Environment.getExternalStorageDirectory().getAbsolutePath()
-        );
+        FilesFragment filesFragment = FilesFragment.newInstance();
+        new FilesPresenter.Builder()
+                .view(filesFragment)
+                .providerId(DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE)
+                .credential(null)
+                .threadExecutor(new JobExecutor())
+                .postExecutionThread(new UIThread())
+                .storageProvider(StorageProviderManager
+                        .getInstance()
+                        .createStorageProvider(
+                                this,
+                                DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE,
+                                null,
+                                Environment.getExternalStorageDirectory().getAbsolutePath()
+                        )
+                ).build();
+        switchContentFragment(filesFragment, null);
     }
 
     public void navigateToOtherLocalStorage(int storageProviderRecordId, String path) {

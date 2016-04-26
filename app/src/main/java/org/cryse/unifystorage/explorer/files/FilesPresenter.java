@@ -103,11 +103,12 @@ public class FilesPresenter implements FilesContract.Presenter {
         mBackwardStack.push(new BrowserState(mDirectory, collectionViewState));
         for (int i = 0; i < mBackwardStack.size(); i++) {
             if (mBackwardStack.get(i).directory.directory.getPath().equals(targetPath)) {
-                this.mDirectory = mBackwardStack.get(i).directory;
-
                 if(isLocalStorage()) {
+                    this.mDirectory = mBackwardStack.get(i).directory;
                     loadFiles(mDirectory.directory, true, false, mBackwardStack.get(i).collectionViewState);
                 } else {
+                    mFilesView.onLeaveDirectory(mDirectory);
+                    this.mDirectory = mBackwardStack.get(i).directory;
                     mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
                     mFilesView.showFiles(mDirectory, mBackwardStack.get(i).collectionViewState);
                     // mFilesView.onCollectionViewStateRestore(mBackwardStack.get(i).collectionViewState);
@@ -125,10 +126,13 @@ public class FilesPresenter implements FilesContract.Presenter {
     public boolean onBackPressed() {
         if (!mBackwardStack.empty()) {
             BrowserState currentState = mBackwardStack.pop();
+            mFilesView.onLeaveDirectory(mDirectory);
             mDirectory = currentState.directory;
             if(isLocalStorage()) {
+                mDirectory = currentState.directory;
                 loadFiles(mDirectory.directory, true, false, currentState.collectionViewState);
             } else {
+                mFilesView.onLeaveDirectory(mDirectory);
                 mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
                 mFilesView.showFiles(mDirectory, currentState.collectionViewState);
                 // mFilesView.onCollectionViewStateRestore(currentState.collectionViewState);
@@ -173,6 +177,7 @@ public class FilesPresenter implements FilesContract.Presenter {
                     @Override
                     public void onNext(UseCase.SingleResponseValue<DirectoryInfo> singleResponseValue) {
                         super.onNext(singleResponseValue);
+                        mFilesView.onLeaveDirectory(mDirectory);
                         mDirectory = singleResponseValue.getValue();
                         mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
                         mFilesView.showFiles(mDirectory, state);

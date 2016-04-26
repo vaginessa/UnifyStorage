@@ -257,7 +257,7 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     protected void setupFileWatcher() {
-        mFileWatcher = new LocalFileWatcher();
+        mFileWatcher = new FileObserverWatcher();
         mFileWatcher.setOnFileChangeListener(new OnFileChangedListener() {
             @Override
             public boolean onFileCreate(String path, String file) {
@@ -394,6 +394,12 @@ public class FilesFragment extends AbstractFragment implements
             return;
         }
         mLoadingProgress.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    @Override
+    public void onLeaveDirectory(DirectoryInfo directory) {
+        if(directory != null && directory.directory != null)
+            mFileWatcher.stopWatching(directory.directory.getPath());
     }
 
     @Override

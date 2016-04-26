@@ -33,6 +33,10 @@ public final class Path {
 
     public static String getLocalCanonicalPath(String path) {
         File file = new File(path);
+        return getLocalCanonicalPath(file);
+    }
+
+    public static String getLocalCanonicalPath(File file) {
         String cleanedPath;
         try {
             cleanedPath = file.getCanonicalPath();

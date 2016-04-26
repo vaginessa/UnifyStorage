@@ -4,11 +4,13 @@ import android.os.FileObserver;
 import android.util.Log;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SimpleFileObserver extends FileObserver {
     private static final String LOG_TAG = SimpleFileObserver.class.getSimpleName();
     private String mRootPath;
     private OnFileChangedListener mOnFileChangedListener;
+    private AtomicBoolean mStarted = new AtomicBoolean(false);
 
     public SimpleFileObserver(String path) {
         super(path, FileObserver.ALL_EVENTS);
@@ -25,6 +27,20 @@ public class SimpleFileObserver extends FileObserver {
             path += File.separator;
         }
         this.mRootPath = path;
+    }
+
+    @Override
+    public void startWatching() {
+        if(!mStarted.get()) {
+            mStarted.set(true);
+            super.startWatching();
+        }
+    }
+
+    @Override
+    public void stopWatching() {
+        super.stopWatching();
+        mStarted.set(false);
     }
 
     @Override

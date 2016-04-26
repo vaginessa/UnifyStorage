@@ -68,6 +68,8 @@ dependencies {
 
     compile libDependencies.easypermission
 
+    compile libDependencies.commons_io
+
     compile libDependencies.rxjava
     compile libDependencies.rxandroid
 

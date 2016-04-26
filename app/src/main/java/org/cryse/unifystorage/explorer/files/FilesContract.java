@@ -19,6 +19,8 @@ public interface FilesContract {
 
         void setLoadingIndicator(boolean active);
 
+        void onLeaveDirectory(DirectoryInfo directory);
+
         void showFiles(DirectoryInfo directory, @Nullable CollectionViewState collectionViewState);
 
         void showAddFile();
