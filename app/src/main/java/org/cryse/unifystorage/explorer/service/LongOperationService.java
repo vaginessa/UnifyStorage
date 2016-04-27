@@ -106,13 +106,18 @@ public class LongOperationService extends Service {
                 break;
         }
     }
-    private void doCopy(final FileOperation fileOperation) {
-        StorageProvider storageProvider = StorageProviderManager.getInstance().createStorageProvider(
+
+    private StorageProvider getStorageProvider(FileOperation fileOperation) {
+        return StorageProviderManager.getInstance().createStorageProvider(
                 this,
                 fileOperation.getStorageProviderInfo().getStorageProviderId(),
                 fileOperation.getStorageProviderInfo().getCredential(),
                 fileOperation.getStorageProviderInfo().getExtras()
         );
+    }
+
+    private void doCopy(final FileOperation fileOperation) {
+        StorageProvider storageProvider = getStorageProvider(fileOperation);
         if(storageProvider == null) throw new IllegalStateException("Cannot get StorageProvider instance");
         RxStorageProvider rxStorageProvider = new RxStorageProvider(storageProvider);
         final int fileCount = fileOperation.getFiles().length;
@@ -142,12 +147,7 @@ public class LongOperationService extends Service {
 
     private void doDelete(final FileOperation fileOperation) {
         final NotificationCompat.Builder deleteNotificationBuilder = new NotificationCompat.Builder(this);
-        StorageProvider storageProvider = StorageProviderManager.getInstance().createStorageProvider(
-                this,
-                fileOperation.getStorageProviderInfo().getStorageProviderId(),
-                fileOperation.getStorageProviderInfo().getCredential(),
-                fileOperation.getStorageProviderInfo().getExtras()
-        );
+        StorageProvider storageProvider = getStorageProvider(fileOperation);
         if(storageProvider == null) throw new IllegalStateException("Cannot get StorageProvider instance");
         RxStorageProvider rxStorageProvider = new RxStorageProvider(storageProvider);
         final int fileCount = fileOperation.getFiles().length;
