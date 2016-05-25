@@ -409,7 +409,8 @@ public class FilesFragment extends AbstractFragment implements
         if (getView() == null) {
             return;
         }
-        hideStateView();
+        if(active)
+            hideStateView();
         mLoadingProgress.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
     }
 

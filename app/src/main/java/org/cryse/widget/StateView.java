@@ -69,7 +69,7 @@ public class StateView extends LinearLayout {
 
     public void hide() {
         mState = State.HIDE;
-        this.setVisibility(GONE);
+        this.setVisibility(INVISIBLE);
     }
 
     public void showEmptyViewByRes(@DrawableRes int imageId, @StringRes int textId) {
