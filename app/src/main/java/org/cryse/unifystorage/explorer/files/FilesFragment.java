@@ -543,17 +543,7 @@ public class FilesFragment extends AbstractFragment implements
     protected void menuDeleteFile() {
         RemoteFile[] files = mCollectionAdapter.getSelectionItems(RemoteFile.class);
         mCollectionAdapter.clearSelection();
-        mEventBus.sendEvent(
-                new FileOperationTaskEvent(
-                        new FileOperation(
-                                FileOperation.FileOperationCode.DELETE,
-                                RandomUtils.nextInt(),
-                                mPresenter.getStorageProviderInfo(),
-                                mPresenter.getDirectory().directory,
-                                files
-                        )
-                )
-        );
+        mPresenter.deleteFiles(files);
     }
 
     protected MainActivity getMainActivity() {

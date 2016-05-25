@@ -65,7 +65,7 @@ public interface FilesContract {
 
         void openFileDetails(RemoteFile requestedFile);
 
-        void deleteFiles(List<RemoteFile> filesToDelete);
+        void deleteFiles(RemoteFile[] filesToDelete);
 
         void onDeleteFileEvent(FileDeleteEvent event);
 

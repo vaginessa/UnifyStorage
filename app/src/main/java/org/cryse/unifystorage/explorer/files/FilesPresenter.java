@@ -11,10 +11,12 @@ import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.base.BasePresenter;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
+import org.cryse.unifystorage.explorer.event.RxEventBus;
 import org.cryse.unifystorage.explorer.executor.PostExecutionThread;
 import org.cryse.unifystorage.explorer.executor.ThreadExecutor;
 import org.cryse.unifystorage.explorer.interactor.CreateFolderUseCase;
 import org.cryse.unifystorage.explorer.interactor.DefaultSubscriber;
+import org.cryse.unifystorage.explorer.interactor.DeleteFilesUseCase;
 import org.cryse.unifystorage.explorer.interactor.GetFilesUseCase;
 import org.cryse.unifystorage.explorer.interactor.UseCase;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
@@ -43,6 +45,7 @@ public class FilesPresenter implements FilesContract.Presenter {
     protected PostExecutionThread mPostExecutionThread;
     private GetFilesUseCase mGetFilesUseCase;
     private CreateFolderUseCase mCreateFolderUseCase;
+    private DeleteFilesUseCase mDeleteFilesUseCase;
     private boolean mFirstLoad = true;
     private boolean mShowHiddenFile = false;
     public DirectoryInfo mDirectory;
@@ -68,6 +71,7 @@ public class FilesPresenter implements FilesContract.Presenter {
 
         this.mGetFilesUseCase = new GetFilesUseCase(mRxStorageProvider, mThreadExecutor, mPostExecutionThread);
         this.mCreateFolderUseCase = new CreateFolderUseCase(mRxStorageProvider, mThreadExecutor, mPostExecutionThread);
+        this.mDeleteFilesUseCase = new DeleteFilesUseCase(RxEventBus.getInstance(), mThreadExecutor, mPostExecutionThread);
 
         this.mRxStorageProvider.getStorageProvider().setOnTokenRefreshListener(new StorageProvider.OnTokenRefreshListener() {
             @Override
@@ -223,6 +227,19 @@ public class FilesPresenter implements FilesContract.Presenter {
         );
     }
 
+    public void deleteFiles(RemoteFile[] files) {
+        mDeleteFilesUseCase.execute(
+                new DeleteFilesUseCase.RequestValues(
+                        mStorageProviderInfo,
+                        mDirectory.directory,
+                        files
+                ),
+                new DefaultSubscriber<UseCase.SingleResponseValue<Void>>() {
+
+                }
+        );
+    }
+
     public void setShowHiddenFiles(boolean show) {
         this.mShowHiddenFile = show;
         if(mDirectory != null) {
@@ -235,11 +252,6 @@ public class FilesPresenter implements FilesContract.Presenter {
 
     @Override
     public void openFileDetails(RemoteFile requestedFile) {
-
-    }
-
-    @Override
-    public void deleteFiles(List<RemoteFile> filesToDelete) {
 
     }
 
