@@ -1,7 +1,7 @@
 package org.cryse.unifystorage.explorer.service;
 
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.credential.Credential;
+import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 
 public class FileOperation {
     public enum FileOperationCode {
@@ -40,17 +40,5 @@ public class FileOperation {
 
     public RemoteFile[] getFiles() {
         return mFiles;
-    }
-
-    public static class StorageProviderInfo {
-        public int id;
-        public Credential credential;
-        public String[] extras;
-
-        public StorageProviderInfo(int id, Credential credential, String[] extras) {
-            this.id = id;
-            this.credential = credential;
-            this.extras = extras;
-        }
     }
 }

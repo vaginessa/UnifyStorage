@@ -20,10 +20,10 @@ public class GetFilesUseCase extends UseCase<GetFilesUseCase.RequestValues, UseC
 
     @Override public Observable<SingleResponseValue<DirectoryInfo>> buildUseCaseObservable(RequestValues requestValues) {
         Observable<DirectoryInfo> observable;
-        if(requestValues.parentFile == null)
+        if(requestValues.directoryInfo == null)
             observable = this.rxStorageProvider.list();
         else
-            observable = this.rxStorageProvider.list(requestValues.parentFile);
+            observable = this.rxStorageProvider.list(requestValues.directoryInfo);
         return observable.map(new Func1<DirectoryInfo, SingleResponseValue<DirectoryInfo>>() {
             @Override
             public SingleResponseValue<DirectoryInfo> call(DirectoryInfo directoryInfo) {
@@ -33,10 +33,10 @@ public class GetFilesUseCase extends UseCase<GetFilesUseCase.RequestValues, UseC
     }
 
     public static class RequestValues extends UseCase.RequestValues {
-        public final RemoteFile parentFile;
+        public final DirectoryInfo directoryInfo;
 
-        public RequestValues(RemoteFile parentFile) {
-            this.parentFile = parentFile;
+        public RequestValues(DirectoryInfo directoryInfo) {
+            this.directoryInfo = directoryInfo;
         }
     }
 }

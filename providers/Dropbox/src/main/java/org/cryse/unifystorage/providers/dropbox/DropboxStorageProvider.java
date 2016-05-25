@@ -1,5 +1,7 @@
 package org.cryse.unifystorage.providers.dropbox;
 
+import android.text.TextUtils;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -69,49 +71,64 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public DirectoryInfo list(RemoteFile parent) throws StorageException {
+    public DirectoryInfo list(DirectoryInfo directoryInfo) throws StorageException {
         /*try {*/
+        RemoteFile directory = directoryInfo.directory;
         List<RemoteFile> list = new ArrayList<RemoteFile>();
-        String parentPath = getPathString(parent);
-
-        JsonObject requestData = new DropboxRequestDataBuilder()
-                .listFolder(parentPath)
-                .build();
-        Call<JsonObject> call = mDropboxService.listFolders(mAuthenticationHeader, requestData);
-        try {
-            Response<JsonObject> response = call.execute();
-            int responseCode = response.code();
-            JsonObject responseObject = response.body();
-            if (responseCode == 200) {
-                if (responseObject.has("entries")) {
-                    List<DropboxFile> fileMetas = gson.fromJson(responseObject.get("entries"), new TypeToken<List<DropboxFile>>() {
-                    }.getType());
-                    list.addAll(fileMetas);
+        String parentPath = getPathString(directory);
+        boolean hasMore = false;
+        String cursor = null;
+        boolean append = directoryInfo.hasMore;
+        JsonObject responseJsonObject = null;
+        if(directoryInfo.hasMore && !TextUtils.isEmpty(directoryInfo.cursor)) {
+            String moreCursor = directoryInfo.cursor;
+            JsonObject requestMoreData = new DropboxRequestDataBuilder()
+                    .listFolderContinue(moreCursor)
+                    .build();
+            Call<JsonObject> moreCall = mDropboxService.listFoldersContinue(mAuthenticationHeader, requestMoreData);
+            Response<JsonObject> moreResponse = null;
+            try {
+                moreResponse = moreCall.execute();
+                if (moreResponse.code() == 200) {
+                    responseJsonObject = moreResponse.body();
                 }
-                while (responseObject.has("has_more") && responseObject.get("has_more").getAsBoolean() && responseObject.has("cursor")) {
-                    JsonObject requestMoreData = new DropboxRequestDataBuilder()
-                            .listFolderContinue(responseObject.get("cursor").getAsString())
-                            .build();
-                    Call<JsonObject> moreCall = mDropboxService.listFoldersContinue(mAuthenticationHeader, requestMoreData);
-                    Response<JsonObject> moreResponse = moreCall.execute();
-                    if (moreResponse.code() == 200) {
-                        responseObject = response.body();
-                        if (responseObject.has("entries")) {
-                            List<DropboxFile> fileMetas = gson.fromJson(responseObject.get("entries"), new TypeToken<List<DropboxFile>>() {
-                            }.getType());
-                            list.addAll(fileMetas);
-                        }
-                    } else {
-                        break;
-                    }
-                }
-            } else {
-                // Failure here
+            } catch (IOException e) {
+                throw new StorageException(e);
             }
-        } catch (IOException e) {
-            throw new StorageException(e);
+        } else {
+            JsonObject requestData = new DropboxRequestDataBuilder()
+                    .listFolder(parentPath)
+                    .build();
+            Call<JsonObject> call = mDropboxService.listFolders(mAuthenticationHeader, requestData);
+            try {
+                Response<JsonObject> response = call.execute();
+                int responseCode = response.code();
+                if (responseCode == 200) {
+                    responseJsonObject = response.body();
+                }
+            } catch (IOException e) {
+                throw new StorageException(e);
+            }
         }
-        return DirectoryInfo.create(parent, list);
+
+        if(responseJsonObject != null) {
+            if (responseJsonObject.has("entries")) {
+                List<DropboxFile> fileMetas = gson.fromJson(responseJsonObject.get("entries"), new TypeToken<List<DropboxFile>>() {
+                }.getType());
+                list.addAll(fileMetas);
+            }
+            if(responseJsonObject.has("has_more") && responseJsonObject.get("has_more").getAsBoolean() && responseJsonObject.has("cursor")) {
+                hasMore = true;
+                cursor = responseJsonObject.get("cursor").getAsString();
+            }
+            if(!append) {
+                directoryInfo.files.clear();
+            }
+            directoryInfo.files.addAll(list);
+            directoryInfo.hasMore = hasMore;
+            directoryInfo.cursor = cursor;
+        }
+        return directoryInfo;
     }
 
     @Override

@@ -8,7 +8,7 @@ import java.io.InputStream;
 
 public class FileUtils {
     public static boolean deleteQuietly(File file) {
-        if (file != null) {
+        if (file == null) {
             return false;
         }
         try {

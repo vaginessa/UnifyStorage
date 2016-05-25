@@ -64,10 +64,11 @@ public class LocalStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public DirectoryInfo list(RemoteFile parent) throws StorageException {
-        if(parent == null) return list();
+    public DirectoryInfo list(DirectoryInfo directoryInfo) throws StorageException {
+        RemoteFile directory = directoryInfo.directory;
+        if(directory == null) return list();
 
-        File file = new File(parent.getPath());
+        File file = new File(directory.getPath());
         List<RemoteFile> list = new ArrayList<>();
         File[] children = file.listFiles();
         if(children != null) {
@@ -75,7 +76,7 @@ public class LocalStorageProvider extends AbstractStorageProvider {
                 list.add(new LocalStorageFile(f));
             }
         }
-        return DirectoryInfo.create(parent, list);
+        return DirectoryInfo.create(directory, list);
     }
 
     @Override
