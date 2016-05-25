@@ -1,9 +1,11 @@
 package org.cryse.unifystorage.providers.onedrive;
 
 import android.support.v4.util.Pair;
+import android.text.TextUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
 import org.cryse.unifystorage.AbstractStorageProvider;
@@ -28,6 +30,7 @@ import java.util.Calendar;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -43,6 +46,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     private String mAuthenticationHeader = "";
     private Gson gson = GsonFactory.getGsonInstance();
 
+    OkHttpClient mOkHttpClient = null;
     Retrofit mRetrofit = null;
     OneDriveService mOneDriveService;
 
@@ -73,6 +77,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
         if (this.mOneDriveCredential != null)
             this.mAuthenticationHeader = "Bearer " + mOneDriveCredential.getAccessToken();
 
+        this.mOkHttpClient = okHttpClient;
         this.mRetrofit = new Retrofit.Builder()
                 .baseUrl("https://" + OneDriveService.SUBDOMAIN_API + OneDriveService.SUBDOMAIN_VERSION)
                 .client(okHttpClient)
@@ -153,55 +158,62 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public DirectoryInfo list(RemoteFile parent) throws StorageException {
-        /*List<Item> children = mOneDriveClient
-                .getDrive()
-                .getItems(parent.getId())
-                .getChildren()
-                .buildRequest()
-                .get()
-                .getCurrentPage();*/
-        List<RemoteFile> list = new ArrayList<RemoteFile>();
-        /*for (final Item childItem : children) {
-            list.add(new OneDriveFile(childItem));
-        }*/
+    public DirectoryInfo list(DirectoryInfo directoryInfo) throws StorageException {
+        RemoteFile directory = directoryInfo.directory;
+        List<RemoteFile> list = new ArrayList<>();
+        boolean hasMore = false;
+        String cursor = null;
         checkCredential();
-        Call<JsonObject> call = mOneDriveService.listChildrenById(mAuthenticationHeader, parent.getId());
-        try {
-            Response<JsonObject> response = call.execute();
-            int responseCode = response.code();
-            JsonObject responseObject = response.body();
-            if (responseCode == 200) {
-                if (responseObject.has("value")) {
-                    List<OneDriveFile> fileMetas = gson.fromJson(responseObject.get("value"), new TypeToken<List<OneDriveFile>>() {
-                    }.getType());
-                    list.addAll(fileMetas);
+        JsonObject responseJsonObject = null;
+        boolean append = directoryInfo.hasMore;
+        if(directoryInfo.hasMore && !TextUtils.isEmpty(directoryInfo.cursor)) {
+            String url = directoryInfo.cursor;
+            Request request = new Request.Builder().url(url).addHeader("Authorization", mAuthenticationHeader).build();
+            try {
+                okhttp3.Response response = mOkHttpClient.newCall(request).execute();
+                if(response.isSuccessful()) {
+                    ResponseBody responseBody = response.body();
+                    String responseString = responseBody.string();
+                    JsonParser parser = new JsonParser();
+                    responseJsonObject = parser.parse(responseString).getAsJsonObject();
                 }
-                /*while (responseObject.has("has_more") && responseObject.get("has_more").getAsBoolean() && responseObject.has("cursor")) {
-                    JsonObject requestMoreData = new DropboxRequestDataBuilder()
-                            .listFolderContinue(responseObject.get("cursor").getAsString())
-                            .build();
-                    Call<JsonObject> moreCall = dropboxService.listFoldersContinue(mAuthenticationHeader, requestMoreData);
-                    Response<JsonObject> moreResponse = moreCall.execute();
-                    if (moreResponse.code() == 200) {
-                        responseObject = response.body();
-                        if (responseObject.has("entries")) {
-                            List<DropboxFile> fileMetas = gson.fromJson(responseObject.get("entries"), new TypeToken<List<DropboxFile>>() {
-                            }.getType());
-                            list.addAll(fileMetas);
-                        }
-                    } else {
-                        break;
-                    }
-                }*/
-            } else {
-                // Failure here
+            } catch (IOException e) {
+                throw new StorageException(e);
             }
-            //String resultString = responseObject.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } else {
+            Call<JsonObject> call = mOneDriveService.listChildrenById(mAuthenticationHeader, directory.getId());
+            try {
+                Response<JsonObject> response = call.execute();
+                int responseCode = response.code();
+                if (responseCode == 200) {
+                    responseJsonObject = response.body();
+                } else {
+                    // Failure here
+                }
+                //String resultString = responseObject.toString();
+            } catch (IOException e) {
+                throw new StorageException(e);
+            }
         }
-        return DirectoryInfo.create(parent, list);
+
+        if(responseJsonObject != null) {
+            if (responseJsonObject.has("value")) {
+                List<OneDriveFile> fileMetas = gson.fromJson(responseJsonObject.get("value"), new TypeToken<List<OneDriveFile>>() {
+                }.getType());
+                list.addAll(fileMetas);
+            }
+            if(responseJsonObject.has("@odata.nextLink") && !TextUtils.isEmpty(responseJsonObject.get("@odata.nextLink").getAsString())) {
+                hasMore = true;
+                cursor = responseJsonObject.get("@odata.nextLink").getAsString();
+            }
+            if(!append) {
+                directoryInfo.files.clear();
+            }
+            directoryInfo.files.addAll(list);
+            directoryInfo.hasMore = hasMore;
+            directoryInfo.cursor = cursor;
+        }
+        return directoryInfo;
     }
 
     @Override

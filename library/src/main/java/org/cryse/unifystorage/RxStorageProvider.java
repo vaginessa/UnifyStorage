@@ -38,12 +38,12 @@ public class RxStorageProvider {
         });
     }
 
-    public Observable<DirectoryInfo> list(final RemoteFile parent) {
+    public Observable<DirectoryInfo> list(final DirectoryInfo directoryInfo) {
         return Observable.create(new Observable.OnSubscribe<DirectoryInfo>() {
             @Override
             public void call(Subscriber<? super DirectoryInfo> subscriber) {
                 try {
-                    subscriber.onNext(mStorageProvider.list(parent));
+                    subscriber.onNext(mStorageProvider.list(directoryInfo));
                     subscriber.onCompleted();
                 } catch (Throwable throwable) {
                     subscriber.onError(throwable);

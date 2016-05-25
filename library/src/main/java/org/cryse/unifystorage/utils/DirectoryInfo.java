@@ -3,6 +3,7 @@ package org.cryse.unifystorage.utils;
 import org.cryse.unifystorage.AbstractFile;
 import org.cryse.unifystorage.RemoteFile;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -21,10 +22,23 @@ public class DirectoryInfo {
         return new DirectoryInfo(a, b);
     }
 
+    public static DirectoryInfo fromDirectory(RemoteFile directory) {
+        return new DirectoryInfo(directory, new ArrayList<RemoteFile>());
+    }
+
+    public static DirectoryInfo create(RemoteFile a, List<RemoteFile> b, boolean hasMore, String cursor) {
+        DirectoryInfo directoryInfo = new DirectoryInfo(a, b);
+        directoryInfo.hasMore = hasMore;
+        directoryInfo.cursor = cursor;
+        return directoryInfo;
+    }
+
     public DirectoryInfo(RemoteFile directory, List<RemoteFile> files) {
         this.directory = directory;
         this.files = files;
         this.hiddenFiles = new LinkedList<>();
+        this.hasMore = false;
+        this.cursor = null;
     }
 
     public void setShowHiddenFiles(boolean show) {
@@ -51,6 +65,13 @@ public class DirectoryInfo {
     public void setShowHiddenFiles(boolean show, Comparator<AbstractFile> fileComparator) {
         setShowHiddenFiles(show);
         sort(fileComparator);
+    }
+
+    public void clear() {
+        this.hasMore = false;
+        this.cursor = null;
+        this.files.clear();
+        this.hiddenFiles.clear();
     }
 
     @Override

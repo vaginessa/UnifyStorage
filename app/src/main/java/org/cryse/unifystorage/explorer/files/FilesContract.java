@@ -55,9 +55,9 @@ public interface FilesContract {
 
         void setShowHiddenFiles(boolean show);
 
-        void loadFiles(RemoteFile parent, boolean forceUpdate);
+        void loadFiles(DirectoryInfo directoryInfo, boolean forceUpdate);
 
-        void loadFiles(RemoteFile parent, boolean forceUpdate, boolean showLoadingUI, CollectionViewState collectionViewState);
+        void loadFiles(DirectoryInfo directoryInfo, boolean forceUpdate, boolean showLoadingUI, CollectionViewState collectionViewState);
 
         void createFile();
 

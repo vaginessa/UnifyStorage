@@ -115,7 +115,7 @@ public class FilesPresenter implements FilesContract.Presenter {
             if (mBackwardStack.get(i).directory.directory.getPath().equals(targetPath)) {
                 if(isLocalStorage()) {
                     this.mDirectory = mBackwardStack.get(i).directory;
-                    loadFiles(mDirectory.directory, true, false, mBackwardStack.get(i).collectionViewState);
+                    loadFiles(mDirectory, true, false, mBackwardStack.get(i).collectionViewState);
                 } else {
                     mFilesView.onLeaveDirectory(mDirectory);
                     this.mDirectory = mBackwardStack.get(i).directory;
@@ -140,7 +140,7 @@ public class FilesPresenter implements FilesContract.Presenter {
             mDirectory = currentState.directory;
             if(isLocalStorage()) {
                 mDirectory = currentState.directory;
-                loadFiles(mDirectory.directory, true, false, currentState.collectionViewState);
+                loadFiles(mDirectory, true, false, currentState.collectionViewState);
             } else {
                 mFilesView.onLeaveDirectory(mDirectory);
                 mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
@@ -159,19 +159,19 @@ public class FilesPresenter implements FilesContract.Presenter {
     }
 
     @Override
-    public void loadFiles(RemoteFile parent, boolean forceUpdate) {
-        loadFiles(parent, forceUpdate || mFirstLoad, true, null);
+    public void loadFiles(DirectoryInfo directoryInfo, boolean forceUpdate) {
+        loadFiles(directoryInfo, forceUpdate || mFirstLoad, true, null);
         mFirstLoad = false;
     }
 
     @Override
-    public void loadFiles(final RemoteFile parent, boolean forceUpdate, final boolean showLoadingUI, final CollectionViewState state) {
+    public void loadFiles(final DirectoryInfo directoryInfo, boolean forceUpdate, final boolean showLoadingUI, final CollectionViewState state) {
         if(!forceUpdate) return;
-        if (showLoadingUI) {
+        if (showLoadingUI/* && ((directoryInfo != null && !directoryInfo.hasMore) || (directoryInfo == null))*/) {
             mFilesView.setLoadingIndicator(true);
         }
         this.mGetFilesUseCase.execute(
-                new GetFilesUseCase.RequestValues(parent),
+                new GetFilesUseCase.RequestValues(directoryInfo),
                 new DefaultSubscriber<UseCase.SingleResponseValue<DirectoryInfo>>() {
                     @Override
                     public void onCompleted() {
@@ -183,7 +183,7 @@ public class FilesPresenter implements FilesContract.Presenter {
                     public void onError(Throwable e) {
                         super.onError(e);
                         mFilesView.setLoadingIndicator(false);
-                        mDirectory = DirectoryInfo.create(parent, Collections.<RemoteFile>emptyList());
+                        mDirectory = directoryInfo;
                         mFilesView.showError(mDirectory, e);
                     }
 
@@ -264,7 +264,7 @@ public class FilesPresenter implements FilesContract.Presenter {
     public void onFileClick(RemoteFile file, CollectionViewState collectionViewState) {
         if (file.isDirectory()) {
             mBackwardStack.push(new BrowserState(mDirectory, collectionViewState));
-            loadFiles(file, true);
+            loadFiles(DirectoryInfo.fromDirectory(file), true);
         } else {
             if(file.needsDownload()) {
                 downloadFile(file);

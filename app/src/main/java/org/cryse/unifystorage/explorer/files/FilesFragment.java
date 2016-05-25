@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -27,6 +28,8 @@ import com.afollestad.materialcab.MaterialCab;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
+import com.malinskiy.superrecyclerview.OnMoreListener;
+import com.malinskiy.superrecyclerview.SuperRecyclerView;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.PrefsConst;
@@ -54,6 +57,7 @@ import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
 import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
 import org.cryse.widget.StateView;
+import org.cryse.widget.recyclerview.Bookends;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -77,8 +81,10 @@ public class FilesFragment extends AbstractFragment implements
         }
     };
 
+    private AtomicBoolean isLoadingMore = new AtomicBoolean(false);
     private FilesContract.Presenter mPresenter;
     private FilesAdapter mCollectionAdapter;
+    private Bookends<FilesAdapter> mWrapperAdapter;
     private OpenFileUtils mOpenFileUtils;
     private LocalFileWatcher mFileWatcher;
 
@@ -89,7 +95,7 @@ public class FilesFragment extends AbstractFragment implements
     BreadCrumbLayout mBreadCrumbLayout;
 
     @Bind(R.id.fragment_files_recyclerview_files)
-    RecyclerView mCollectionView;
+    SuperRecyclerView mCollectionView;
 
     @Bind(R.id.fragment_files_fab_menu)
     FloatingActionMenu mFabMenu;
@@ -108,6 +114,8 @@ public class FilesFragment extends AbstractFragment implements
 
     @Bind(R.id.fragment_files_loading_progressbar)
     ProgressBar mLoadingProgress;
+
+    private ProgressBar mMoreProgressBar;
 
     protected MaterialCab mCab;
 
@@ -209,7 +217,7 @@ public class FilesFragment extends AbstractFragment implements
                     if (crumb.getPath() != null && activeFile != null &&
                             crumb.getPath().equals(activeFile)) {
                         // When the target path is current, scroll file list to top.
-                        mCollectionView.scrollToPosition(0);
+                        mCollectionView.getRecyclerView().scrollToPosition(0);
                         /*Fragment frag = getFragmentManager().findFragmentById(R.id.content_frame);
                         ((MediaFragment) frag).jumpToTop(true);*/
                     } else {
@@ -257,7 +265,40 @@ public class FilesFragment extends AbstractFragment implements
 
     private void setupRecyclerView() {
         mCollectionView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mCollectionView.setAdapter(mCollectionAdapter);
+        mCollectionView.setOnMoreListener(new OnMoreListener() {
+            @Override
+            public void onMoreAsked(int overallItemsCount, int itemsBeforeMore, int maxLastVisiblePosition) {
+                if (!isLoadingMore.get() && mPresenter.getDirectory().hasMore) {
+                    mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
+                    isLoadingMore.set(true);
+                    // getPresenter().loadThreadList(mUserAccountManager.getAuthObject(), mForumId, mLastItemSortKey, mCurrentListType, true);
+                } else {
+                    mCollectionView.setLoadingMore(false);
+                    mCollectionView.hideMoreProgress();
+                }
+            }
+
+            @Override
+            public void onChangeMoreVisibility(int visibility) {
+                mMoreProgressBar.setVisibility(visibility);
+            }
+        });
+        mCollectionView.setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if(mPresenter.getDirectory() != null) {
+                    mPresenter.getDirectory().clear();
+                }
+                mPresenter.loadFiles(mPresenter.getDirectory(), true, false, null);
+            }
+        });
+        mWrapperAdapter = new Bookends<>(mCollectionAdapter);
+        mCollectionView.setAdapter(mWrapperAdapter);
+        mMoreProgressBar = new ProgressBar(getActivity());
+        RecyclerView.LayoutParams moreProgressLP = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        mMoreProgressBar.setLayoutParams(moreProgressLP);
+        mMoreProgressBar.setVisibility(View.INVISIBLE);
+        mWrapperAdapter.addFooter(mMoreProgressBar);
     }
 
     protected void setupFileWatcher() {
@@ -268,7 +309,7 @@ public class FilesFragment extends AbstractFragment implements
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true, false, getCollectionViewState());
+                        mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
                     }
                 });
                 return true;
@@ -279,7 +320,7 @@ public class FilesFragment extends AbstractFragment implements
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true, false, getCollectionViewState());
+                        mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
                     }
                 });
                 return true;
@@ -290,7 +331,7 @@ public class FilesFragment extends AbstractFragment implements
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true, false, getCollectionViewState());
+                        mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
                     }
                 });
                 return true;
@@ -314,7 +355,7 @@ public class FilesFragment extends AbstractFragment implements
             public void onButtonClick(StateView.State state) {
                 if(state == StateView.State.ERROR) {
                     if(mPresenter.getDirectory() != null)
-                        mPresenter.loadFiles(mPresenter.getDirectory().directory, true);
+                        mPresenter.loadFiles(mPresenter.getDirectory(), true);
                 }
             }
         });
@@ -422,6 +463,11 @@ public class FilesFragment extends AbstractFragment implements
 
     @Override
     public void showFiles(DirectoryInfo directory, @Nullable CollectionViewState collectionViewState) {
+        if(mCollectionView.isLoadingMore()) {
+            isLoadingMore.set(false);
+            mCollectionView.setLoadingMore(false);
+            mCollectionView.hideMoreProgress();
+        }
         if(directory != null && directory.files != null) {
             if(mPresenter.showWatchChanges())
                 mFileWatcher.startWatching(directory.directory.getPath());
@@ -429,7 +475,7 @@ public class FilesFragment extends AbstractFragment implements
             if(directory.files.size() > 0) {
                 hideStateView();
                 if(collectionViewState != null) {
-                    LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getLayoutManager();
+                    LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getRecyclerView().getLayoutManager();
                     manager.scrollToPositionWithOffset(collectionViewState.position, (int) collectionViewState.offset);
                 }
             } else {
@@ -443,10 +489,11 @@ public class FilesFragment extends AbstractFragment implements
 
     @Override
     public void showError(DirectoryInfo directory, Throwable throwable) {
-        if(directory.directory != null) {
+        if(directory != null && directory.directory != null) {
             updateBreadcrumb(directory.directory.getPath());
         }
-        mCollectionAdapter.replaceWith(directory.files);
+        if(directory != null)
+            mCollectionAdapter.replaceWith(directory.files);
         showRetryView(ExceptionUtils.exceptionToStringRes(throwable));
     }
 
@@ -501,7 +548,7 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     private CollectionViewState getCollectionViewState() {
-        LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getLayoutManager();
+        LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getRecyclerView().getLayoutManager();
         int position = manager.findFirstVisibleItemPosition();
         View firstItemView = manager.findViewByPosition(position);
         if(firstItemView != null) {

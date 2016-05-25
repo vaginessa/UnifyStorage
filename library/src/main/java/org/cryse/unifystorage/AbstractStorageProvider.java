@@ -11,10 +11,10 @@ public abstract class AbstractStorageProvider implements StorageProvider {
 
     public abstract RemoteFile getRootDirectory() throws StorageException;
 
-    public abstract DirectoryInfo list(RemoteFile parent) throws StorageException;
+    public abstract DirectoryInfo list(DirectoryInfo directoryInfo) throws StorageException;
 
     public DirectoryInfo list() throws StorageException {
-        return list(getRootDirectory());
+        return list(DirectoryInfo.fromDirectory(getRootDirectory()));
     }
 
     public abstract RemoteFile createDirectory(RemoteFile parent, String name) throws StorageException;

@@ -12,7 +12,7 @@ public interface StorageProvider {
 
     RemoteFile getRootDirectory() throws StorageException;
 
-    DirectoryInfo list(RemoteFile parent) throws StorageException;
+    DirectoryInfo list(DirectoryInfo directoryInfo) throws StorageException;
 
     DirectoryInfo list() throws StorageException;
 
