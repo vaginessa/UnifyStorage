@@ -1,13 +1,11 @@
 package org.cryse.unifystorage.explorer.files;
 
 
-
 import org.cryse.unifystorage.AbstractFile;
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RxStorageProvider;
 import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
-import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.base.BasePresenter;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
@@ -21,15 +19,15 @@ import org.cryse.unifystorage.explorer.interactor.GetFilesUseCase;
 import org.cryse.unifystorage.explorer.interactor.UseCase;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
+import org.cryse.unifystorage.explorer.service.StartDownloadEvent;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
+import org.cryse.unifystorage.explorer.utils.cache.FileCacheRepository;
 import org.cryse.unifystorage.io.comparator.NameFileComparator;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Stack;
 
 public class FilesPresenter implements FilesContract.Presenter {
@@ -43,6 +41,7 @@ public class FilesPresenter implements FilesContract.Presenter {
     private final RxStorageProvider mRxStorageProvider;
     protected ThreadExecutor mThreadExecutor;
     protected PostExecutionThread mPostExecutionThread;
+    protected FileCacheRepository mFileCacheRepository;
     private GetFilesUseCase mGetFilesUseCase;
     private CreateFolderUseCase mCreateFolderUseCase;
     private DeleteFilesUseCase mDeleteFilesUseCase;
@@ -59,6 +58,7 @@ public class FilesPresenter implements FilesContract.Presenter {
             StorageProvider storageProvider,
             ThreadExecutor threadExecutor,
             PostExecutionThread postExecutionThread,
+            FileCacheRepository fileCacheRepository,
             String[] extras
     ) {
         this.mFilesView = filesView;
@@ -67,6 +67,7 @@ public class FilesPresenter implements FilesContract.Presenter {
         this.mStorageProviderRecord = StorageProviderManager.getInstance().loadStorageProviderRecord(storageProviderRecordId);
         this.mThreadExecutor = threadExecutor;
         this.mPostExecutionThread = postExecutionThread;
+        this.mFileCacheRepository = fileCacheRepository;
         this.mFileComparator = NameFileComparator.NAME_INSENSITIVE_COMPARATOR;
 
         this.mGetFilesUseCase = new GetFilesUseCase(mRxStorageProvider, mThreadExecutor, mPostExecutionThread);
@@ -279,7 +280,88 @@ public class FilesPresenter implements FilesContract.Presenter {
     }
 
     private void downloadFile(final RemoteFile file) {
+        final int token = file.getId().hashCode();
+        final String fileName = file.getName();
+        final long fileSize = file.size();
+        final String localPath = mFileCacheRepository.getFullCachePathForFile(
+                mRxStorageProvider.getStorageProviderName(),
+                mStorageProviderRecord.getUuid(),
+                file
+        );
 
+        RxEventBus.getInstance().sendEvent(
+                new StartDownloadEvent(
+                        mStorageProviderInfo,
+                        token,
+                        file,
+                        localPath,
+                        true
+                )
+        );
+        /*final Subscription[] subscription = new Subscription[1];
+        final DownloadFileMessage downloadFileMessage = new DownloadFileMessage(file.getId().hashCode(), "", fileName);
+        downloadFileMessage.setCurrentSize(0);
+        downloadFileMessage.setFileSize(fileSize);
+        DialogInterface.OnDismissListener dismissListener = new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                mDownloadFileUseCase.unsubscribe();
+                RxSubscriptionUtils.checkAndUnsubscribe(subscription[0]);
+            }
+        };
+        downloadFileMessage.setOnDismissListener(dismissListener);
+        downloadFileMessage.setAction(BasicMessage.MessageAction.CREATE);
+        mFilesView.showMessage(downloadFileMessage);*/
+        /*mDownloadFileUseCase.execute(new DownloadFileUseCase.RequestValues(file, localPath),
+                new DefaultSubscriber<UseCase.SingleResponseValue<InputStream>>() {
+                    @Override
+                    public void onCompleted() {
+                        super.onCompleted();
+                        // downloadFileMessage.setAction(BasicMessage.MessageAction.DISMISS);
+                        // mFilesView.showMessage(downloadFileMessage);
+                        // String uriString = mFileCacheRepository.getUriForFile(new File(localPath));
+                        // mFilesView.openFileByUri(uriString, true);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        super.onError(e);
+                        // downloadFileMessage.setAction(BasicMessage.MessageAction.DISMISS);
+                        // mFilesView.showMessage(downloadFileMessage);
+                    }
+
+                    @Override
+                    public void onNext(final UseCase.SingleResponseValue<InputStream> inputStreamSingleResponseValue) {
+                        super.onNext(inputStreamSingleResponseValue);
+
+                        *//*subscription[0] = OperationObserables.downloadFileObservable(file, localPath, inputStreamSingleResponseValue.getValue())
+                                .subscribeOn(Schedulers.from(mThreadExecutor))
+                                .observeOn(mPostExecutionThread.getScheduler())
+                                .subscribe(new DefaultSubscriber<Long>() {
+                                    @Override
+                                    public void onCompleted() {
+                                        super.onCompleted();
+                                        downloadFileMessage.setAction(BasicMessage.MessageAction.DISMISS);
+                                        mFilesView.showMessage(downloadFileMessage);
+                                    }
+
+                                    @Override
+                                    public void onError(Throwable e) {
+                                        super.onError(e);
+                                        downloadFileMessage.setAction(BasicMessage.MessageAction.DISMISS);
+                                        mFilesView.showMessage(downloadFileMessage);
+                                    }
+
+                                    @Override
+                                    public void onNext(Long aLong) {
+                                        super.onNext(aLong);
+                                        downloadFileMessage.setAction(BasicMessage.MessageAction.UPDATE);
+                                        downloadFileMessage.setCurrentSize(aLong);
+                                        mFilesView.showMessage(downloadFileMessage);
+                                    }
+                                });*//*
+                    }
+                });*/
     }
 
     @Override
@@ -298,6 +380,7 @@ public class FilesPresenter implements FilesContract.Presenter {
         private StorageProvider storageProvider;
         private ThreadExecutor threadExecutor;
         private PostExecutionThread postExecutionThread;
+        private FileCacheRepository fileCacheRepository;
         private String[] extras;
 
         public Builder() {
@@ -313,6 +396,7 @@ public class FilesPresenter implements FilesContract.Presenter {
                     storageProvider,
                     threadExecutor,
                     postExecutionThread,
+                    fileCacheRepository,
                     extras
             );
         }
@@ -331,6 +415,11 @@ public class FilesPresenter implements FilesContract.Presenter {
         @Override
         public Builder postExecutionThread(PostExecutionThread postExecutionThread) {
             this.postExecutionThread = postExecutionThread;
+            return this;
+        }
+
+        public Builder fileCacheRepository(FileCacheRepository fileCacheRepository) {
+            this.fileCacheRepository = fileCacheRepository;
             return this;
         }
 

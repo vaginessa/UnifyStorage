@@ -36,9 +36,11 @@ import org.cryse.unifystorage.explorer.executor.UIThread;
 import org.cryse.unifystorage.explorer.files.FilesFragment;
 import org.cryse.unifystorage.explorer.files.FilesPresenter;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
+import org.cryse.unifystorage.explorer.service.DownloadService;
 import org.cryse.unifystorage.explorer.service.LongOperationService;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
+import org.cryse.unifystorage.explorer.utils.cache.AndroidFileCacheRepository;
 import org.cryse.unifystorage.explorer.viewmodel.MainViewModel;
 import org.cryse.unifystorage.providers.dropbox.DropboxAuthenticator;
 import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
@@ -66,6 +68,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
 
     ServiceConnection mLongOperationServiceConnection;
     private LongOperationService.LongOperationBinder mLongOperationBinder;
+    ServiceConnection mDownloadServiceConnection;
+    private DownloadService.DownloadServiceBinder mDownloadServiceBinder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +99,17 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
             @Override
             public void onServiceDisconnected(ComponentName name) {
                 mLongOperationBinder = null;
+            }
+        };
+        mDownloadServiceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                mDownloadServiceBinder = (DownloadService.DownloadServiceBinder) service;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                mDownloadServiceBinder = null;
             }
         };
     }
@@ -144,15 +159,23 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onStart() {
         super.onStart();
-        Intent service = new Intent(this.getApplicationContext(), LongOperationService.class);
-        startService(service);
-        this.bindService(service, mLongOperationServiceConnection, Context.BIND_AUTO_CREATE);
+
+        // Start LongOperationService
+        Intent longOperationServiceIntent = new Intent(this.getApplicationContext(), LongOperationService.class);
+        startService(longOperationServiceIntent);
+        this.bindService(longOperationServiceIntent, mLongOperationServiceConnection, Context.BIND_AUTO_CREATE);
+
+        // Start DownloadService
+        Intent downloadServiceIntent = new Intent(this.getApplicationContext(), DownloadService.class);
+        startService(downloadServiceIntent);
+        this.bindService(downloadServiceIntent, mDownloadServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         this.unbindService(mLongOperationServiceConnection);
+        this.unbindService(mDownloadServiceConnection);
     }
 
     @Override
@@ -280,6 +303,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .credential(null)
                 .threadExecutor(new JobExecutor())
                 .postExecutionThread(new UIThread())
+                .fileCacheRepository(new AndroidFileCacheRepository(this))
                 .extras(new String[] {Environment.getExternalStorageDirectory().getAbsolutePath()})
                 .storageProvider(StorageProviderManager
                         .getInstance()
@@ -301,6 +325,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .credential(null)
                 .threadExecutor(new JobExecutor())
                 .postExecutionThread(new UIThread())
+                .fileCacheRepository(new AndroidFileCacheRepository(this))
                 .extras(new String[] {path})
                 .storageProvider(StorageProviderManager
                         .getInstance()
@@ -322,6 +347,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .credential(credential)
                 .threadExecutor(new JobExecutor())
                 .postExecutionThread(new UIThread())
+                .fileCacheRepository(new AndroidFileCacheRepository(this))
                 .extras(new String[] {DataContract.CONST_ONEDRIVE_CLIENT_ID})
                 .storageProvider(StorageProviderManager
                         .getInstance()
@@ -343,6 +369,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .credential(credential)
                 .threadExecutor(new JobExecutor())
                 .postExecutionThread(new UIThread())
+                .fileCacheRepository(new AndroidFileCacheRepository(this))
                 .extras(new String[] {DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER})
                 .storageProvider(StorageProviderManager
                         .getInstance()

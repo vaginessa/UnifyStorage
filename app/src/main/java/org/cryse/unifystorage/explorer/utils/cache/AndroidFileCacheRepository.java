@@ -1,30 +1,44 @@
-package org.cryse.unifystorage.explorer.utils;
+package org.cryse.unifystorage.explorer.utils.cache;
 
 import android.content.Context;
+import android.net.Uri;
+import android.support.v4.content.FileProvider;
 
 import org.cryse.unifystorage.RemoteFile;
+import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.utils.Path;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class LocalCachesUtils {
-    public static <RF extends RemoteFile> String getFullCachePath(
-            Context context,
-            String providerName,
-            String providerUuid,
-            RF file
-    ) {
+public class AndroidFileCacheRepository implements FileCacheRepository {
+    private Context mContext;
+    public AndroidFileCacheRepository(Context context) {
+        this.mContext = context;
+    }
+
+    @Override
+    public String getFullCachePathForFile(String providerName, String providerUuid, RemoteFile file) {
+
         String cacheFileDirectory = getCacheFileDirectory(providerName, providerUuid, file);
-        String appFilesDirectory = context.getFilesDir().getPath();
+        String appFilesDirectory = mContext.getFilesDir().getPath();
         return Path.combine(Path.combine(appFilesDirectory, cacheFileDirectory),file.getName());
     }
 
-    public static <RF extends RemoteFile>  String getCacheFileDirectory(
+    @Override
+    public String getUriForFile(File file) {
+        return FileProvider.getUriForFile(
+                mContext,
+                mContext.getString(R.string.authority_file_provider),
+                file).toString();
+    }
+
+    public static String getCacheFileDirectory(
             String providerName,
             String providerUuid,
-            RF file
+            RemoteFile file
     ) {
         String hashOriginal = file.getPath() + "::" + file.getName() + "::" + Long.toString(file.size());
         String hash = md5hash(hashOriginal);

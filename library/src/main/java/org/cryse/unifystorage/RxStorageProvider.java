@@ -455,20 +455,6 @@ public class RxStorageProvider {
         });
     }
 
-    public Observable<RemoteFileDownloader> download(final RemoteFile file) throws StorageException {
-        return Observable.create(new Observable.OnSubscribe<RemoteFileDownloader>() {
-            @Override
-            public void call(Subscriber<? super RemoteFileDownloader> subscriber) {
-                try {
-                    subscriber.onNext(mStorageProvider.download(file));
-                    subscriber.onCompleted();
-                } catch (Throwable throwable) {
-                    subscriber.onError(throwable);
-                }
-            }
-        });
-    }
-
     public StorageProvider getStorageProvider() {
         return mStorageProvider;
     }

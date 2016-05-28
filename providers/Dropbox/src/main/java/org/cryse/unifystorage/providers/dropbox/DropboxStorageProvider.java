@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.ResponseBody;
 
 import retrofit2.Call;
@@ -41,6 +42,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
 
     public static final String NAME = DropboxConst.NAME_STORAGE_PROVIDER;
 
+    OkHttpClient mOkHttpClient = null;
     Retrofit mRetrofit;
     DropboxService mDropboxService;
 
@@ -49,6 +51,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
         if (this.mDropboxCredential != null)
             this.mAuthenticationHeader = "Bearer " + this.mDropboxCredential.getAccessSecret();
 
+        this.mOkHttpClient = okHttpClient;
         this.mRetrofit = new Retrofit.Builder()
                 .baseUrl("https:" + DropboxService.SUBDOMAIN_API)
                 .client(okHttpClient)
@@ -290,17 +293,17 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFileDownloader download(RemoteFile file) throws StorageException {
+    public Request download(RemoteFile file) throws StorageException {
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .download(file.getPath())
                 .build();
-        Call<ResponseBody> call = mDropboxService.download(mAuthenticationHeader, requestData.toString());
-        try {
+        return mDropboxService.download(mAuthenticationHeader, requestData.toString()).request();
+        /*try {
             Response<ResponseBody> response = call.execute();
             int responseCode = response.code();
             ResponseBody responseBody = response.body();
             if (responseCode == 200) {
-                return new RemoteFileDownloader(file, responseBody.byteStream());
+                return responseBody.byteStream();
             } else {
                 // Failure here
                 throw new StorageException();
@@ -308,7 +311,7 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
             //String resultString = responseObject.toString();
         } catch (IOException ex) {
             throw new StorageException(ex);
-        }
+        }*/
     }
 
     @Override

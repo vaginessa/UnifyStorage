@@ -1,6 +1,5 @@
 package org.cryse.unifystorage.providers.onedrive;
 
-import android.support.v4.util.Pair;
 import android.text.TextUtils;
 
 import com.google.gson.Gson;
@@ -11,7 +10,6 @@ import com.google.gson.reflect.TypeToken;
 import org.cryse.unifystorage.AbstractStorageProvider;
 import org.cryse.unifystorage.ConflictBehavior;
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
@@ -453,15 +451,15 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFileDownloader download(RemoteFile file) throws StorageException {
+    public Request download(RemoteFile file) throws StorageException {
         checkCredential();
-        Call<ResponseBody> call = mOneDriveService.downloadById(mAuthenticationHeader, file.getId());
-        try {
+        return mOneDriveService.downloadById(mAuthenticationHeader, file.getId()).request();
+        /*try {
             Response<ResponseBody> response = call.execute();
             int responseCode = response.code();
             ResponseBody responseBody = response.body();
             if (responseCode == 200) {
-                return new RemoteFileDownloader(file, responseBody.byteStream());
+                return responseBody.byteStream();
             } else {
                 // Failure here
                 throw new StorageException();
@@ -469,6 +467,6 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
             //String resultString = responseObject.toString();
         } catch (IOException ex) {
             throw new StorageException(ex);
-        }
+        }*/
     }
 }

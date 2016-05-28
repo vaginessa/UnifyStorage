@@ -7,6 +7,10 @@ import org.cryse.unifystorage.utils.ProgressCallback;
 
 import java.io.InputStream;
 
+import okhttp3.Call;
+import okhttp3.Request;
+import okhttp3.ResponseBody;
+
 public interface StorageProvider {
     String getStorageProviderName();
 
@@ -66,7 +70,7 @@ public interface StorageProvider {
 
     StorageUserInfo getUserInfo(boolean forceRefresh) throws StorageException;
 
-    RemoteFileDownloader download(RemoteFile file) throws StorageException;
+    Request download(RemoteFile file) throws StorageException;
 
     HashAlgorithm getHashAlgorithm() throws StorageException;
 

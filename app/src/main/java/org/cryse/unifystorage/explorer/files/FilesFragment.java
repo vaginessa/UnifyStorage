@@ -1,10 +1,17 @@
 package org.cryse.unifystorage.explorer.files;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.content.FileProvider;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,6 +19,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,14 +40,19 @@ import com.malinskiy.superrecyclerview.OnMoreListener;
 import com.malinskiy.superrecyclerview.SuperRecyclerView;
 
 import org.cryse.unifystorage.RemoteFile;
+import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.event.FileDeleteResultEvent;
+import org.cryse.unifystorage.explorer.event.RxEventBus;
+import org.cryse.unifystorage.explorer.message.BasicMessage;
+import org.cryse.unifystorage.explorer.message.DownloadFileMessage;
 import org.cryse.unifystorage.explorer.service.FileOperation;
 import org.cryse.unifystorage.explorer.service.FileOperationTaskEvent;
+import org.cryse.unifystorage.explorer.service.StopDownloadEvent;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.common.AbstractFragment;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
@@ -52,6 +65,7 @@ import org.cryse.unifystorage.explorer.utils.exception.ExceptionUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
+import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.utils.file.OnFileChangedListener;
 import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
@@ -60,6 +74,7 @@ import org.cryse.widget.StateView;
 import org.cryse.widget.recyclerview.Bookends;
 
 import java.io.File;
+import java.util.Hashtable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import butterknife.Bind;
@@ -87,6 +102,7 @@ public class FilesFragment extends AbstractFragment implements
     private Bookends<FilesAdapter> mWrapperAdapter;
     private OpenFileUtils mOpenFileUtils;
     private LocalFileWatcher mFileWatcher;
+    private Hashtable<Integer, MaterialDialog> mMaterialDialogs = new Hashtable<>();
 
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
@@ -437,6 +453,24 @@ public class FilesFragment extends AbstractFragment implements
             if(mPresenter.getDirectory() != null && mPresenter.getDirectory().directory != null)
                 mFileWatcher.startWatching(mPresenter.getDirectory().directory.getPath());
         }
+        getActivity().registerReceiver(this.mDownloadStartReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST_START_IDENTIFIER));
+        getActivity().registerReceiver(this.mDownloadProgressReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST__PROGRESS_IDENTIFIER));
+        getActivity().registerReceiver(this.mDownloadSuccessReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST_SUCCESS_IDENTIFIER));
+        getActivity().registerReceiver(this.mDownloadErrorReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST_ERROR_IDENTIFIER));
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        getActivity().unregisterReceiver(this.mDownloadStartReceiver);
+        getActivity().unregisterReceiver(this.mDownloadProgressReceiver);
+        getActivity().unregisterReceiver(this.mDownloadSuccessReceiver);
+        getActivity().unregisterReceiver(this.mDownloadErrorReceiver);
+        for(MaterialDialog materialDialog : mMaterialDialogs.values()) {
+            if(materialDialog != null && !materialDialog.isCancelled())
+                materialDialog.dismiss();
+        }
+        mMaterialDialogs.clear();
     }
 
     @Override
@@ -526,6 +560,50 @@ public class FilesFragment extends AbstractFragment implements
     public void openFileByUri(String uriString, boolean useSystemSelector) {
         mOpenFileUtils.openFileByUri(uriString, useSystemSelector);
     }
+
+    @Override
+    public void showMessage(BasicMessage basicMessage) {
+        switch (basicMessage.getMsgType()) {
+            case BasicMessage.MSG_TYPE:
+                break;
+            case DownloadFileMessage.MSG_TYPE:
+                //showDownloadDialog((DownloadFileMessage) basicMessage);
+                break;
+        }
+    }
+/*
+    private void showDownloadDialog(DownloadFileMessage message) {
+        switch (message.getAction()) {
+            case CREATE:
+                if(mDownloadDialog != null && mDownloadDialog.isShowing()) mDownloadDialog.dismiss();
+                mDownloadDialog = new MaterialDialog.Builder(getContext())
+                        .title(R.string.dialog_title_opening_file)
+                        .content(R.string.dialog_content_opening)
+                        .progress(false, 100, false)
+                        .dismissListener(message.getOnDismissListener())
+                        .show();
+                break;
+            case UPDATE:
+                if(mDownloadDialog != null && mDownloadDialog.isShowing()) {
+                    int newPercent = (int) Math.round(((double) message.getCurrentSize()  / (double) message.getFileSize()) * 100.0d);
+                    int currentPercent = mDownloadDialog.getCurrentProgress();
+                    if(newPercent > currentPercent) {
+                        mDownloadDialog.incrementProgress(newPercent - currentPercent);
+                        mDownloadDialog.setContent(
+                                String.format(
+                                        "%s / %s",
+                                        FileSizeUtils.humanReadableByteCount(message.getCurrentSize(), true),
+                                        FileSizeUtils.humanReadableByteCount(message.getFileSize(), true)
+                                ));
+                    }
+                }
+                break;
+            default:
+            case DISMISS:
+                if(mDownloadDialog != null && mDownloadDialog.isShowing()) mDownloadDialog.dismiss();
+                break;
+        }
+    }*/
 
     @Override
     public void setPresenter(FilesContract.Presenter presenter) {
@@ -719,4 +797,91 @@ public class FilesFragment extends AbstractFragment implements
     protected boolean isCurrentStorageProvider(int id) {
         return mPresenter.getStorageProviderInfo().getStorageProviderId() == id;
     }
+
+    private BroadcastReceiver mDownloadStartReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, final Intent intent) {
+            // Toast.makeText(getActivity(), "Start downloading " + intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_FILENAME), Toast.LENGTH_SHORT).show();
+            int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
+            MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
+            if(downloadingDialog == null ||  downloadingDialog.isCancelled()) {
+                downloadingDialog = new MaterialDialog.Builder(getContext())
+                        .title(R.string.dialog_title_opening_file)
+                        .content(R.string.dialog_content_opening)
+                        .progress(false, 100, false)
+                        .dismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                RxEventBus.getInstance().sendEvent(new StopDownloadEvent(intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0)));
+                            }
+                        })
+                        .show();
+                mMaterialDialogs.put(token, downloadingDialog);
+            }
+        }
+    };
+
+    private BroadcastReceiver mDownloadProgressReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Log.e("PROGRESS", "Downloading " + intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_FILENAME) + ": " + Integer.toString(intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_PERCENTAGE, 0)) + "%");
+            int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
+            long readSize = intent.getLongExtra(DataContract.DOWNLOAD_BROADCAST_READ_SIZE, 0);
+            long totalSize = intent.getLongExtra(DataContract.DOWNLOAD_BROADCAST_FILE_SIZE, 0);
+            int newPercent = (int) Math.round(((double) readSize  / (double) totalSize) * 100.0d);
+            MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
+            if (downloadingDialog != null && !downloadingDialog.isCancelled()) {
+                int currentPercent = downloadingDialog.getCurrentProgress();
+                downloadingDialog.incrementProgress(newPercent - currentPercent);
+                downloadingDialog.setContent(
+                        String.format(
+                                "%s / %s",
+                                FileSizeUtils.humanReadableByteCount(readSize, true),
+                                FileSizeUtils.humanReadableByteCount(totalSize, true)
+                        ));
+            }
+        }
+    };
+
+    private BroadcastReceiver mDownloadSuccessReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Toast.makeText(getActivity(), "Download " + intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_FILENAME) + " success.", Toast.LENGTH_SHORT).show();
+            int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
+            MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
+            if (downloadingDialog != null && !downloadingDialog.isCancelled()) {
+                downloadingDialog.dismiss();
+            }
+            if (intent.getBooleanExtra(DataContract.DOWNLOAD_BROADCAST_SUCCESS_OPEN, false)) {
+                String localPath = intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_SUCCESS_PATH);
+                Uri fileUri = FileProvider.getUriForFile(
+                        getActivity(),
+                        getActivity().getString(R.string.authority_file_provider),
+                        new File(localPath));
+                openFileByUri(fileUri.toString(), true);
+
+            }
+        }
+    };
+
+    private BroadcastReceiver mDownloadErrorReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Toast.makeText(getActivity(), "Download " + intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_FILENAME) + " failed.", Toast.LENGTH_SHORT).show();
+            String errorMessage = intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_ERROR_MESSAGE);
+            int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
+            MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
+            if (downloadingDialog != null && !downloadingDialog.isCancelled()) {
+                downloadingDialog.dismiss();
+            }
+            MaterialDialog materialDialog = new MaterialDialog.Builder(getActivity())
+                    .title(R.string.dialog_title_error)
+                    .content(errorMessage)
+                    .show();
+        }
+    };
 }

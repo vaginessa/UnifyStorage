@@ -34,6 +34,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import okhttp3.Call;
+import okhttp3.Request;
+
 public class LocalStorageProvider extends AbstractStorageProvider {
     private Context mContext;
     private String mStartPath;
@@ -303,7 +306,7 @@ public class LocalStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFileDownloader download(RemoteFile file) throws StorageException {
+    public Request download(RemoteFile file) throws StorageException {
         return null;
     }
 

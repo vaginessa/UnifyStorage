@@ -39,6 +39,6 @@ public interface DropboxService {
     })
     Call<JsonObject> delete(@Header("Authorization") String authorization, @Body JsonObject body);
 
-    @POST("//" + SUBDOMAIN_CONTENT + "/2/files/download")
+    @POST("//" + SUBDOMAIN_CONTENT + "2/files/download")
     Call<ResponseBody> download(@Header("Authorization") String authorization, @Header("Dropbox-API-Arg") String argAPI);
 }
