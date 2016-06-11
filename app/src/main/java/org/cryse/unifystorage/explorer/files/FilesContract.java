@@ -3,17 +3,12 @@ package org.cryse.unifystorage.explorer.files;
 import android.support.annotation.Nullable;
 
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.base.BasePresenter;
 import org.cryse.unifystorage.explorer.base.BaseView;
-import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.message.BasicMessage;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
-import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
-
-import java.util.List;
 
 public interface FilesContract {
     interface View extends BaseView<Presenter> {

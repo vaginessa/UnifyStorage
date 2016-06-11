@@ -1,10 +1,6 @@
 package org.cryse.unifystorage.explorer.files;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -19,7 +15,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -38,24 +33,16 @@ import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.malinskiy.superrecyclerview.OnMoreListener;
 import com.malinskiy.superrecyclerview.SuperRecyclerView;
-import com.mikepenz.materialize.color.Material;
 
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
-import org.cryse.unifystorage.explorer.event.CancelTaskEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
-import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
-import org.cryse.unifystorage.explorer.event.FileDeleteResultEvent;
 import org.cryse.unifystorage.explorer.event.FrontUIDismissEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
 import org.cryse.unifystorage.explorer.message.BasicMessage;
 import org.cryse.unifystorage.explorer.message.DownloadFileMessage;
-import org.cryse.unifystorage.explorer.service.FileOperation;
-import org.cryse.unifystorage.explorer.service.FileOperationTaskEvent;
-import org.cryse.unifystorage.explorer.service.StopDownloadEvent;
 import org.cryse.unifystorage.explorer.service.operation.CreateFolderOperation;
 import org.cryse.unifystorage.explorer.service.operation.DeleteOperation;
 import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
@@ -67,7 +54,6 @@ import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.common.AbstractFragment;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.MenuUtils;
-import org.cryse.unifystorage.explorer.utils.RandomUtils;
 import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
 import org.cryse.unifystorage.explorer.utils.copy.CopyTask;
@@ -75,7 +61,6 @@ import org.cryse.unifystorage.explorer.utils.exception.ExceptionUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
-import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.utils.file.OnFileChangedListener;
 import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
@@ -466,20 +451,12 @@ public class FilesFragment extends AbstractFragment implements
             if (mPresenter.getDirectory() != null && mPresenter.getDirectory().directory != null)
                 mFileWatcher.startWatching(mPresenter.getDirectory().directory.getPath());
         }
-        getActivity().registerReceiver(this.mDownloadStartReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST_START_IDENTIFIER));
-        getActivity().registerReceiver(this.mDownloadProgressReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST__PROGRESS_IDENTIFIER));
-        getActivity().registerReceiver(this.mDownloadSuccessReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST_SUCCESS_IDENTIFIER));
-        getActivity().registerReceiver(this.mDownloadErrorReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST_ERROR_IDENTIFIER));
         OperationObserverManager.instance().addOperationListener(this);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getActivity().unregisterReceiver(this.mDownloadStartReceiver);
-        getActivity().unregisterReceiver(this.mDownloadProgressReceiver);
-        getActivity().unregisterReceiver(this.mDownloadSuccessReceiver);
-        getActivity().unregisterReceiver(this.mDownloadErrorReceiver);
         for (MaterialDialog materialDialog : mMaterialDialogs.values()) {
             if (materialDialog != null && !materialDialog.isCancelled())
                 materialDialog.dismiss();
@@ -675,7 +652,7 @@ public class FilesFragment extends AbstractFragment implements
             RemoteFile[] files = task.fileToCopy;
             Toast.makeText(getContext(), "Paste!", Toast.LENGTH_SHORT).show();
             CopyManager.getInstance().cancelCopyTask();
-            mEventBus.sendEvent(
+            /*mEventBus.sendEvent(
                     new FileOperationTaskEvent(
                             new FileOperation(
                                     FileOperation.FileOperationCode.COPY,
@@ -685,7 +662,7 @@ public class FilesFragment extends AbstractFragment implements
                                     files
                             )
                     )
-            );
+            );*/
         }
     }
 
@@ -778,12 +755,6 @@ public class FilesFragment extends AbstractFragment implements
         super.onEvent(event);
         int eventId = event.eventId();
         switch (eventId) {
-            case EventConst.EVENT_ID_FILE_DELETE:
-                onFileDeleteEvent((FileDeleteEvent) event);
-                break;
-            case EventConst.EVENT_ID_FILE_DELETE_RESULT:
-                onFileDeleteResultEvent((FileDeleteResultEvent) event);
-                break;
             case EventConst.EVENT_ID_SELECT_COPY_EVENT:
                 Toast.makeText(getContext(), String.format("Select %d files to copy.", CopyManager.getInstance().getCurrentCopyTask().fileToCopy.length), Toast.LENGTH_SHORT).show();
                 mFabMenu.setVisibility(View.GONE);
@@ -797,31 +768,11 @@ public class FilesFragment extends AbstractFragment implements
         }
     }
 
-    protected void onFileDeleteEvent(FileDeleteEvent fileDeleteEvent) {
-        if (isCurrentStorageProvider(fileDeleteEvent.providerId)) {
-            if (fileDeleteEvent.success) {
-                // mPresenter.onDeleteFileEvent(fileDeleteEvent);
-            } else {
-                Toast.makeText(getContext(), "Delete: " + fileDeleteEvent.fileName + " failed.", Toast.LENGTH_SHORT).show();
-            }
-
-        }
-    }
-
-    protected void onFileDeleteResultEvent(FileDeleteResultEvent fileDeleteResultEvent) {
-        if (isCurrentStorageProvider(fileDeleteResultEvent.providerId)) {
-            if (fileDeleteResultEvent.succes) {
-            } else {
-                Toast.makeText(getContext(), fileDeleteResultEvent.errorMessage, Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
     protected boolean isCurrentStorageProvider(int id) {
         return mPresenter.getStorageProviderInfo().getStorageProviderId() == id;
     }
 
-    private BroadcastReceiver mDownloadStartReceiver = new BroadcastReceiver() {
+    /*private BroadcastReceiver mDownloadStartReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, final Intent intent) {
@@ -906,7 +857,7 @@ public class FilesFragment extends AbstractFragment implements
                     .content(errorMessage)
                     .show();
         }
-    };
+    };*/
 
     private ConcurrentHashMap<String, MaterialDialog> mDialogMaps = new ConcurrentHashMap<>();
 

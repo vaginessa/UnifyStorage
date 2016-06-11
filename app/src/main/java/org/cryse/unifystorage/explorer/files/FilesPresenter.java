@@ -8,19 +8,16 @@ import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.base.BasePresenter;
-import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.event.NewTaskEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
 import org.cryse.unifystorage.explorer.executor.PostExecutionThread;
 import org.cryse.unifystorage.explorer.executor.ThreadExecutor;
 import org.cryse.unifystorage.explorer.interactor.CreateFolderUseCase;
 import org.cryse.unifystorage.explorer.interactor.DefaultSubscriber;
-import org.cryse.unifystorage.explorer.interactor.DeleteFilesUseCase;
 import org.cryse.unifystorage.explorer.interactor.GetFilesUseCase;
 import org.cryse.unifystorage.explorer.interactor.UseCase;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
-import org.cryse.unifystorage.explorer.service.StartDownloadEvent;
 import org.cryse.unifystorage.explorer.service.task.CreateFolderTask;
 import org.cryse.unifystorage.explorer.service.task.DeleteTask;
 import org.cryse.unifystorage.explorer.service.task.DownloadTask;
@@ -48,7 +45,6 @@ public class FilesPresenter implements FilesContract.Presenter {
     protected FileCacheRepository mFileCacheRepository;
     private GetFilesUseCase mGetFilesUseCase;
     private CreateFolderUseCase mCreateFolderUseCase;
-    private DeleteFilesUseCase mDeleteFilesUseCase;
     private boolean mFirstLoad = true;
     private boolean mShowHiddenFile = false;
     public DirectoryInfo mDirectory;
@@ -76,7 +72,6 @@ public class FilesPresenter implements FilesContract.Presenter {
 
         this.mGetFilesUseCase = new GetFilesUseCase(mRxStorageProvider, mThreadExecutor, mPostExecutionThread);
         this.mCreateFolderUseCase = new CreateFolderUseCase(mRxStorageProvider, mThreadExecutor, mPostExecutionThread);
-        this.mDeleteFilesUseCase = new DeleteFilesUseCase(RxEventBus.getInstance(), mThreadExecutor, mPostExecutionThread);
 
         this.mRxStorageProvider.getStorageProvider().setOnTokenRefreshListener(new StorageProvider.OnTokenRefreshListener() {
             @Override
@@ -220,39 +215,9 @@ public class FilesPresenter implements FilesContract.Presenter {
                         )
                 )
         );
-        /*mCreateFolderUseCase.execute(
-                new CreateFolderUseCase.RequestValues(parent, name),
-                new DefaultSubscriber<UseCase.SingleResponseValue<RemoteFile>>() {
-                    @Override
-                    public void onCompleted() {
-                        super.onCompleted();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        super.onError(e);
-                    }
-
-                    @Override
-                    public void onNext(UseCase.SingleResponseValue<RemoteFile> remoteFileSingleResponseValue) {
-                        super.onNext(remoteFileSingleResponseValue);
-                    }
-                }
-        );*/
     }
 
     public void deleteFiles(RemoteFile[] files) {
-        /*mDeleteFilesUseCase.execute(
-                new DeleteFilesUseCase.RequestValues(
-                        mStorageProviderInfo,
-                        mDirectory.directory,
-                        files
-                ),
-                new DefaultSubscriber<UseCase.SingleResponseValue<Void>>() {
-
-                }
-        );*/
-
         RxEventBus.getInstance().sendEvent(
                 new NewTaskEvent(
                         new DeleteTask(

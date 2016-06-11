@@ -36,8 +36,6 @@ import org.cryse.unifystorage.explorer.executor.UIThread;
 import org.cryse.unifystorage.explorer.files.FilesFragment;
 import org.cryse.unifystorage.explorer.files.FilesPresenter;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
-import org.cryse.unifystorage.explorer.service.DownloadService;
-import org.cryse.unifystorage.explorer.service.LongOperationService;
 import org.cryse.unifystorage.explorer.service.OperationService;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
@@ -67,10 +65,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     private Runnable mPendingRunnable = null;
     AtomicBoolean mDoubleBackToExitPressedOnce = new AtomicBoolean(false);
 
-    ServiceConnection mLongOperationServiceConnection;
-    private LongOperationService.LongOperationBinder mLongOperationBinder;
-    ServiceConnection mDownloadServiceConnection;
-    private DownloadService.DownloadServiceBinder mDownloadServiceBinder;
     ServiceConnection mOperationServiceConnection;
     private OperationService.OperationBinder mOperationBinder;
 
@@ -93,28 +87,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
 
         initDrawer();
         checkStoragePermissions();
-        mLongOperationServiceConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                mLongOperationBinder = (LongOperationService.LongOperationBinder) service;
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                mLongOperationBinder = null;
-            }
-        };
-        mDownloadServiceConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                mDownloadServiceBinder = (DownloadService.DownloadServiceBinder) service;
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                mDownloadServiceBinder = null;
-            }
-        };
         mOperationServiceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
@@ -174,17 +146,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     protected void onStart() {
         super.onStart();
 
-        // Start LongOperationService
-        Intent longOperationServiceIntent = new Intent(this.getApplicationContext(), LongOperationService.class);
-        startService(longOperationServiceIntent);
-        this.bindService(longOperationServiceIntent, mLongOperationServiceConnection, Context.BIND_AUTO_CREATE);
-
-        // Start DownloadService
-        Intent downloadServiceIntent = new Intent(this.getApplicationContext(), DownloadService.class);
-        startService(downloadServiceIntent);
-        this.bindService(downloadServiceIntent, mDownloadServiceConnection, Context.BIND_AUTO_CREATE);
-
-
         // Start OperationService
         Intent operationServiceIntent = new Intent(this.getApplicationContext(), OperationService.class);
         startService(operationServiceIntent);
@@ -194,8 +155,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onStop() {
         super.onStop();
-        this.unbindService(mLongOperationServiceConnection);
-        this.unbindService(mDownloadServiceConnection);
         this.unbindService(mOperationServiceConnection);
     }
 
@@ -550,9 +509,5 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     protected void onDestroy() {
         super.onDestroy();
         mMainViewModel.destroy();
-    }
-
-    public LongOperationService.LongOperationBinder getLongOperationBinder() {
-        return mLongOperationBinder;
     }
 }

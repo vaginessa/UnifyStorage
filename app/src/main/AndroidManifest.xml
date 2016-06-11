@@ -39,9 +39,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <service android:name=".service.LongOperationService"/>
+
         <service android:name=".service.OperationService"/>
-        <service android:name=".service.DownloadService"/>
         <provider
             android:exported="false"
             android:grantUriPermissions="true"
