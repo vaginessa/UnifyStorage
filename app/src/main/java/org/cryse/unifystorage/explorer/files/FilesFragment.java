@@ -61,6 +61,7 @@ import org.cryse.unifystorage.explorer.utils.exception.ExceptionUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
+import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.utils.file.OnFileChangedListener;
 import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
@@ -71,6 +72,7 @@ import org.cryse.widget.recyclerview.Bookends;
 import java.io.File;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -970,9 +972,15 @@ public class FilesFragment extends AbstractFragment implements
                 if (dialog != null && !dialog.isCancelled()) {
                     int lastPercent = dialog.getCurrentProgress();
                     int newPercent = (int) Math.round(((double) current / (double) total) * 100.0d);
-                    if (lastPercent < newPercent) {
-                        dialog.incrementProgress(newPercent - lastPercent);
+                    if(caller instanceof DownloadOperation) {
+                        String content = String.format(Locale.getDefault(), "%s / %s", FileSizeUtils.humanReadableByteCount(current, false), FileSizeUtils.humanReadableByteCount(total, false));
+                        dialog.setContent(content);
+                    } else {
+                        if (lastPercent < newPercent) {
+                            dialog.incrementProgress(newPercent - lastPercent);
+                        }
                     }
+
                 }
             }
         }
