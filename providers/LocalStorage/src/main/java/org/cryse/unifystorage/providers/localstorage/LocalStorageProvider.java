@@ -84,6 +84,8 @@ public class LocalStorageProvider extends AbstractStorageProvider {
 
     @Override
     public LocalStorageFile createDirectory(RemoteFile parent, String name) throws StorageException {
+        if(parent == null)
+            parent = getRootDirectory();
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && isOnExtSdCard(mContext, parent.getPath())) {
             DocumentFile documentFile = getDocumentFile(mContext, mSdcardUri, ((LocalStorageFile)parent).getFile(), true);
             DocumentFile newFile = documentFile.createDirectory(name);

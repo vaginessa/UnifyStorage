@@ -8,4 +8,7 @@ public class EventConst {
     public static final int EVENT_ID_TASK_FILE_OPERATION = 10001;
     public static final int EVENT_ID_TASK_DOWNLOAD_FILE_START = 10011;
     public static final int EVENT_ID_TASK_DOWNLOAD_FILE_STOP = 10012;
+    public static final int EVENT_ID_NEW_TASK = 1000010;
+    public static final int EVENT_ID_CANCEL_TASK = 1000011;
+    public static final int EVENT_ID_FRONT_UI_DISMISS = 1000012;
 }

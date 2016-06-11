@@ -37,6 +37,7 @@
     <string name="dialog_content_opening">Connecting…</string>
     <string name="dialog_content_error_open_file">Fail to open file.</string>
     <string name="dialog_content_error_download_file">Fail to download file.</string>
+    <string name="dialog_title_deleting_file">Deleting files</string>
 
     <string name="fab_lable_create_file">Create New File</string>
     <string name="fab_lable_create_directory">Create New Directory</string>

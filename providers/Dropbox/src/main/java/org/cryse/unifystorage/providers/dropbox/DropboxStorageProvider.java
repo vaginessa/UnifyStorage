@@ -136,6 +136,8 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
 
     @Override
     public DropboxFile createDirectory(RemoteFile parent, String name) throws StorageException {
+        if(parent == null)
+            parent = getRootDirectory();
         DropboxFile fileMetaData = null;
         JsonObject requestData = new DropboxRequestDataBuilder()
                 .createFolder(Path.combine(parent.getPath(), name))

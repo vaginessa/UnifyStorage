@@ -10,6 +10,7 @@ import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
+import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
@@ -114,6 +115,10 @@ public class StorageProviderManager {
 
     public List<StorageProviderRecord> loadStorageProviderRecords() {
         return mUnifyStorageDatabase.getSavedStorageProviders();
+    }
+
+    public StorageProvider createStorageProvider(Context context, StorageProviderInfo info) {
+        return createStorageProvider(context, info.getStorageProviderId(), info.getCredential(), info.getExtras());
     }
 
     public StorageProvider createStorageProvider(Context context, int id, Credential credential, Object...extra) {

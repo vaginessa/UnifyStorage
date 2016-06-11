@@ -70,8 +70,6 @@ public interface FilesContract {
 
         void deleteFiles(RemoteFile[] filesToDelete);
 
-        void onDeleteFileEvent(FileDeleteEvent event);
-
         void onFileClick(RemoteFile file, CollectionViewState collectionViewState);
 
         void onFileLongClick(RemoteFile file);

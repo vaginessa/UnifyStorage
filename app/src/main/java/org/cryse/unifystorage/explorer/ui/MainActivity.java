@@ -38,6 +38,7 @@ import org.cryse.unifystorage.explorer.files.FilesPresenter;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.service.DownloadService;
 import org.cryse.unifystorage.explorer.service.LongOperationService;
+import org.cryse.unifystorage.explorer.service.OperationService;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.explorer.utils.cache.AndroidFileCacheRepository;
@@ -70,6 +71,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     private LongOperationService.LongOperationBinder mLongOperationBinder;
     ServiceConnection mDownloadServiceConnection;
     private DownloadService.DownloadServiceBinder mDownloadServiceBinder;
+    ServiceConnection mOperationServiceConnection;
+    private OperationService.OperationBinder mOperationBinder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +113,17 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
             @Override
             public void onServiceDisconnected(ComponentName name) {
                 mDownloadServiceBinder = null;
+            }
+        };
+        mOperationServiceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                mOperationBinder = (OperationService.OperationBinder) service;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                mOperationBinder = null;
             }
         };
     }
@@ -169,6 +183,12 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         Intent downloadServiceIntent = new Intent(this.getApplicationContext(), DownloadService.class);
         startService(downloadServiceIntent);
         this.bindService(downloadServiceIntent, mDownloadServiceConnection, Context.BIND_AUTO_CREATE);
+
+
+        // Start OperationService
+        Intent operationServiceIntent = new Intent(this.getApplicationContext(), OperationService.class);
+        startService(operationServiceIntent);
+        this.bindService(operationServiceIntent, mOperationServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -176,6 +196,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         super.onStop();
         this.unbindService(mLongOperationServiceConnection);
         this.unbindService(mDownloadServiceConnection);
+        this.unbindService(mOperationServiceConnection);
     }
 
     @Override

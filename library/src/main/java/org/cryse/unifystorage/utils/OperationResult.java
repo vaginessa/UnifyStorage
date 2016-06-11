@@ -1,17 +1,25 @@
 package org.cryse.unifystorage.utils;
 
-import android.util.Pair;
-
 import org.cryse.unifystorage.RemoteFile;
 
-public class OperationResult extends Pair<RemoteFile, Boolean> {
-
-    public OperationResult(RemoteFile file, Boolean result) {
-        super(file, result);
+public class OperationResult {
+    private RemoteFile mFile;
+    private boolean mSuccess;
+    public OperationResult(RemoteFile file, Boolean success) {
+        mFile = file;
+        mSuccess = success;
     }
 
-    public static OperationResult create(RemoteFile a, Boolean b) {
-        return new OperationResult(a, b);
+    public static OperationResult create(RemoteFile file, Boolean success) {
+        return new OperationResult(file, success);
+    }
+
+    public RemoteFile getFile() {
+        return mFile;
+    }
+
+    public boolean isSuccess() {
+        return mSuccess;
     }
 }
 

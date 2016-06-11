@@ -38,21 +38,31 @@ import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.malinskiy.superrecyclerview.OnMoreListener;
 import com.malinskiy.superrecyclerview.SuperRecyclerView;
+import com.mikepenz.materialize.color.Material;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
+import org.cryse.unifystorage.explorer.event.CancelTaskEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
 import org.cryse.unifystorage.explorer.event.FileDeleteResultEvent;
+import org.cryse.unifystorage.explorer.event.FrontUIDismissEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
 import org.cryse.unifystorage.explorer.message.BasicMessage;
 import org.cryse.unifystorage.explorer.message.DownloadFileMessage;
 import org.cryse.unifystorage.explorer.service.FileOperation;
 import org.cryse.unifystorage.explorer.service.FileOperationTaskEvent;
 import org.cryse.unifystorage.explorer.service.StopDownloadEvent;
+import org.cryse.unifystorage.explorer.service.operation.CreateFolderOperation;
+import org.cryse.unifystorage.explorer.service.operation.DeleteOperation;
+import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
+import org.cryse.unifystorage.explorer.service.operation.OnRemoteOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.OperationObserverManager;
+import org.cryse.unifystorage.explorer.service.operation.RemoteOperation;
+import org.cryse.unifystorage.explorer.service.operation.RemoteOperationResult;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.common.AbstractFragment;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
@@ -75,6 +85,9 @@ import org.cryse.widget.recyclerview.Bookends;
 
 import java.io.File;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import butterknife.Bind;
@@ -84,7 +97,8 @@ public class FilesFragment extends AbstractFragment implements
         FilesContract.View,
         FilesAdapter.OnFileClickListener,
         SelectableRecyclerViewAdapter.OnSelectionListener,
-        MaterialCab.Callback {
+        MaterialCab.Callback,
+        OnRemoteOperationListener {
 
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
     private Handler mHandler = new Handler();
@@ -187,7 +201,7 @@ public class FilesFragment extends AbstractFragment implements
                 @Override
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (keyCode == KeyEvent.KEYCODE_BACK) {
-                        if(mCollectionAdapter.isInSelection() || !mPresenter.isAtTopPath()) {
+                        if (mCollectionAdapter.isInSelection() || !mPresenter.isAtTopPath()) {
                             if (!FilesFragment.this.mDoubleBackPressedOnce.get()) {
                                 FilesFragment.this.mDoubleBackPressedOnce.set(true);
                                 mHandler.postDelayed(mBackPressdRunnable, 400);
@@ -211,7 +225,7 @@ public class FilesFragment extends AbstractFragment implements
     private void setupToolbar() {
         getAppCompatActivity().setSupportActionBar(mToolbar);
         ActionBar actionBar = getAppCompatActivity().getSupportActionBar();
-        if(actionBar != null) {
+        if (actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
             Drawable indicatorDrawable = ResourceUtils.makeTintedDrawable(getActivity(), R.drawable.ic_action_menu_drawer, Color.WHITE);
@@ -245,7 +259,7 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     private void setupFab() {
-        if(CopyManager.getInstance().hasCopyTask()) {
+        if (CopyManager.getInstance().hasCopyTask()) {
             mFabMenu.setVisibility(View.GONE);
             mFabPaste.setVisibility(View.VISIBLE);
         } else {
@@ -302,7 +316,7 @@ public class FilesFragment extends AbstractFragment implements
         mCollectionView.setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if(mPresenter.getDirectory() != null) {
+                if (mPresenter.getDirectory() != null) {
                     mPresenter.getDirectory().clear();
                 }
                 mPresenter.loadFiles(mPresenter.getDirectory(), true, false, null);
@@ -369,8 +383,8 @@ public class FilesFragment extends AbstractFragment implements
 
             @Override
             public void onButtonClick(StateView.State state) {
-                if(state == StateView.State.ERROR) {
-                    if(mPresenter.getDirectory() != null)
+                if (state == StateView.State.ERROR) {
+                    if (mPresenter.getDirectory() != null)
                         mPresenter.loadFiles(mPresenter.getDirectory(), true);
                 }
             }
@@ -408,7 +422,6 @@ public class FilesFragment extends AbstractFragment implements
     }
 
 
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
@@ -419,7 +432,7 @@ public class FilesFragment extends AbstractFragment implements
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        if(mShowHiddenFilesMenuItem != null) {
+        if (mShowHiddenFilesMenuItem != null) {
             mShowHiddenFilesMenuItem.setChecked(mShowHiddenFilesPrefs.get());
         }
     }
@@ -428,7 +441,7 @@ public class FilesFragment extends AbstractFragment implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                if(getActivity() instanceof MainActivity) {
+                if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).getNavigationDrawer().openDrawer();
                     return true;
                 } else {
@@ -437,7 +450,7 @@ public class FilesFragment extends AbstractFragment implements
             case R.id.action_show_hidden_files:
                 boolean isShow = mShowHiddenFilesPrefs.get();
                 mShowHiddenFilesPrefs.set(!isShow);
-                if(mShowHiddenFilesMenuItem!= null)
+                if (mShowHiddenFilesMenuItem != null)
                     mShowHiddenFilesMenuItem.setChecked(!isShow);
                 mPresenter.setShowHiddenFiles(!isShow);
                 return true;
@@ -449,14 +462,15 @@ public class FilesFragment extends AbstractFragment implements
     public void onResume() {
         super.onResume();
         mPresenter.start();
-        if(mPresenter.showWatchChanges()) {
-            if(mPresenter.getDirectory() != null && mPresenter.getDirectory().directory != null)
+        if (mPresenter.showWatchChanges()) {
+            if (mPresenter.getDirectory() != null && mPresenter.getDirectory().directory != null)
                 mFileWatcher.startWatching(mPresenter.getDirectory().directory.getPath());
         }
         getActivity().registerReceiver(this.mDownloadStartReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST_START_IDENTIFIER));
         getActivity().registerReceiver(this.mDownloadProgressReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST__PROGRESS_IDENTIFIER));
         getActivity().registerReceiver(this.mDownloadSuccessReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST_SUCCESS_IDENTIFIER));
         getActivity().registerReceiver(this.mDownloadErrorReceiver, new IntentFilter(DataContract.DOWNLOAD_BROADCAST_ERROR_IDENTIFIER));
+        OperationObserverManager.instance().addOperationListener(this);
     }
 
     @Override
@@ -466,11 +480,20 @@ public class FilesFragment extends AbstractFragment implements
         getActivity().unregisterReceiver(this.mDownloadProgressReceiver);
         getActivity().unregisterReceiver(this.mDownloadSuccessReceiver);
         getActivity().unregisterReceiver(this.mDownloadErrorReceiver);
-        for(MaterialDialog materialDialog : mMaterialDialogs.values()) {
-            if(materialDialog != null && !materialDialog.isCancelled())
+        for (MaterialDialog materialDialog : mMaterialDialogs.values()) {
+            if (materialDialog != null && !materialDialog.isCancelled())
                 materialDialog.dismiss();
         }
         mMaterialDialogs.clear();
+        OperationObserverManager.instance().removeOperationListener(this);
+        for (Iterator<Map.Entry<String, MaterialDialog>> iterator = mDialogMaps.entrySet().iterator(); iterator.hasNext(); ) {
+            Map.Entry<String, MaterialDialog> entry = iterator.next();
+            MaterialDialog dialog = entry.getValue();
+            if (dialog != null && !dialog.isCancelled()) {
+                dialog.dismiss();
+            }
+            iterator.remove();
+        }
     }
 
     @Override
@@ -484,31 +507,31 @@ public class FilesFragment extends AbstractFragment implements
         if (getView() == null) {
             return;
         }
-        if(active)
+        if (active)
             hideStateView();
         mLoadingProgress.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
     }
 
     @Override
     public void onLeaveDirectory(DirectoryInfo directory) {
-        if(directory != null && directory.directory != null)
+        if (directory != null && directory.directory != null)
             mFileWatcher.stopWatching(directory.directory.getPath());
     }
 
     @Override
     public void showFiles(DirectoryInfo directory, @Nullable CollectionViewState collectionViewState) {
-        if(mCollectionView.isLoadingMore()) {
+        if (mCollectionView.isLoadingMore()) {
             isLoadingMore.set(false);
             mCollectionView.setLoadingMore(false);
             mCollectionView.hideMoreProgress();
         }
-        if(directory != null && directory.files != null) {
-            if(mPresenter.showWatchChanges())
+        if (directory != null && directory.files != null) {
+            if (mPresenter.showWatchChanges())
                 mFileWatcher.startWatching(directory.directory.getPath());
             mCollectionAdapter.replaceWith(directory.files);
-            if(directory.files.size() > 0) {
+            if (directory.files.size() > 0) {
                 hideStateView();
-                if(collectionViewState != null) {
+                if (collectionViewState != null) {
                     LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getRecyclerView().getLayoutManager();
                     manager.scrollToPositionWithOffset(collectionViewState.position, (int) collectionViewState.offset);
                 }
@@ -523,10 +546,10 @@ public class FilesFragment extends AbstractFragment implements
 
     @Override
     public void showError(DirectoryInfo directory, Throwable throwable) {
-        if(directory != null && directory.directory != null) {
+        if (directory != null && directory.directory != null) {
             updateBreadcrumb(directory.directory.getPath());
         }
-        if(directory != null)
+        if (directory != null)
             mCollectionAdapter.replaceWith(directory.files);
         showRetryView(ExceptionUtils.exceptionToStringRes(throwable));
     }
@@ -629,7 +652,7 @@ public class FilesFragment extends AbstractFragment implements
         LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getRecyclerView().getLayoutManager();
         int position = manager.findFirstVisibleItemPosition();
         View firstItemView = manager.findViewByPosition(position);
-        if(firstItemView != null) {
+        if (firstItemView != null) {
             float offset = firstItemView.getTop();
             return new CollectionViewState(position, offset);
         } else
@@ -678,7 +701,7 @@ public class FilesFragment extends AbstractFragment implements
 
     @Override
     public void onFileClick(View view, int position, RemoteFile file) {
-        if(mCollectionAdapter.isInSelection()) {
+        if (mCollectionAdapter.isInSelection()) {
             mCollectionAdapter.toggleSelection(position);
         } else {
             mPresenter.onFileClick(file, getCollectionViewState());
@@ -702,19 +725,19 @@ public class FilesFragment extends AbstractFragment implements
 
     @Override
     public void onSelectionEnd() {
-        if(mCab != null && mCab.isActive())
+        if (mCab != null && mCab.isActive())
             mCab.finish();
     }
 
     @Override
     public void onSelect(int currentSelectionCount, int... positions) {
-        if(mCab != null && mCab.isActive())
+        if (mCab != null && mCab.isActive())
             mCab.setTitle(Integer.toString(currentSelectionCount));
     }
 
     @Override
     public void onDeselect(int currentSelectionCount, int... positions) {
-        if(mCab != null && mCab.isActive())
+        if (mCab != null && mCab.isActive())
             mCab.setTitle(Integer.toString(currentSelectionCount));
     }
 
@@ -745,7 +768,7 @@ public class FilesFragment extends AbstractFragment implements
 
     @Override
     public boolean onCabFinished(MaterialCab materialCab) {
-        if(mCollectionAdapter.isInSelection())
+        if (mCollectionAdapter.isInSelection())
             mCollectionAdapter.clearSelection();
         return true;
     }
@@ -775,9 +798,9 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     protected void onFileDeleteEvent(FileDeleteEvent fileDeleteEvent) {
-        if(isCurrentStorageProvider(fileDeleteEvent.providerId)) {
+        if (isCurrentStorageProvider(fileDeleteEvent.providerId)) {
             if (fileDeleteEvent.success) {
-                mPresenter.onDeleteFileEvent(fileDeleteEvent);
+                // mPresenter.onDeleteFileEvent(fileDeleteEvent);
             } else {
                 Toast.makeText(getContext(), "Delete: " + fileDeleteEvent.fileName + " failed.", Toast.LENGTH_SHORT).show();
             }
@@ -786,8 +809,8 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     protected void onFileDeleteResultEvent(FileDeleteResultEvent fileDeleteResultEvent) {
-        if(isCurrentStorageProvider(fileDeleteResultEvent.providerId)) {
-            if(fileDeleteResultEvent.succes) {
+        if (isCurrentStorageProvider(fileDeleteResultEvent.providerId)) {
+            if (fileDeleteResultEvent.succes) {
             } else {
                 Toast.makeText(getContext(), fileDeleteResultEvent.errorMessage, Toast.LENGTH_SHORT).show();
             }
@@ -805,7 +828,7 @@ public class FilesFragment extends AbstractFragment implements
             // Toast.makeText(getActivity(), "Start downloading " + intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_FILENAME), Toast.LENGTH_SHORT).show();
             int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
             MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
-            if(downloadingDialog == null ||  downloadingDialog.isCancelled()) {
+            if (downloadingDialog == null || downloadingDialog.isCancelled()) {
                 downloadingDialog = new MaterialDialog.Builder(getContext())
                         .title(R.string.dialog_title_opening_file)
                         .content(R.string.dialog_content_opening)
@@ -830,7 +853,7 @@ public class FilesFragment extends AbstractFragment implements
             int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
             long readSize = intent.getLongExtra(DataContract.DOWNLOAD_BROADCAST_READ_SIZE, 0);
             long totalSize = intent.getLongExtra(DataContract.DOWNLOAD_BROADCAST_FILE_SIZE, 0);
-            int newPercent = (int) Math.round(((double) readSize  / (double) totalSize) * 100.0d);
+            int newPercent = (int) Math.round(((double) readSize / (double) totalSize) * 100.0d);
             MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
             if (downloadingDialog != null && !downloadingDialog.isCancelled()) {
                 int currentPercent = downloadingDialog.getCurrentProgress();
@@ -884,4 +907,123 @@ public class FilesFragment extends AbstractFragment implements
                     .show();
         }
     };
+
+    private ConcurrentHashMap<String, MaterialDialog> mDialogMaps = new ConcurrentHashMap<>();
+
+    @Override
+    public void onRemoteOperationStart(RemoteOperation caller) {
+        if (isCurrentStorageProvider(caller.getOperationContext().getStorageProviderId())) {
+            final String token = caller.getOperationToken();
+            // Toast.makeText(getActivity(), String.format("%s onStart.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
+            if (mDialogMaps.containsKey(token)) {
+                MaterialDialog dialog = mDialogMaps.get(token);
+                if (dialog != null && !dialog.isCancelled() && dialog.isShowing())
+                    dialog.dismiss();
+                mDialogMaps.remove(token);
+            } else {
+                MaterialDialog dialog = null;
+                if (caller instanceof DeleteOperation) {
+                    dialog = new MaterialDialog.Builder(getContext())
+                            .title(R.string.dialog_title_deleting_file)
+                            .content(R.string.dialog_content_opening)
+                            .progress(false, 100, false)
+                            .dismissListener(new DialogInterface.OnDismissListener() {
+                                @Override
+                                public void onDismiss(DialogInterface dialog) {
+                                    RxEventBus.getInstance().sendEvent(new FrontUIDismissEvent(token));
+                                }
+                            })
+                            .show();
+                } else if (caller instanceof CreateFolderOperation) {
+                    dialog = new MaterialDialog.Builder(getContext())
+                            .title(R.string.dialog_title_create_new_directory)
+                            .content(R.string.dialog_content_opening)
+                            .progress(true, 100, false)
+                            .dismissListener(new DialogInterface.OnDismissListener() {
+                                @Override
+                                public void onDismiss(DialogInterface dialog) {
+                                    RxEventBus.getInstance().sendEvent(new FrontUIDismissEvent(token));
+                                }
+                            })
+                            .show();
+                } else if (caller instanceof DownloadOperation) {
+                    dialog = new MaterialDialog.Builder(getContext())
+                            .title(R.string.dialog_title_opening_file)
+                            .content(R.string.dialog_content_opening)
+                            .progress(false, 100, false)
+                            .dismissListener(new DialogInterface.OnDismissListener() {
+                                @Override
+                                public void onDismiss(DialogInterface dialog) {
+                                    RxEventBus.getInstance().sendEvent(new FrontUIDismissEvent(token));
+                                }
+                            })
+                            .show();
+                } else {
+
+                }
+                if (dialog != null) {
+                    mDialogMaps.put(token, dialog);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRemoteOperationFinish(RemoteOperation caller, RemoteOperationResult result) {
+        if (isCurrentStorageProvider(caller.getOperationContext().getStorageProviderId())) {
+            // Toast.makeText(getActivity(), String.format("%s onFinish.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
+            String token = caller.getOperationToken();
+            if (mDialogMaps.containsKey(token)) {
+                final MaterialDialog dialog = mDialogMaps.get(token);
+                if (dialog != null && !dialog.isCancelled()) {
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            dialog.dismiss();
+                        }
+                    });
+                }
+                mDialogMaps.remove(token);
+            }
+            if (!result.isSuccess()) {
+                new MaterialDialog.Builder(getActivity())
+                        .title(R.string.dialog_title_error)
+                        .content(result.getException().getMessage())
+                        .show();
+            } else {
+                if (caller.shouldRefresh()) {
+                    if (mPresenter.getDirectory() != null) {
+                        mPresenter.getDirectory().clear();
+                    }
+                    mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
+                }
+                if (caller instanceof DownloadOperation) {
+                    String localPath = ((DownloadOperation) caller).getSavePath();
+                    Uri fileUri = FileProvider.getUriForFile(
+                            getActivity(),
+                            getActivity().getString(R.string.authority_file_provider),
+                            new File(localPath));
+                    openFileByUri(fileUri.toString(), true);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRemoteOperationProgress(RemoteOperation caller, final long current, final long total) {
+        if (isCurrentStorageProvider(caller.getOperationContext().getStorageProviderId())) {
+            // Toast.makeText(getActivity(), String.format("%s onProgress.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
+            final String token = caller.getOperationToken();
+            if (mDialogMaps.containsKey(token)) {
+                final MaterialDialog dialog = mDialogMaps.get(token);
+                if (dialog != null && !dialog.isCancelled()) {
+                    int lastPercent = dialog.getCurrentProgress();
+                    int newPercent = (int) Math.round(((double) current / (double) total) * 100.0d);
+                    if (lastPercent < newPercent) {
+                        dialog.incrementProgress(newPercent - lastPercent);
+                    }
+                }
+            }
+        }
+    }
 }

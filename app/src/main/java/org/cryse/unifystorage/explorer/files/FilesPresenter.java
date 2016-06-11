@@ -9,6 +9,7 @@ import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.base.BasePresenter;
 import org.cryse.unifystorage.explorer.event.FileDeleteEvent;
+import org.cryse.unifystorage.explorer.event.NewTaskEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
 import org.cryse.unifystorage.explorer.executor.PostExecutionThread;
 import org.cryse.unifystorage.explorer.executor.ThreadExecutor;
@@ -20,6 +21,9 @@ import org.cryse.unifystorage.explorer.interactor.UseCase;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.service.StartDownloadEvent;
+import org.cryse.unifystorage.explorer.service.task.CreateFolderTask;
+import org.cryse.unifystorage.explorer.service.task.DeleteTask;
+import org.cryse.unifystorage.explorer.service.task.DownloadTask;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.explorer.utils.cache.FileCacheRepository;
@@ -207,7 +211,16 @@ public class FilesPresenter implements FilesContract.Presenter {
 
     @Override
     public void createFolder(RemoteFile parent, String name) {
-        mCreateFolderUseCase.execute(
+        RxEventBus.getInstance().sendEvent(
+                new NewTaskEvent(
+                        new CreateFolderTask(
+                                mStorageProviderInfo,
+                                parent,
+                                name
+                        )
+                )
+        );
+        /*mCreateFolderUseCase.execute(
                 new CreateFolderUseCase.RequestValues(parent, name),
                 new DefaultSubscriber<UseCase.SingleResponseValue<RemoteFile>>() {
                     @Override
@@ -225,11 +238,11 @@ public class FilesPresenter implements FilesContract.Presenter {
                         super.onNext(remoteFileSingleResponseValue);
                     }
                 }
-        );
+        );*/
     }
 
     public void deleteFiles(RemoteFile[] files) {
-        mDeleteFilesUseCase.execute(
+        /*mDeleteFilesUseCase.execute(
                 new DeleteFilesUseCase.RequestValues(
                         mStorageProviderInfo,
                         mDirectory.directory,
@@ -238,6 +251,16 @@ public class FilesPresenter implements FilesContract.Presenter {
                 new DefaultSubscriber<UseCase.SingleResponseValue<Void>>() {
 
                 }
+        );*/
+
+        RxEventBus.getInstance().sendEvent(
+                new NewTaskEvent(
+                        new DeleteTask(
+                                mStorageProviderInfo,
+                                false,
+                                files
+                        )
+                )
         );
     }
 
@@ -253,11 +276,6 @@ public class FilesPresenter implements FilesContract.Presenter {
 
     @Override
     public void openFileDetails(RemoteFile requestedFile) {
-
-    }
-
-    @Override
-    public void onDeleteFileEvent(FileDeleteEvent event) {
 
     }
 
@@ -290,6 +308,17 @@ public class FilesPresenter implements FilesContract.Presenter {
         );
 
         RxEventBus.getInstance().sendEvent(
+                new NewTaskEvent(
+                        new DownloadTask(
+                                mStorageProviderInfo,
+                                file,
+                                localPath,
+                                false
+                        )
+                )
+        );
+
+        /*RxEventBus.getInstance().sendEvent(
                 new StartDownloadEvent(
                         mStorageProviderInfo,
                         token,
@@ -297,7 +326,7 @@ public class FilesPresenter implements FilesContract.Presenter {
                         localPath,
                         true
                 )
-        );
+        );*/
         /*final Subscription[] subscription = new Subscription[1];
         final DownloadFileMessage downloadFileMessage = new DownloadFileMessage(file.getId().hashCode(), "", fileName);
         downloadFileMessage.setCurrentSize(0);

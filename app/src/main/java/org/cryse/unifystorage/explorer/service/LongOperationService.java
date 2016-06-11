@@ -138,7 +138,7 @@ public class LongOperationService extends Service {
 
                     @Override
                     public void onNext(OperationResult result) {
-                        String resultToast = String.format("Copy %s %s", result.first.getName(), result.second ? "success" : "failed");
+                        String resultToast = String.format("Copy %s %s", result.getFile().getName(), result.isSuccess() ? "success" : "failed");
                         Log.e("CopyFile", resultToast);
                         currentProgress[0]++;
                     }
@@ -192,16 +192,16 @@ public class LongOperationService extends Service {
 
                     @Override
                     public void onNext(OperationResult result) {
-                        String resultToast = String.format("Delete %s %s", result.first.getName(), result.second ? "success" : "failed");
+                        String resultToast = String.format("Delete %s %s", result.getFile().getName(), result.isSuccess() ? "success" : "failed");
                         Log.e("DeleteFile", resultToast);
                         mEventBus.sendEvent(new FileDeleteEvent(
                                 fileOperation.getStorageProviderInfo().getStorageProviderId(),
                                 fileOperation.getTarget().getId(),
                                 currentProgress[0],
                                 fileCount,
-                                result.first.getId(),
-                                result.first.getName(),
-                                result.second
+                                result.getFile().getId(),
+                                result.getFile().getName(),
+                                result.isSuccess()
                         ));
                         deleteNotificationBuilder
                                 .setProgress(fileCount, currentProgress[0], false)

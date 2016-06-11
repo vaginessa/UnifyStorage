@@ -216,6 +216,8 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
 
     @Override
     public RemoteFile createDirectory(RemoteFile parent, String name) throws StorageException {
+        if(parent == null)
+            parent = getRootDirectory();
         OneDriveFile fileMetaData = null;
         JsonObject requestData = new RequestDataBuilder()
                 .createFolder(name, "fail")
@@ -229,7 +231,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
                 fileMetaData = gson.fromJson(responseObject, OneDriveFile.class);
             } else {
                 // Failure here
-                throw new StorageException();
+                throw new StorageException(String.format("Response Code: %d", responseCode));
             }
             //String resultString = responseObject.toString();
         } catch (IOException ex) {
