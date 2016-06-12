@@ -71,7 +71,6 @@ public class DownloadOperation extends RemoteOperation {
             if (!targetFile.exists()) targetFile.createNewFile();
             if (!targetFile.canWrite())
                 throw new IOException("Target file not writable.");
-
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
                     .addNetworkInterceptor(new Interceptor() {
                         @Override
@@ -82,12 +81,14 @@ public class DownloadOperation extends RemoteOperation {
                                             new ProgressResponseBody(
                                                     originalResponse.body(),
                                                     new ProgressResponseBody.ProgressListener() {
+                                                        long lastReadBytes = 0;
+                                                        int lastPercent = 0;
                                                         @Override
                                                         public void update(final long bytesRead, final long contentLength, boolean done) {
                                                             int newPercent = (int) Math.round(((double) bytesRead / (double) contentLength) * 100.0d);
                                                             if (done) {
                                                             } else {
-                                                                if (listenerHandler != null && listener != null) {
+                                                                if (listenerHandler != null && listener != null && (bytesRead - lastReadBytes > 1024 * 1024 || newPercent > lastPercent)) {
                                                                     listenerHandler.post(new Runnable() {
                                                                         @Override
                                                                         public void run() {
@@ -99,6 +100,8 @@ public class DownloadOperation extends RemoteOperation {
                                                                         }
                                                                     });
                                                                 }
+                                                                lastReadBytes = bytesRead;
+                                                                lastPercent = newPercent;
                                                             }
                                                         }
                                                     }
@@ -118,33 +121,11 @@ public class DownloadOperation extends RemoteOperation {
                 sink.writeAll(response.body().source());
                 sink.close();
             } catch (final IOException e) {
-                if (listenerHandler != null && listener != null) {
-                    listenerHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            listener.onRemoteOperationFinish(
-                                    DownloadOperation.this,
-                                    new RemoteOperationResult(e)
-                            );
-                        }
-                    });
-                }
+                return new RemoteOperationResult(e);
             }
-
             // Maybe should call mDownloadListener.onFinished() here.
         } catch (final IOException ex) {
-            // Send error broadcast here to dismiss progress dialog and show error message
-            if (listenerHandler != null && listener != null) {
-                listenerHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onRemoteOperationFinish(
-                                DownloadOperation.this,
-                                new RemoteOperationResult(ex)
-                        );
-                    }
-                });
-            }
+            return new RemoteOperationResult(ex);
         } finally {
             // IOUtils.closeQuietly(downloadStream);
         }

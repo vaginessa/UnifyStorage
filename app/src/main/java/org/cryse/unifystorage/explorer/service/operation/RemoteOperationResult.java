@@ -143,11 +143,14 @@ public class RemoteOperationResult extends Operation.OperationResult implements 
     }
 
     public RemoteOperationResult(Exception e) {
+        mSuccess = false;
         mException = e;
 
         if (e instanceof InterruptedException ) {
             mCode = ResultCode.CANCELLED;
 
+        } else if(e instanceof SSLException) {
+            mCode = ResultCode.SSL_ERROR;
         } else if (e instanceof SocketException) {
             mCode = ResultCode.WRONG_CONNECTION;
 
@@ -202,7 +205,7 @@ public class RemoteOperationResult extends Operation.OperationResult implements 
     }
 
     public boolean isSuccess() {
-        return mSuccess;
+        return mSuccess && !isException();
     }
 
     public boolean isCancelled() {

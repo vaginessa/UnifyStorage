@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -38,11 +39,11 @@ import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
+import org.cryse.unifystorage.explorer.event.CancelTaskEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
 import org.cryse.unifystorage.explorer.event.FrontUIDismissEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
-import org.cryse.unifystorage.explorer.message.BasicMessage;
-import org.cryse.unifystorage.explorer.message.DownloadFileMessage;
+
 import org.cryse.unifystorage.explorer.service.operation.CreateFolderOperation;
 import org.cryse.unifystorage.explorer.service.operation.DeleteOperation;
 import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
@@ -70,7 +71,6 @@ import org.cryse.widget.StateView;
 import org.cryse.widget.recyclerview.Bookends;
 
 import java.io.File;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
@@ -103,7 +103,6 @@ public class FilesFragment extends AbstractFragment implements
     private Bookends<FilesAdapter> mWrapperAdapter;
     private OpenFileUtils mOpenFileUtils;
     private LocalFileWatcher mFileWatcher;
-    private Hashtable<Integer, MaterialDialog> mMaterialDialogs = new Hashtable<>();
 
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
@@ -282,6 +281,7 @@ public class FilesFragment extends AbstractFragment implements
 
     private void setupRecyclerView() {
         mCollectionView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        mCollectionView.getRecyclerView().setItemAnimator(new DefaultItemAnimator());
         mCollectionView.setOnMoreListener(new OnMoreListener() {
             @Override
             public void onMoreAsked(int overallItemsCount, int itemsBeforeMore, int maxLastVisiblePosition) {
@@ -316,6 +316,7 @@ public class FilesFragment extends AbstractFragment implements
         mMoreProgressBar.setLayoutParams(moreProgressLP);
         mMoreProgressBar.setVisibility(View.INVISIBLE);
         mWrapperAdapter.addFooter(mMoreProgressBar);
+        mWrapperAdapter.notifyDataSetChanged();
     }
 
     protected void setupFileWatcher() {
@@ -459,11 +460,6 @@ public class FilesFragment extends AbstractFragment implements
     @Override
     public void onPause() {
         super.onPause();
-        for (MaterialDialog materialDialog : mMaterialDialogs.values()) {
-            if (materialDialog != null && !materialDialog.isCancelled())
-                materialDialog.dismiss();
-        }
-        mMaterialDialogs.clear();
         OperationObserverManager.instance().removeOperationListener(this);
         for (Iterator<Map.Entry<String, MaterialDialog>> iterator = mDialogMaps.entrySet().iterator(); iterator.hasNext(); ) {
             Map.Entry<String, MaterialDialog> entry = iterator.next();
@@ -561,17 +557,6 @@ public class FilesFragment extends AbstractFragment implements
     @Override
     public void openFileByUri(String uriString, boolean useSystemSelector) {
         mOpenFileUtils.openFileByUri(uriString, useSystemSelector);
-    }
-
-    @Override
-    public void showMessage(BasicMessage basicMessage) {
-        switch (basicMessage.getMsgType()) {
-            case BasicMessage.MSG_TYPE:
-                break;
-            case DownloadFileMessage.MSG_TYPE:
-                //showDownloadDialog((DownloadFileMessage) basicMessage);
-                break;
-        }
     }
 /*
     private void showDownloadDialog(DownloadFileMessage message) {
@@ -874,46 +859,43 @@ public class FilesFragment extends AbstractFragment implements
                     dialog.dismiss();
                 mDialogMaps.remove(token);
             } else {
-                MaterialDialog dialog = null;
-                if (caller instanceof DeleteOperation) {
-                    dialog = new MaterialDialog.Builder(getContext())
-                            .title(R.string.dialog_title_deleting_file)
-                            .content(R.string.dialog_content_opening)
-                            .progress(false, 100, false)
-                            .dismissListener(new DialogInterface.OnDismissListener() {
-                                @Override
-                                public void onDismiss(DialogInterface dialog) {
-                                    RxEventBus.getInstance().sendEvent(new FrontUIDismissEvent(token));
-                                }
-                            })
-                            .show();
-                } else if (caller instanceof CreateFolderOperation) {
-                    dialog = new MaterialDialog.Builder(getContext())
-                            .title(R.string.dialog_title_create_new_directory)
-                            .content(R.string.dialog_content_opening)
-                            .progress(true, 100, false)
-                            .dismissListener(new DialogInterface.OnDismissListener() {
-                                @Override
-                                public void onDismiss(DialogInterface dialog) {
-                                    RxEventBus.getInstance().sendEvent(new FrontUIDismissEvent(token));
-                                }
-                            })
-                            .show();
-                } else if (caller instanceof DownloadOperation) {
-                    dialog = new MaterialDialog.Builder(getContext())
-                            .title(R.string.dialog_title_opening_file)
-                            .content(R.string.dialog_content_opening)
-                            .progress(false, 100, false)
-                            .dismissListener(new DialogInterface.OnDismissListener() {
-                                @Override
-                                public void onDismiss(DialogInterface dialog) {
-                                    RxEventBus.getInstance().sendEvent(new FrontUIDismissEvent(token));
-                                }
-                            })
-                            .show();
-                } else {
-
+                String title = getString(R.string.dialog_title_running);
+                String content = getString(R.string.dialog_content_please_wait);
+                long current = 0;
+                long total = 0;
+                boolean indeterminate = false;
+                switch (caller.getOperationName()) {
+                    case CreateFolderOperation.OP_NAME:
+                        title = getString(R.string.dialog_title_creating_directory);
+                        content = getString(R.string.dialog_content_please_wait);
+                        indeterminate = true;
+                        break;
+                    case DeleteOperation.OP_NAME:
+                        title = getString(R.string.dialog_title_deleting_file);
+                        content = getString(R.string.dialog_content_please_wait);
+                        break;
+                    case DownloadOperation.OP_NAME:
+                        title = getString(R.string.dialog_title_downloading_file);
+                        content = getString(R.string.dialog_content_please_wait);
+                        break;
                 }
+                MaterialDialog dialog = new MaterialDialog.Builder(getContext())
+                        .title(title)
+                        .content(content)
+                        .progress(indeterminate, 100, false)
+                        .dismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                RxEventBus.getInstance().sendEvent(new FrontUIDismissEvent(token));
+                            }
+                        })
+                        .cancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                RxEventBus.getInstance().sendEvent(new CancelTaskEvent(token));
+                            }
+                        })
+                        .show();
                 if (dialog != null) {
                     mDialogMaps.put(token, dialog);
                 }
@@ -972,15 +954,27 @@ public class FilesFragment extends AbstractFragment implements
                 if (dialog != null && !dialog.isCancelled()) {
                     int lastPercent = dialog.getCurrentProgress();
                     int newPercent = (int) Math.round(((double) current / (double) total) * 100.0d);
-                    if(caller instanceof DownloadOperation) {
-                        String content = String.format(Locale.getDefault(), "%s / %s", FileSizeUtils.humanReadableByteCount(current, false), FileSizeUtils.humanReadableByteCount(total, false));
-                        dialog.setContent(content);
-                    } else {
-                        if (lastPercent < newPercent) {
-                            dialog.incrementProgress(newPercent - lastPercent);
-                        }
-                    }
 
+                    String content = dialog.getContentView() == null ? "" : dialog.getContentView().getText().toString();
+                    switch (caller.getOperationName()) {
+                        case CreateFolderOperation.OP_NAME:
+                            break;
+                        case DeleteOperation.OP_NAME:
+                            content = getString(R.string.dialog_content_delete_file_progress, current, total);
+                            break;
+                        case DownloadOperation.OP_NAME:
+                            content = String.format(
+                                    Locale.getDefault(),
+                                    "%s / %s",
+                                    FileSizeUtils.humanReadableByteCount(current, false),
+                                    FileSizeUtils.humanReadableByteCount(total, false)
+                            );
+                            break;
+                    }
+                    dialog.setContent(content);
+                    if (lastPercent < newPercent) {
+                        dialog.incrementProgress(newPercent - lastPercent);
+                    }
                 }
             }
         }

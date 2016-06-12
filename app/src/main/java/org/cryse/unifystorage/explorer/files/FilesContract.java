@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.base.BasePresenter;
 import org.cryse.unifystorage.explorer.base.BaseView;
-import org.cryse.unifystorage.explorer.message.BasicMessage;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
 import org.cryse.unifystorage.utils.DirectoryInfo;
@@ -32,8 +31,6 @@ public interface FilesContract {
         void openFileByPath(String filePath, boolean useSystemSelector);
 
         void openFileByUri(String uriString, boolean useSystemSelector);
-
-        void showMessage(BasicMessage basicMessage);
     }
 
     interface Presenter extends BasePresenter {

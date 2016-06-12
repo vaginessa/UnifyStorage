@@ -9,6 +9,22 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A RecyclerView.Adapter that allows for headers and footers as well.
+ *
+ * This class wraps a base adapter that's passed into the constructor. It works by creating extra view items types
+ * that are returned in {@link #getItemViewType(int)}, and mapping these to the header and footer views provided via
+ * {@link #addHeader(android.view.View)} and {@link #addFooter(android.view.View)}.
+ *
+ * There are two restrictions when using this class:
+ *
+ * 1) The base adapter can't use negative view types, since this class uses negative view types to keep track
+ *    of header and footer views.
+ *
+ * 2) You can't add more than 1000 headers or footers.
+ *
+ * Created by mlapadula on 12/15/14.
+ */
 public class Bookends<T extends RecyclerView.Adapter> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final T mBase;

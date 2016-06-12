@@ -27,17 +27,23 @@
     <string name="tag_directory">Directory</string>
 
     <string name="dialog_title_error">Error</string>
+    <string name="dialog_title_running">Running…</string>
+    <string name="dialog_title_deleting_file">Deleting</string>
     <string name="dialog_title_add_storage_provider">Add Storage Provider</string>
     <string name="dialog_title_permission_storage">Unify Storage needs Storage permission to access your device storage.</string>
     <string name="dialog_title_open_as_type">Open As</string>
-    <string name="dialog_title_opening_file">Opening file</string>
+    <string name="dialog_title_opening_file">Opening</string>
+    <string name="dialog_title_downloading_file">Downloading</string>
+    <string name="dialog_title_creating_directory">Creating</string>
     <string name="dialog_title_create_new_directory">Create a directory</string>
+    <string name="dialog_content_please_wait">Please wait for a while…</string>
     <string name="dialog_content_create_new_directory">Please enter the new folder name</string>
     <string name="dialog_content_error_dropbox_signin">Fail to sign in to Dropbox.</string>
     <string name="dialog_content_opening">Connecting…</string>
     <string name="dialog_content_error_open_file">Fail to open file.</string>
     <string name="dialog_content_error_download_file">Fail to download file.</string>
-    <string name="dialog_title_deleting_file">Deleting files</string>
+    <string name="dialog_content_download_file_progress">%1$s / %2$s</string>
+    <string name="dialog_content_delete_file_progress">%1$d / %2$d\n</string>
 
     <string name="fab_lable_create_file">Create New File</string>
     <string name="fab_lable_create_directory">Create New Directory</string>
