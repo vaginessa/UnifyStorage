@@ -19,6 +19,7 @@ import org.cryse.unifystorage.explorer.event.EventConst;
 import org.cryse.unifystorage.explorer.event.FrontUIDismissEvent;
 import org.cryse.unifystorage.explorer.event.NewTaskEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
+import org.cryse.unifystorage.explorer.event.ShowProgressEvent;
 import org.cryse.unifystorage.explorer.service.operation.CreateFolderOperation;
 import org.cryse.unifystorage.explorer.service.operation.DeleteOperation;
 import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
@@ -26,7 +27,6 @@ import org.cryse.unifystorage.explorer.service.operation.OnRemoteOperationListen
 import org.cryse.unifystorage.explorer.service.operation.Operation;
 import org.cryse.unifystorage.explorer.service.operation.OperationObserverManager;
 import org.cryse.unifystorage.explorer.service.operation.OperationStatus;
-import org.cryse.unifystorage.explorer.service.operation.RemoteOperation;
 import org.cryse.unifystorage.explorer.service.operation.RemoteOperationResult;
 import org.cryse.unifystorage.explorer.service.task.RemoteTask;
 import org.cryse.unifystorage.explorer.service.task.Task;
@@ -91,11 +91,14 @@ public class OperationService extends Service {
 
             Log.d(LOG_TAG, String.format("onStartCommand: %s", intent.getStringExtra("type")));
             if("notification_action".compareTo(intent.getStringExtra("type")) == 0) {
-                String actionName = intent.getStringExtra("action_name");
+                String actionName = intent.getAction();
                 String token = intent.getStringExtra("token");
                 switch (actionName) {
                     case "cancel_task":
                         cancelOperation(token);
+                        break;
+                    case "show_progress_dialog":
+                        showProgressDialog(token);
                         break;
                 }
             }
@@ -158,17 +161,43 @@ public class OperationService extends Service {
         }
     }
 
+    public void showProgressDialog(String token) {
+        OperationStatus status = mOperationStatusMap.get(token);
+        if(status != null) {
+            RxEventBus.instance().sendEvent(new ShowProgressEvent(status.getOperation()));
+        }
+    }
+
     public void showNotificationForOperation(OperationStatus status) {
         NotificationCompat.Builder notificationBuilder = status.getNotificationBuilder();
         if(notificationBuilder == null) {
             notificationBuilder = new NotificationCompat.Builder(OperationService.this);
+
+            Intent clickIntent = new Intent(this, OperationService.class);
+            clickIntent.setAction("show_progress_dialog");
+            clickIntent.putExtra("type", "notification_action");
+            clickIntent.putExtra("token", status.getToken());
+            PendingIntent clickPendingIntent =
+                    PendingIntent.getService(this, 0, clickIntent, 0);
+
             Intent cancelIntent = new Intent(this, OperationService.class);
-            cancelIntent.putExtra("token", status.getToken());
-            cancelIntent.putExtra("action_name", "cancel_task");
+            cancelIntent.setAction("cancel_task");
             cancelIntent.putExtra("type", "notification_action");
-            PendingIntent cancelPendingIntent = PendingIntent.getService(this, 0, cancelIntent, 0);
+            cancelIntent.putExtra("token", status.getToken());
+            PendingIntent cancelPendingIntent = PendingIntent.getService(this, 1, cancelIntent, 0);
+
+            Intent cancel2Intent = new Intent(this, OperationService.class);
+            cancel2Intent.setAction("asdf");
+            cancel2Intent.putExtra("type", "notification_action");
+            cancel2Intent.putExtra("token", status.getToken());
+            PendingIntent cancel2PendingIntent = PendingIntent.getService(this, 2, cancel2Intent, 0);
+
+
             status.setNotificationBuilder(notificationBuilder);
-            notificationBuilder.addAction(R.drawable.ic_action_cancel, getString(R.string.dialog_button_cancel), cancelPendingIntent);
+            notificationBuilder
+                    .setContentIntent(clickPendingIntent)
+                    .addAction(R.drawable.ic_action_cancel, getString(R.string.dialog_button_cancel), cancelPendingIntent)
+                    .addAction(R.drawable.ic_action_archive, getString(R.string.dialog_title_running), cancel2PendingIntent);
         }
 
         Operation operation = status.getOperation();
@@ -200,7 +229,8 @@ public class OperationService extends Service {
 
         notificationBuilder.setContentTitle(title)
                 .setContentText(content)
-                .setSmallIcon(iconResId)
+                .setSmallIcon(iconResId).setStyle(new NotificationCompat.BigTextStyle()
+                .bigText(content))
                 .setProgress(100, newPercent, indeterminate)
                 .setOngoing(true);
 
@@ -218,18 +248,18 @@ public class OperationService extends Service {
 
     private OnRemoteOperationListener mOnRemoteOperationListener = new OnRemoteOperationListener() {
         @Override
-        public void onRemoteOperationStart(RemoteOperation caller) {
-            String token = caller.getOperationToken();
+        public void onRemoteOperationStart(Operation operation) {
+            String token = operation.getOperationToken();
             OperationStatus status = mOperationStatusMap.get(token);
             if(status != null && status.shouldShowNotification()) {
                 showNotificationForOperation(status);
             }
-            OperationObserverManager.instance().onRemoteOperationStart(caller);
+            OperationObserverManager.instance().onRemoteOperationStart(operation);
         }
 
         @Override
-        public void onRemoteOperationFinish(RemoteOperation caller, RemoteOperationResult result) {
-            String token = caller.getOperationToken();
+        public void onRemoteOperationFinish(Operation operation, RemoteOperationResult result) {
+            String token = operation.getOperationToken();
             if(mOperationStatusMap.containsKey(token)) {
                 OperationStatus status = mOperationStatusMap.get(token);
                 status.cancel();
@@ -237,13 +267,13 @@ public class OperationService extends Service {
                     cancelNotificationForOperation(status);
                 mOperationStatusMap.remove(token);
             }
-            OperationObserverManager.instance().onRemoteOperationFinish(caller, result);
+            OperationObserverManager.instance().onRemoteOperationFinish(operation, result);
         }
 
         @Override
-        public void onRemoteOperationProgress(RemoteOperation caller, long current, long total) {
-            String token = caller.getOperationToken();
-            OperationObserverManager.instance().onRemoteOperationProgress(caller, current, total);
+        public void onRemoteOperationProgress(Operation operation, long current, long total) {
+            String token = operation.getOperationToken();
+            OperationObserverManager.instance().onRemoteOperationProgress(operation, current, total);
             OperationStatus status = mOperationStatusMap.get(token);
             if(status != null) {
                 status.setProgress(current, total);

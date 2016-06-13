@@ -48,33 +48,33 @@ public class OperationObserverManager implements OnRemoteOperationListener {
     }
 
     @Override
-    public void onRemoteOperationStart(RemoteOperation caller) {
+    public void onRemoteOperationStart(Operation operation) {
         synchronized (mOperationListeners) {
             for (OnRemoteOperationListener listener : mOperationListeners) {
                 if (listener != null) {
-                    listener.onRemoteOperationStart(caller);
+                    listener.onRemoteOperationStart(operation);
                 }
             }
         }
     }
 
     @Override
-    public void onRemoteOperationFinish(RemoteOperation caller, RemoteOperationResult result) {
+    public void onRemoteOperationFinish(Operation operation, RemoteOperationResult result) {
         synchronized (mOperationListeners) {
             for (OnRemoteOperationListener listener : mOperationListeners) {
                 if (listener != null) {
-                    listener.onRemoteOperationFinish(caller, result);
+                    listener.onRemoteOperationFinish(operation, result);
                 }
             }
         }
     }
 
     @Override
-    public void onRemoteOperationProgress(RemoteOperation caller, long current, long total) {
+    public void onRemoteOperationProgress(Operation operation, long current, long total) {
         synchronized (mOperationListeners) {
             for (OnRemoteOperationListener listener : mOperationListeners) {
                 if (listener != null) {
-                    listener.onRemoteOperationProgress(caller, current, total);
+                    listener.onRemoteOperationProgress(operation, current, total);
                 }
             }
         }

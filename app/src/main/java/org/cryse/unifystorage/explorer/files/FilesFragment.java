@@ -46,10 +46,12 @@ import org.cryse.unifystorage.explorer.event.EventConst;
 import org.cryse.unifystorage.explorer.event.FrontUIDismissEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
 
+import org.cryse.unifystorage.explorer.event.ShowProgressEvent;
 import org.cryse.unifystorage.explorer.service.operation.CreateFolderOperation;
 import org.cryse.unifystorage.explorer.service.operation.DeleteOperation;
 import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
 import org.cryse.unifystorage.explorer.service.operation.OnRemoteOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.Operation;
 import org.cryse.unifystorage.explorer.service.operation.OperationObserverManager;
 import org.cryse.unifystorage.explorer.service.operation.RemoteOperation;
 import org.cryse.unifystorage.explorer.service.operation.RemoteOperationResult;
@@ -721,6 +723,8 @@ public class FilesFragment extends AbstractFragment implements
                 mFabMenu.setVisibility(View.VISIBLE);
                 mFabPaste.setVisibility(View.GONE);
                 break;
+            case EventConst.EVENT_ID_SHOW_PROGRESS:
+                onRemoteOperationStart(((ShowProgressEvent)event).getOperation());
         }
     }
 
@@ -731,9 +735,11 @@ public class FilesFragment extends AbstractFragment implements
     private ConcurrentHashMap<String, MaterialDialog> mDialogMaps = new ConcurrentHashMap<>();
 
     @Override
-    public void onRemoteOperationStart(RemoteOperation caller) {
-        if (isCurrentStorageProvider(caller.getOperationContext().getStorageProviderId())) {
-            final String token = caller.getOperationToken();
+    public void onRemoteOperationStart(Operation operation) {
+        if(operation instanceof RemoteOperation) {
+            RemoteOperation remoteOperation = (RemoteOperation)operation;
+            if (isCurrentStorageProvider(remoteOperation.getOperationContext().getStorageProviderId())) {
+            final String token = remoteOperation.getOperationToken();
             // Toast.makeText(getActivity(), String.format("%s onStart.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
             if (mDialogMaps.containsKey(token)) {
                 MaterialDialog dialog = mDialogMaps.get(token);
@@ -746,7 +752,7 @@ public class FilesFragment extends AbstractFragment implements
                 long current = 0;
                 long total = 0;
                 boolean indeterminate = false;
-                switch (caller.getOperationName()) {
+                switch (remoteOperation.getOperationName()) {
                     case CreateFolderOperation.OP_NAME:
                         title = getString(R.string.dialog_title_creating_directory);
                         content = getString(R.string.dialog_content_please_wait);
@@ -769,6 +775,7 @@ public class FilesFragment extends AbstractFragment implements
                             @Override
                             public void onDismiss(DialogInterface dialog) {
                                 RxEventBus.instance().sendEvent(new FrontUIDismissEvent(token));
+                                mDialogMaps.remove(token);
                             }
                         })
                         .negativeText(R.string.dialog_button_cancel)
@@ -783,55 +790,60 @@ public class FilesFragment extends AbstractFragment implements
                     mDialogMaps.put(token, dialog);
                 }
             }
-        }
+        }}
     }
 
     @Override
-    public void onRemoteOperationFinish(RemoteOperation caller, RemoteOperationResult result) {
-        if (isCurrentStorageProvider(caller.getOperationContext().getStorageProviderId())) {
-            // Toast.makeText(getActivity(), String.format("%s onFinish.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
-            String token = caller.getOperationToken();
-            if (mDialogMaps.containsKey(token)) {
-                final MaterialDialog dialog = mDialogMaps.get(token);
-                if (dialog != null && !dialog.isCancelled()) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            dialog.dismiss();
-                        }
-                    });
-                }
-                mDialogMaps.remove(token);
-            }
-            if (!result.isSuccess()) {
-                new MaterialDialog.Builder(getActivity())
-                        .title(R.string.dialog_title_error)
-                        .content(result.getLogMessage())
-                        .show();
-            } else {
-                if (caller.shouldRefresh()) {
-                    if (mPresenter.getDirectory() != null) {
-                        mPresenter.getDirectory().clear();
+    public void onRemoteOperationFinish(Operation operation, RemoteOperationResult result) {
+        if(operation instanceof RemoteOperation) {
+            RemoteOperation remoteOperation = (RemoteOperation)operation;
+            if (isCurrentStorageProvider(remoteOperation.getOperationContext().getStorageProviderId())) {
+                // Toast.makeText(getActivity(), String.format("%s onFinish.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
+                String token = remoteOperation.getOperationToken();
+                if (mDialogMaps.containsKey(token)) {
+                    final MaterialDialog dialog = mDialogMaps.get(token);
+                    if (dialog != null && !dialog.isCancelled()) {
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                dialog.dismiss();
+                            }
+                        });
                     }
-                    mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
+                    mDialogMaps.remove(token);
                 }
-                if (caller instanceof DownloadOperation) {
-                    String localPath = ((DownloadOperation) caller).getSavePath();
-                    Uri fileUri = FileProvider.getUriForFile(
-                            getActivity(),
-                            getActivity().getString(R.string.authority_file_provider),
-                            new File(localPath));
-                    openFileByUri(fileUri.toString(), true);
+                if (!result.isSuccess()) {
+                    new MaterialDialog.Builder(getActivity())
+                            .title(R.string.dialog_title_error)
+                            .content(result.getLogMessage())
+                            .show();
+                } else {
+                    if (remoteOperation.shouldRefresh()) {
+                        if (mPresenter.getDirectory() != null) {
+                            mPresenter.getDirectory().clear();
+                        }
+                        mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
+                    }
+                    if (remoteOperation instanceof DownloadOperation) {
+                        String localPath = ((DownloadOperation) remoteOperation).getSavePath();
+                        Uri fileUri = FileProvider.getUriForFile(
+                                getActivity(),
+                                getActivity().getString(R.string.authority_file_provider),
+                                new File(localPath));
+                        openFileByUri(fileUri.toString(), true);
+                    }
                 }
             }
         }
     }
 
     @Override
-    public void onRemoteOperationProgress(RemoteOperation caller, final long current, final long total) {
-        if (isCurrentStorageProvider(caller.getOperationContext().getStorageProviderId())) {
+    public void onRemoteOperationProgress(Operation operation, final long current, final long total) {
+        if(operation instanceof RemoteOperation) {
+            RemoteOperation remoteOperation = (RemoteOperation)operation;
+            if (isCurrentStorageProvider(remoteOperation.getOperationContext().getStorageProviderId())) {
             // Toast.makeText(getActivity(), String.format("%s onProgress.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
-            final String token = caller.getOperationToken();
+            final String token = remoteOperation.getOperationToken();
             if (mDialogMaps.containsKey(token)) {
                 final MaterialDialog dialog = mDialogMaps.get(token);
                 if (dialog != null && !dialog.isCancelled()) {
@@ -839,7 +851,7 @@ public class FilesFragment extends AbstractFragment implements
                     int newPercent = (int) Math.round(((double) current / (double) total) * 100.0d);
 
                     String content = dialog.getContentView() == null ? "" : dialog.getContentView().getText().toString();
-                    switch (caller.getOperationName()) {
+                    switch (remoteOperation.getOperationName()) {
                         case CreateFolderOperation.OP_NAME:
                             break;
                         case DeleteOperation.OP_NAME:
@@ -860,6 +872,6 @@ public class FilesFragment extends AbstractFragment implements
                     }
                 }
             }
-        }
+        }}
     }
 }
