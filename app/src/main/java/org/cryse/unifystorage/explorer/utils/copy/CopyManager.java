@@ -35,11 +35,11 @@ public class CopyManager {
 
     public void setCopyTask(CopyTask copyTask) {
         this.mCurrentCopyTask = copyTask;
-        RxEventBus.getInstance().sendEvent(new SelectCopyEvent());
+        RxEventBus.instance().sendEvent(new SelectCopyEvent());
     }
 
     public void cancelCopyTask() {
         this.mCurrentCopyTask = null;
-        RxEventBus.getInstance().sendEvent(new CancelSelectCopyEvent());
+        RxEventBus.instance().sendEvent(new CancelSelectCopyEvent());
     }
 }

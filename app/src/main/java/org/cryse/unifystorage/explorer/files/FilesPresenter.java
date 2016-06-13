@@ -64,7 +64,7 @@ public class FilesPresenter implements FilesContract.Presenter {
         this.mFilesView = filesView;
         this.mRxStorageProvider = new RxStorageProvider(storageProvider);
         this.mStorageProviderInfo = new StorageProviderInfo(storageProviderRecordId, credential, extras);
-        this.mStorageProviderRecord = StorageProviderManager.getInstance().loadStorageProviderRecord(storageProviderRecordId);
+        this.mStorageProviderRecord = StorageProviderManager.instance().loadStorageProviderRecord(storageProviderRecordId);
         this.mThreadExecutor = threadExecutor;
         this.mPostExecutionThread = postExecutionThread;
         this.mFileCacheRepository = fileCacheRepository;
@@ -77,7 +77,7 @@ public class FilesPresenter implements FilesContract.Presenter {
             @Override
             public void onTokenRefresh(Credential refreshedCredential) {
                 mStorageProviderRecord.setCredentialData(refreshedCredential.persist());
-                StorageProviderManager.getInstance().updateStorageProviderRecord(mStorageProviderRecord, true);
+                StorageProviderManager.instance().updateStorageProviderRecord(mStorageProviderRecord, true);
 
                 FilesPresenter.this.mStorageProviderInfo.setCredential(refreshedCredential);
             }
@@ -206,7 +206,7 @@ public class FilesPresenter implements FilesContract.Presenter {
 
     @Override
     public void createFolder(RemoteFile parent, String name) {
-        RxEventBus.getInstance().sendEvent(
+        RxEventBus.instance().sendEvent(
                 new NewTaskEvent(
                         new CreateFolderTask(
                                 mStorageProviderInfo,
@@ -218,7 +218,7 @@ public class FilesPresenter implements FilesContract.Presenter {
     }
 
     public void deleteFiles(RemoteFile[] files) {
-        RxEventBus.getInstance().sendEvent(
+        RxEventBus.instance().sendEvent(
                 new NewTaskEvent(
                         new DeleteTask(
                                 mStorageProviderInfo,
@@ -272,7 +272,7 @@ public class FilesPresenter implements FilesContract.Presenter {
                 file
         );
 
-        RxEventBus.getInstance().sendEvent(
+        RxEventBus.instance().sendEvent(
                 new NewTaskEvent(
                         new DownloadTask(
                                 mStorageProviderInfo,

@@ -46,13 +46,13 @@ public class StorageProviderManager {
         }
     }
 
-    public static StorageProviderManager getInstance() {
+    public static StorageProviderManager instance() {
         return instance;
     }
 
     protected StorageProviderManager(Context context) {
         mHandler = new Handler(context.getMainLooper());
-        mUnifyStorageDatabase = UnifyStorageDatabase.getInstance();
+        mUnifyStorageDatabase = UnifyStorageDatabase.instance();
         mLoggingInterceptor = new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY);
         mOkHttpClient = new OkHttpClient.Builder()
                 .addInterceptor(mLoggingInterceptor)

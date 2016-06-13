@@ -286,7 +286,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .fileCacheRepository(new AndroidFileCacheRepository(this))
                 .extras(new String[] {Environment.getExternalStorageDirectory().getAbsolutePath()})
                 .storageProvider(StorageProviderManager
-                        .getInstance()
+                        .instance()
                         .createStorageProvider(
                                 this,
                                 DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE,
@@ -308,7 +308,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .fileCacheRepository(new AndroidFileCacheRepository(this))
                 .extras(new String[] {path})
                 .storageProvider(StorageProviderManager
-                        .getInstance()
+                        .instance()
                         .createStorageProvider(
                                 this,
                                 storageProviderRecordId,
@@ -330,7 +330,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .fileCacheRepository(new AndroidFileCacheRepository(this))
                 .extras(new String[] {DataContract.CONST_ONEDRIVE_CLIENT_ID})
                 .storageProvider(StorageProviderManager
-                        .getInstance()
+                        .instance()
                         .createStorageProvider(
                                 this,
                                 storageProviderRecordId,
@@ -352,7 +352,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 .fileCacheRepository(new AndroidFileCacheRepository(this))
                 .extras(new String[] {DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER})
                 .storageProvider(StorageProviderManager
-                        .getInstance()
+                        .instance()
                         .createStorageProvider(
                                 this,
                                 storageProviderRecordId,

@@ -38,7 +38,7 @@ import rx.functions.Action1;
 
 public class OperationService extends Service {
     private ConcurrentHashMap<String, OperationStatus> mOperationStatusMap;
-    RxEventBus mEventBus = RxEventBus.getInstance();
+    RxEventBus mEventBus = RxEventBus.instance();
     Subscription mEventSubscription;
     Handler mOperationListenerHandler;
     NotificationManager mNotifyManager;

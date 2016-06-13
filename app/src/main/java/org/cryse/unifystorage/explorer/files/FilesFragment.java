@@ -886,13 +886,13 @@ public class FilesFragment extends AbstractFragment implements
                         .dismissListener(new DialogInterface.OnDismissListener() {
                             @Override
                             public void onDismiss(DialogInterface dialog) {
-                                RxEventBus.getInstance().sendEvent(new FrontUIDismissEvent(token));
+                                RxEventBus.instance().sendEvent(new FrontUIDismissEvent(token));
                             }
                         })
                         .cancelListener(new DialogInterface.OnCancelListener() {
                             @Override
                             public void onCancel(DialogInterface dialog) {
-                                RxEventBus.getInstance().sendEvent(new CancelTaskEvent(token));
+                                RxEventBus.instance().sendEvent(new CancelTaskEvent(token));
                             }
                         })
                         .show();

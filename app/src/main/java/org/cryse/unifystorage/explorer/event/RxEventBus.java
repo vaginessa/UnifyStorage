@@ -10,7 +10,7 @@ public enum RxEventBus {
 
     private final Subject<AbstractEvent, AbstractEvent> mInstance = new SerializedSubject<AbstractEvent, AbstractEvent>(PublishSubject.<AbstractEvent>create());
 
-    public static RxEventBus getInstance() {
+    public static RxEventBus instance() {
         return INSTANCE;
     }
 

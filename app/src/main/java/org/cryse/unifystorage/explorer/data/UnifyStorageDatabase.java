@@ -33,7 +33,7 @@ public class UnifyStorageDatabase {
         }
     }
 
-    public static UnifyStorageDatabase getInstance() {
+    public static UnifyStorageDatabase instance() {
         return instance;
     }
 

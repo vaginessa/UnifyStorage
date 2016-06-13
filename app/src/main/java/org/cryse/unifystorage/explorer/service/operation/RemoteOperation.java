@@ -79,7 +79,7 @@ public abstract class RemoteOperation extends Operation<RemoteOperation.RemoteOp
 
         public RemoteOperationContext(Context context, StorageProviderInfo providerInfo) {
             mStorageProviderInfo = providerInfo;
-            mStorageProvider = StorageProviderManager.getInstance().createStorageProvider(
+            mStorageProvider = StorageProviderManager.instance().createStorageProvider(
                     context,
                     providerInfo
             );

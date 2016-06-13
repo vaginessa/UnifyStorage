@@ -17,7 +17,7 @@ import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 public abstract class AbstractFragment extends Fragment {
-    protected RxEventBus mEventBus = RxEventBus.getInstance();
+    protected RxEventBus mEventBus = RxEventBus.instance();
     private Subscription mEventBusSubscription;
     protected int mPrimaryColor;
     protected int mToolbarContentColor;

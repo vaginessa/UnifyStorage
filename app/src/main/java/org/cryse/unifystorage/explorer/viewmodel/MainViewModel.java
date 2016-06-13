@@ -25,7 +25,7 @@ public class MainViewModel implements ViewModel {
     public MainViewModel(DataListener mDataListener, Context mContext) {
         this.mDataListener = mDataListener;
         this.mContext = mContext;
-        this.mUnifyStorageDatabase = UnifyStorageDatabase.getInstance();
+        this.mUnifyStorageDatabase = UnifyStorageDatabase.instance();
     }
 
     @Override
@@ -39,7 +39,7 @@ public class MainViewModel implements ViewModel {
 
     private void buildDrawerItems() {
         List<IDrawerItem> drawerItems = new ArrayList<>();
-        List<StorageProviderRecord> storageProviderRecords = StorageProviderManager.getInstance().loadStorageProviderRecordsWithLocal(mContext);
+        List<StorageProviderRecord> storageProviderRecords = StorageProviderManager.instance().loadStorageProviderRecordsWithLocal(mContext);
         for(StorageProviderRecord record : storageProviderRecords) {
             PrimaryDrawerItem item = new PrimaryDrawerItem();
             item.withName(record.getDisplayName()).withSelectable(true).withIdentifier(record.getId());
@@ -99,7 +99,7 @@ public class MainViewModel implements ViewModel {
     }
 
     public void addNewProvider(String displayName, String userName, int providerType, String credentialData, String extraData) {
-        StorageProviderManager.getInstance().addStorageProviderRecord(displayName, userName, providerType, credentialData, extraData);
+        StorageProviderManager.instance().addStorageProviderRecord(displayName, userName, providerType, credentialData, extraData);
     }
 
     public interface DataListener {
