@@ -7,6 +7,8 @@ public interface BasePresenter {
 
     void start();
 
+    void destroy();
+
     abstract class Builder<P extends BasePresenter, V extends BaseView<P>> {
         protected ThreadExecutor threadExecutor;
         protected PostExecutionThread postExecutionThread;

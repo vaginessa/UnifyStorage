@@ -368,6 +368,11 @@ public class FilesPresenter implements FilesContract.Presenter {
         loadFiles(null, false);
     }
 
+    @Override
+    public void destroy() {
+
+    }
+
     public static class Builder extends BasePresenter.Builder<FilesContract.Presenter, FilesContract.View> {
         private int providerId;
         private Credential credential;

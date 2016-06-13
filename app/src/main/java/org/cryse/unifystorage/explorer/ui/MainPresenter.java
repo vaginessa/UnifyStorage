@@ -1,4 +1,4 @@
-package org.cryse.unifystorage.explorer.viewmodel;
+package org.cryse.unifystorage.explorer.ui;
 
 import android.content.Context;
 
@@ -8,33 +8,27 @@ import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
-import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainViewModel implements ViewModel {
-    private IDrawerItem[] mDrawerItems;
+public class MainPresenter implements MainContract.Presenter {
     private Context mContext;
-    private DataListener mDataListener;
-    private UnifyStorageDatabase mUnifyStorageDatabase;
-    private int mCurrentSelectionIdentifier;
+    private MainContract.View mView;
+    private IDrawerItem[] mDrawerItems;
 
-    public MainViewModel(DataListener mDataListener, Context mContext) {
-        this.mDataListener = mDataListener;
-        this.mContext = mContext;
-        this.mUnifyStorageDatabase = UnifyStorageDatabase.instance();
+    public MainPresenter(Context context, MainContract.View view) {
+        mContext = context;
+        mView = view;
     }
 
     @Override
-    public void destroy() {
-    }
-
     public void updateDrawerItems(int currentSelectionIdentifier) {
         buildDrawerItems();
-        mDataListener.onDrawerItemsChanged(mDrawerItems, currentSelectionIdentifier);
+        if(mView != null)
+            mView.onDrawerItemsChanged(mDrawerItems, currentSelectionIdentifier);
     }
 
     private void buildDrawerItems() {
@@ -70,7 +64,7 @@ public class MainViewModel implements ViewModel {
                     break;
                 default:
                     item.withTag(record)
-                        .withIcon(R.drawable.ic_drawer_cloud);
+                            .withIcon(R.drawable.ic_drawer_cloud);
             }
             drawerItems.add(item);
         }
@@ -93,17 +87,24 @@ public class MainViewModel implements ViewModel {
         mDrawerItems = drawerItems.toArray(new IDrawerItem[drawerItems.size()]);
     }
 
+    @Override
     public void onNavigationSelected(IDrawerItem drawerItem) {
-        if(mDataListener != null)
-            mDataListener.onNavigateTo(drawerItem);
+        if(mView != null)
+            mView.onNavigateTo(drawerItem);
     }
 
+    @Override
     public void addNewProvider(String displayName, String userName, int providerType, String credentialData, String extraData) {
         StorageProviderManager.instance().addStorageProviderRecord(displayName, userName, providerType, credentialData, extraData);
     }
 
-    public interface DataListener {
-        void onDrawerItemsChanged(IDrawerItem[] drawerItems, int selectionIdentifier);
-        void onNavigateTo(IDrawerItem drawerItem);
+    @Override
+    public void start() {
+
+    }
+
+    @Override
+    public void destroy() {
+
     }
 }

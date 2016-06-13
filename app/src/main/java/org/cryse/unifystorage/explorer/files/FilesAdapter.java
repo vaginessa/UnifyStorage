@@ -71,21 +71,6 @@ public class FilesAdapter extends SelectableRecyclerViewAdapter<
                 return false;
             }
         });
-
-        /*ItemFileBinding fileBinding = holder.binding;
-        ItemRemoteFileViewModel viewModel = fileBinding.getViewModel();
-        if (viewModel == null) {
-            viewModel = new ItemRemoteFileViewModel(mContext, position, getItems().get(position));
-            viewModel.setOnFileClickListener(this.mOnFileClickListener);
-            fileBinding.setViewModel(viewModel);
-        } else {
-            viewModel.setAdapterPosition(position);
-            viewModel.setRemoteFile(getItem(position));
-        }
-        fileBinding.setItemSelected(isSelected(position));
-        fileBinding.getViewModel().notifyChange();
-        fileBinding.executePendingBindings();*/
-        // ATE.apply(fileBinding.itemFileRootContainer,mATEKey);
     }
 
     public String getDetail(RemoteFile file) {

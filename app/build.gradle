@@ -13,10 +13,6 @@ android {
         versionName appVersionName
     }
 
-    dataBinding {
-        enabled = true
-    }
-
     signingConfigs {
         debug {}
         release {}

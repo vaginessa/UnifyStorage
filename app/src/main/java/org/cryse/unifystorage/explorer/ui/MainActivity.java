@@ -6,7 +6,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -30,7 +29,6 @@ import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.AppPermissions;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
-import org.cryse.unifystorage.explorer.databinding.ActivityMainBinding;
 import org.cryse.unifystorage.explorer.executor.JobExecutor;
 import org.cryse.unifystorage.explorer.executor.UIThread;
 import org.cryse.unifystorage.explorer.files.FilesFragment;
@@ -40,7 +38,6 @@ import org.cryse.unifystorage.explorer.service.OperationService;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.explorer.utils.cache.AndroidFileCacheRepository;
-import org.cryse.unifystorage.explorer.viewmodel.MainViewModel;
 import org.cryse.unifystorage.providers.dropbox.DropboxAuthenticator;
 import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
 import org.cryse.unifystorage.providers.onedrive.OneDriveAuthenticator;
@@ -52,11 +49,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AbstractActivity implements EasyPermissions.PermissionCallbacks,
-        MainViewModel.DataListener {
+        MainContract.View {
     private static final int RC_AUTHENTICATE_ONEDRIVE = 101;
     private static final int RC_AUTHENTICATE_DROPBOX = 102;
-    private ActivityMainBinding mBinding;
-    private MainViewModel mMainViewModel;
+    // private MainViewModel mMainViewModel;
+    private MainContract.Presenter mPresenter;
 
     private Drawer mDrawer;
     long mCurrentSelection = 0;
@@ -72,10 +69,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     protected void onCreate(Bundle savedInstanceState) {
         // Default config
         super.onCreate(savedInstanceState);
-        // setContentView(R.layout.activity_main);
-        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-        mMainViewModel = new MainViewModel(this, this);
-        mBinding.setViewModel(mMainViewModel);
+        setContentView(R.layout.activity_main);
+        setPresenter(new MainPresenter(this, this));
 
         if (savedInstanceState != null && savedInstanceState.containsKey("selection_item_position")) {
             mCurrentSelection = savedInstanceState.getInt("selection_item_position");
@@ -132,7 +127,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 mPendingRunnable = new Runnable() {
                     @Override
                     public void run() {
-                        mMainViewModel.onNavigationSelected(drawerItem);
+                        mPresenter.onNavigationSelected(drawerItem);
                         mPendingRunnable = null;
                     }
                 };
@@ -200,7 +195,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     private void addStorageProviderItemsAndLoad() {
-        mMainViewModel.updateDrawerItems(DrawerItemUtils.DRAWER_ITEM_NONE);
+        mPresenter.updateDrawerItems(DrawerItemUtils.DRAWER_ITEM_NONE);
         if (mIsRestorePosition) {
             mDrawer.setSelection(mCurrentSelection, false);
         } else {
@@ -226,7 +221,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                     public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
                         switch (which) {
                             case 0:
-                            mMainViewModel.addNewProvider(
+                                mPresenter.addNewProvider(
                                     "Pictures",
                                     "Cryse Hillmes",
                                     StorageProviderRecord.PROVIDER_LOCAL_STORAGE,
@@ -463,14 +458,14 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 data.hasExtra(Credential.RESULT_KEY)) {
             if(resultCode == RESULT_OK) {
                 OneDriveCredential credential = data.getParcelableExtra(Credential.RESULT_KEY);
-                mMainViewModel.addNewProvider(
+                mPresenter.addNewProvider(
                         credential.getAccountType(),
                         credential.getAccountName(),
                         StorageProviderRecord.PROVIDER_ONE_DRIVE,
                         credential.persist(),
                         ""
                 );
-                mMainViewModel.updateDrawerItems((int)mCurrentSelection);
+                mPresenter.updateDrawerItems((int)mCurrentSelection);
             } else {
                 String errorMessage = data.getStringExtra(Credential.RESULT_KEY);
                 new MaterialDialog.Builder(this)
@@ -483,14 +478,14 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 data.hasExtra(Credential.RESULT_KEY)) {
             if(resultCode == RESULT_OK) {
                 DropboxCredential credential = data.getParcelableExtra(Credential.RESULT_KEY);
-                mMainViewModel.addNewProvider(
+                mPresenter.addNewProvider(
                         credential.getAccountType(),
                         credential.getAccountName(),
                         StorageProviderRecord.PROVIDER_DROPBOX,
                         credential.persist(),
                         ""
                 );
-                mMainViewModel.updateDrawerItems((int)mCurrentSelection);
+                mPresenter.updateDrawerItems((int)mCurrentSelection);
             } else {
                 new MaterialDialog.Builder(this)
                         .title(R.string.dialog_title_error)
@@ -508,6 +503,11 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mMainViewModel.destroy();
+        mPresenter.destroy();
+    }
+
+    @Override
+    public void setPresenter(MainContract.Presenter presenter) {
+        this.mPresenter = presenter;
     }
 }
