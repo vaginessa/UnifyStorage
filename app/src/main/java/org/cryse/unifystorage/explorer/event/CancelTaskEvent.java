@@ -12,6 +12,6 @@ public class CancelTaskEvent extends AbstractEvent {
 
     @Override
     public int eventId() {
-        return 0;
+        return EventConst.EVENT_ID_CANCEL_TASK;
     }
 }

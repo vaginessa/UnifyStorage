@@ -50,6 +50,10 @@ public class OperationStatus {
         return mShouldShowNotification;
     }
 
+    public String getToken() {
+        return mToken;
+    }
+
     public int getTokenInt() {
         return mTokenInt;
     }

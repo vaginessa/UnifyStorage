@@ -43,7 +43,8 @@
     <string name="dialog_content_error_open_file">Fail to open file.</string>
     <string name="dialog_content_error_download_file">Fail to download file.</string>
     <string name="dialog_content_download_file_progress">%1$s / %2$s</string>
-    <string name="dialog_content_delete_file_progress">%1$d / %2$d\n</string>
+    <string name="dialog_content_delete_file_progress">%1$d / %2$d</string>
+    <string name="dialog_button_cancel">Cancel</string>
 
     <string name="fab_lable_create_file">Create New File</string>
     <string name="fab_lable_create_directory">Create New Directory</string>

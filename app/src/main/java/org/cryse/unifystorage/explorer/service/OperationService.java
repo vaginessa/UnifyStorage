@@ -1,6 +1,7 @@
 package org.cryse.unifystorage.explorer.service;
 
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +10,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
@@ -37,6 +39,7 @@ import rx.Subscription;
 import rx.functions.Action1;
 
 public class OperationService extends Service {
+    private static final String LOG_TAG = OperationService.class.getSimpleName();
     private ConcurrentHashMap<String, OperationStatus> mOperationStatusMap;
     RxEventBus mEventBus = RxEventBus.instance();
     Subscription mEventSubscription;
@@ -78,6 +81,26 @@ public class OperationService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return new OperationBinder(this);
+    }
+
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(LOG_TAG, "onStartCommand");
+        if(intent != null && intent.hasExtra("type")) {
+
+            Log.d(LOG_TAG, String.format("onStartCommand: %s", intent.getStringExtra("type")));
+            if("notification_action".compareTo(intent.getStringExtra("type")) == 0) {
+                String actionName = intent.getStringExtra("action_name");
+                String token = intent.getStringExtra("token");
+                switch (actionName) {
+                    case "cancel_task":
+                        cancelOperation(token);
+                        break;
+                }
+            }
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
 
     private void onNewTaskEvent(NewTaskEvent event) {
@@ -139,7 +162,13 @@ public class OperationService extends Service {
         NotificationCompat.Builder notificationBuilder = status.getNotificationBuilder();
         if(notificationBuilder == null) {
             notificationBuilder = new NotificationCompat.Builder(OperationService.this);
+            Intent cancelIntent = new Intent(this, OperationService.class);
+            cancelIntent.putExtra("token", status.getToken());
+            cancelIntent.putExtra("action_name", "cancel_task");
+            cancelIntent.putExtra("type", "notification_action");
+            PendingIntent cancelPendingIntent = PendingIntent.getService(this, 0, cancelIntent, 0);
             status.setNotificationBuilder(notificationBuilder);
+            notificationBuilder.addAction(R.drawable.ic_action_cancel, getString(R.string.dialog_button_cancel), cancelPendingIntent);
         }
 
         Operation operation = status.getOperation();

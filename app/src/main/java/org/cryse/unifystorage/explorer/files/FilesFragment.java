@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -29,6 +30,7 @@ import android.widget.Toast;
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
 import com.afollestad.impression.widget.breadcrumbs.Crumb;
 import com.afollestad.materialcab.MaterialCab;
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
@@ -558,39 +560,6 @@ public class FilesFragment extends AbstractFragment implements
     public void openFileByUri(String uriString, boolean useSystemSelector) {
         mOpenFileUtils.openFileByUri(uriString, useSystemSelector);
     }
-/*
-    private void showDownloadDialog(DownloadFileMessage message) {
-        switch (message.getAction()) {
-            case CREATE:
-                if(mDownloadDialog != null && mDownloadDialog.isShowing()) mDownloadDialog.dismiss();
-                mDownloadDialog = new MaterialDialog.Builder(getContext())
-                        .title(R.string.dialog_title_opening_file)
-                        .content(R.string.dialog_content_opening)
-                        .progress(false, 100, false)
-                        .dismissListener(message.getOnDismissListener())
-                        .show();
-                break;
-            case UPDATE:
-                if(mDownloadDialog != null && mDownloadDialog.isShowing()) {
-                    int newPercent = (int) Math.round(((double) message.getCurrentSize()  / (double) message.getFileSize()) * 100.0d);
-                    int currentPercent = mDownloadDialog.getCurrentProgress();
-                    if(newPercent > currentPercent) {
-                        mDownloadDialog.incrementProgress(newPercent - currentPercent);
-                        mDownloadDialog.setContent(
-                                String.format(
-                                        "%s / %s",
-                                        FileSizeUtils.humanReadableByteCount(message.getCurrentSize(), true),
-                                        FileSizeUtils.humanReadableByteCount(message.getFileSize(), true)
-                                ));
-                    }
-                }
-                break;
-            default:
-            case DISMISS:
-                if(mDownloadDialog != null && mDownloadDialog.isShowing()) mDownloadDialog.dismiss();
-                break;
-        }
-    }*/
 
     @Override
     public void setPresenter(FilesContract.Presenter presenter) {
@@ -759,93 +728,6 @@ public class FilesFragment extends AbstractFragment implements
         return mPresenter.getStorageProviderInfo().getStorageProviderId() == id;
     }
 
-    /*private BroadcastReceiver mDownloadStartReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, final Intent intent) {
-            // Toast.makeText(getActivity(), "Start downloading " + intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_FILENAME), Toast.LENGTH_SHORT).show();
-            int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
-            MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
-            if (downloadingDialog == null || downloadingDialog.isCancelled()) {
-                downloadingDialog = new MaterialDialog.Builder(getContext())
-                        .title(R.string.dialog_title_opening_file)
-                        .content(R.string.dialog_content_opening)
-                        .progress(false, 100, false)
-                        .dismissListener(new DialogInterface.OnDismissListener() {
-                            @Override
-                            public void onDismiss(DialogInterface dialog) {
-                                RxEventBus.getInstance().sendEvent(new StopDownloadEvent(intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0)));
-                            }
-                        })
-                        .show();
-                mMaterialDialogs.put(token, downloadingDialog);
-            }
-        }
-    };
-
-    private BroadcastReceiver mDownloadProgressReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // Log.e("PROGRESS", "Downloading " + intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_FILENAME) + ": " + Integer.toString(intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_PERCENTAGE, 0)) + "%");
-            int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
-            long readSize = intent.getLongExtra(DataContract.DOWNLOAD_BROADCAST_READ_SIZE, 0);
-            long totalSize = intent.getLongExtra(DataContract.DOWNLOAD_BROADCAST_FILE_SIZE, 0);
-            int newPercent = (int) Math.round(((double) readSize / (double) totalSize) * 100.0d);
-            MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
-            if (downloadingDialog != null && !downloadingDialog.isCancelled()) {
-                int currentPercent = downloadingDialog.getCurrentProgress();
-                downloadingDialog.incrementProgress(newPercent - currentPercent);
-                downloadingDialog.setContent(
-                        String.format(
-                                "%s / %s",
-                                FileSizeUtils.humanReadableByteCount(readSize, true),
-                                FileSizeUtils.humanReadableByteCount(totalSize, true)
-                        ));
-            }
-        }
-    };
-
-    private BroadcastReceiver mDownloadSuccessReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // Toast.makeText(getActivity(), "Download " + intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_FILENAME) + " success.", Toast.LENGTH_SHORT).show();
-            int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
-            MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
-            if (downloadingDialog != null && !downloadingDialog.isCancelled()) {
-                downloadingDialog.dismiss();
-            }
-            if (intent.getBooleanExtra(DataContract.DOWNLOAD_BROADCAST_SUCCESS_OPEN, false)) {
-                String localPath = intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_SUCCESS_PATH);
-                Uri fileUri = FileProvider.getUriForFile(
-                        getActivity(),
-                        getActivity().getString(R.string.authority_file_provider),
-                        new File(localPath));
-                openFileByUri(fileUri.toString(), true);
-
-            }
-        }
-    };
-
-    private BroadcastReceiver mDownloadErrorReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // Toast.makeText(getActivity(), "Download " + intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_FILENAME) + " failed.", Toast.LENGTH_SHORT).show();
-            String errorMessage = intent.getStringExtra(DataContract.DOWNLOAD_BROADCAST_ERROR_MESSAGE);
-            int token = intent.getIntExtra(DataContract.DOWNLOAD_BROADCAST_TOKEN, 0);
-            MaterialDialog downloadingDialog = mMaterialDialogs.get(token);
-            if (downloadingDialog != null && !downloadingDialog.isCancelled()) {
-                downloadingDialog.dismiss();
-            }
-            MaterialDialog materialDialog = new MaterialDialog.Builder(getActivity())
-                    .title(R.string.dialog_title_error)
-                    .content(errorMessage)
-                    .show();
-        }
-    };*/
-
     private ConcurrentHashMap<String, MaterialDialog> mDialogMaps = new ConcurrentHashMap<>();
 
     @Override
@@ -889,9 +771,10 @@ public class FilesFragment extends AbstractFragment implements
                                 RxEventBus.instance().sendEvent(new FrontUIDismissEvent(token));
                             }
                         })
-                        .cancelListener(new DialogInterface.OnCancelListener() {
+                        .negativeText(R.string.dialog_button_cancel)
+                        .onNegative(new MaterialDialog.SingleButtonCallback() {
                             @Override
-                            public void onCancel(DialogInterface dialog) {
+                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                                 RxEventBus.instance().sendEvent(new CancelTaskEvent(token));
                             }
                         })
@@ -923,7 +806,7 @@ public class FilesFragment extends AbstractFragment implements
             if (!result.isSuccess()) {
                 new MaterialDialog.Builder(getActivity())
                         .title(R.string.dialog_title_error)
-                        .content(result.getException().getMessage())
+                        .content(result.getLogMessage())
                         .show();
             } else {
                 if (caller.shouldRefresh()) {
