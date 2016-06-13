@@ -49,6 +49,7 @@ public class FilesAdapter extends SelectableRecyclerViewAdapter<
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
         final RemoteFile file = getItems().get(position);
+        holder.itemView.setSelected(isSelected(position));
         holder.mIconView.setImageResource(file.isDirectory() ? R.drawable.ic_format_folder : R.drawable.ic_format_file);
         holder.mNameView.setText(file.getName());
         holder.mDetail1View.setText(getDetail(file));
