@@ -7,12 +7,12 @@ import org.cryse.unifystorage.explorer.base.BaseView;
 
 public interface MainContract {
     interface View extends BaseView<Presenter> {
-        void onDrawerItemsChanged(IDrawerItem[] drawerItems, int selectionIdentifier);
+        void onDrawerItemsChanged(IDrawerItem[] drawerItems);
         void onNavigateTo(IDrawerItem drawerItem);
     }
 
     interface Presenter extends BasePresenter {
-        void updateDrawerItems(int currentSelectionIdentifier);
+        void updateDrawerItems();
 
         void onNavigationSelected(IDrawerItem drawerItem);
 

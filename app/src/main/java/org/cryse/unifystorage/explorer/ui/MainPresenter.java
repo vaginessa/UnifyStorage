@@ -25,10 +25,11 @@ public class MainPresenter implements MainContract.Presenter {
     }
 
     @Override
-    public void updateDrawerItems(int currentSelectionIdentifier) {
+    public void updateDrawerItems() {
         buildDrawerItems();
-        if(mView != null)
-            mView.onDrawerItemsChanged(mDrawerItems, currentSelectionIdentifier);
+        mView.onDrawerItemsChanged(mDrawerItems);
+        /*if(mView != null)
+            mView.onDrawerItemsChanged(mDrawerItems, currentSelectionIdentifier);*/
     }
 
     private void buildDrawerItems() {
@@ -36,7 +37,7 @@ public class MainPresenter implements MainContract.Presenter {
         List<StorageProviderRecord> storageProviderRecords = StorageProviderManager.instance().loadStorageProviderRecordsWithLocal(mContext);
         for(StorageProviderRecord record : storageProviderRecords) {
             PrimaryDrawerItem item = new PrimaryDrawerItem();
-            item.withName(record.getDisplayName()).withSelectable(true).withIdentifier(record.getId());
+            item.withName(record.getDisplayName()).withSelectable(false).withIdentifier(record.getId());
             switch (record.getProviderType()) {
                 case StorageProviderRecord.PROVIDER_LOCAL_STORAGE:
                     if(record.getId() == DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE) {

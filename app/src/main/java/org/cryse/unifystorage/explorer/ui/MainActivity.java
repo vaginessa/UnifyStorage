@@ -56,8 +56,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     private MainContract.Presenter mPresenter;
 
     private Drawer mDrawer;
-    long mCurrentSelection = 0;
-    boolean mIsRestorePosition = false;
     private Handler mHandler = new Handler();
     private Runnable mPendingRunnable = null;
     AtomicBoolean mDoubleBackToExitPressedOnce = new AtomicBoolean(false);
@@ -71,14 +69,6 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setPresenter(new MainPresenter(this, this));
-
-        if (savedInstanceState != null && savedInstanceState.containsKey("selection_item_position")) {
-            mCurrentSelection = savedInstanceState.getInt("selection_item_position");
-            mIsRestorePosition = true;
-        } else {
-            mCurrentSelection = DrawerItemUtils.DRAWER_ITEM_NONE;
-            mIsRestorePosition = false;
-        }
 
         initDrawer();
         checkStoragePermissions();
@@ -122,8 +112,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         mDrawer.setOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
             @Override
             public boolean onItemClick(View view, int position, final IDrawerItem drawerItem) {
-                if (drawerItem instanceof PrimaryDrawerItem && drawerItem.isSelectable())
-                    mCurrentSelection = drawerItem.getIdentifier();
+                /*if (drawerItem instanceof PrimaryDrawerItem && drawerItem.isSelectable())
+                    mCurrentSelection = drawerItem.getIdentifier();*/
                 mPendingRunnable = new Runnable() {
                     @Override
                     public void run() {
@@ -195,12 +185,12 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     private void addStorageProviderItemsAndLoad() {
-        mPresenter.updateDrawerItems(DrawerItemUtils.DRAWER_ITEM_NONE);
-        if (mIsRestorePosition) {
+        mPresenter.updateDrawerItems();
+        /*if (mIsRestorePosition) {
             mDrawer.setSelection(mCurrentSelection, false);
         } else {
             mDrawer.setSelectionAtPosition(0, true);
-        }
+        }*/
         if (mPendingRunnable != null) {
             mHandler.post(mPendingRunnable);
         }
@@ -209,7 +199,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putLong("selection_item_position", mCurrentSelection);
+        // outState.putLong("selection_item_position", mCurrentSelection);
     }
 
     public void showAddProviderDialog() {
@@ -407,11 +397,11 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     @Override
-    public void onDrawerItemsChanged(IDrawerItem[] drawerItems, int selectionIdentifier) {
+    public void onDrawerItemsChanged(IDrawerItem[] drawerItems) {
         mDrawer.removeAllItems();
         mDrawer.addItems(drawerItems);
-        if(selectionIdentifier >= 0)
-            mDrawer.setSelection(selectionIdentifier, false);
+        if(getFragmentManager().getBackStackEntryCount() == 0)
+            navigateToInternalStorage();
     }
 
     @Override
@@ -465,7 +455,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         credential.persist(),
                         ""
                 );
-                mPresenter.updateDrawerItems((int)mCurrentSelection);
+                mPresenter.updateDrawerItems();
             } else {
                 String errorMessage = data.getStringExtra(Credential.RESULT_KEY);
                 new MaterialDialog.Builder(this)
@@ -485,7 +475,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                         credential.persist(),
                         ""
                 );
-                mPresenter.updateDrawerItems((int)mCurrentSelection);
+                mPresenter.updateDrawerItems();
             } else {
                 new MaterialDialog.Builder(this)
                         .title(R.string.dialog_title_error)
