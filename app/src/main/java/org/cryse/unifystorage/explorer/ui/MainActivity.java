@@ -11,8 +11,11 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.view.MenuItem;
 import android.view.View;
@@ -43,9 +46,14 @@ import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
 import org.cryse.unifystorage.providers.onedrive.OneDriveAuthenticator;
 import org.cryse.unifystorage.providers.onedrive.OneDriveCredential;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AbstractActivity implements EasyPermissions.PermissionCallbacks,
@@ -63,12 +71,21 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     ServiceConnection mOperationServiceConnection;
     private OperationService.OperationBinder mOperationBinder;
 
+    @Bind(R.id.container_viewpager)
+    ViewPager mViewPager;
+
+    FilesFragmentAdapter mFragmentAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Default config
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
         setPresenter(new MainPresenter(this, this));
+
+        mFragmentAdapter = new FilesFragmentAdapter(mViewPager, getSupportFragmentManager());
+        // mViewPager.setAdapter(mFragmentAdapter);
 
         initDrawer();
         checkStoragePermissions();
@@ -248,7 +265,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         return backStackCount > 0;
     }
 
-    public void switchContentFragment(Fragment targetFragment, String backStackTag) {
+    /*public void switchContentFragment(Fragment targetFragment, String backStackTag) {
         popEntireFragmentBackStack();
         FragmentTransaction fragmentTransaction = getSupportFragmentManager()
                 .beginTransaction();
@@ -258,9 +275,29 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
             fragmentTransaction.addToBackStack(backStackTag);
         fragmentTransaction.replace(R.id.frame_container, targetFragment);
         fragmentTransaction.commit();
+    }*/
+
+    public void showInitialFragments() {
+        Fragment fragment1 = getInternalStorageFragment();
+        Fragment fragment2 = getInternalStorageFragment();
+        switchContentFragment(fragment1, 0);
+        switchContentFragment(fragment2, 0);
+    }
+
+    public void switchContentFragment(Fragment fragment, int index) {
+        if(mViewPager.getChildCount() < 2) {
+            mFragmentAdapter.addFragment(fragment);
+        } else {
+            mFragmentAdapter.replaceFragmentAt(index, fragment);
+        }
     }
 
     public void navigateToInternalStorage() {
+        FilesFragment filesFragment = getInternalStorageFragment();
+        switchContentFragment(filesFragment, mViewPager.getCurrentItem());
+    }
+
+    private FilesFragment getInternalStorageFragment() {
         FilesFragment filesFragment = FilesFragment.newInstance();
         new FilesPresenter.Builder()
                 .view(filesFragment)
@@ -279,7 +316,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                                 Environment.getExternalStorageDirectory().getAbsolutePath()
                         )
                 ).build();
-        switchContentFragment(filesFragment, null);
+        return filesFragment;
     }
 
     public void navigateToOtherLocalStorage(int storageProviderRecordId, String path) {
@@ -301,7 +338,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                                 path
                         )
                 ).build();
-        switchContentFragment(filesFragment, null);
+        switchContentFragment(filesFragment, mViewPager.getCurrentItem());
     }
 
     public void navigateToOneDriveStorage(int storageProviderRecordId, OneDriveCredential credential) {
@@ -323,7 +360,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                                 DataContract.CONST_ONEDRIVE_CLIENT_ID
                         )
                 ).build();
-        switchContentFragment(filesFragment, null);
+        switchContentFragment(filesFragment, mViewPager.getCurrentItem());
     }
 
     public void navigateToDropboxStorage(int storageProviderRecordId, DropboxCredential credential) {
@@ -345,7 +382,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                                 DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER
                         )
                 ).build();
-        switchContentFragment(filesFragment, null);
+        switchContentFragment(filesFragment, mViewPager.getCurrentItem());
     }
 
     public Drawer getNavigationDrawer() {
@@ -401,7 +438,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         mDrawer.removeAllItems();
         mDrawer.addItems(drawerItems);
         if(getFragmentManager().getBackStackEntryCount() == 0)
-            navigateToInternalStorage();
+            showInitialFragments();
     }
 
     @Override
@@ -499,5 +536,51 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     public void setPresenter(MainContract.Presenter presenter) {
         this.mPresenter = presenter;
+    }
+
+    public static class FilesFragmentAdapter extends FragmentStatePagerAdapter {
+        private ViewPager viewPager;
+        private FragmentManager fragmentManager;
+        private ArrayList<Fragment> fragments;
+        public FilesFragmentAdapter(ViewPager viewPager, FragmentManager fm) {
+            super(fm);
+            this.viewPager = viewPager;
+            this.fragmentManager = fm;
+            this.fragments = new ArrayList<>(4);
+            this.viewPager.setAdapter(this);
+        }
+
+        public void addFragment(Fragment fragment) {
+            fragments.add(fragment);
+            notifyDataSetChanged();
+        }
+
+        public void replaceFragmentAt(int index, Fragment fragment) {
+            Fragment oldFragment = getItem(index);
+            if(oldFragment == null) {
+                return;
+            }
+            fragments.set(index, fragment);
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public int getItemPosition(Object object) {
+            if(!fragments.contains(object)) {
+                return POSITION_NONE;
+            } else {
+                return super.getItemPosition(object);
+            }
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return fragments.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return fragments.size();
+        }
     }
 }

@@ -6,8 +6,8 @@
     android:layout_height="match_parent"
     android:gravity="center">
 
-    <FrameLayout
-        android:id="@+id/frame_container"
+    <android.support.v4.view.ViewPager
+        android:id="@+id/container_viewpager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
 </RelativeLayout>
