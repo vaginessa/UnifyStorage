@@ -45,6 +45,7 @@ import org.cryse.unifystorage.providers.dropbox.DropboxAuthenticator;
 import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
 import org.cryse.unifystorage.providers.onedrive.OneDriveAuthenticator;
 import org.cryse.unifystorage.providers.onedrive.OneDriveCredential;
+import org.cryse.widget.InkPageIndicator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -73,6 +74,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
 
     @Bind(R.id.container_viewpager)
     ViewPager mViewPager;
+    @Bind(R.id.indicator)
+    InkPageIndicator mPageIndicator;
 
     FilesFragmentAdapter mFragmentAdapter;
 
@@ -85,7 +88,8 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         setPresenter(new MainPresenter(this, this));
 
         mFragmentAdapter = new FilesFragmentAdapter(mViewPager, getSupportFragmentManager());
-        // mViewPager.setAdapter(mFragmentAdapter);
+        mViewPager.setAdapter(mFragmentAdapter);
+        // mPageIndicator.setViewPager(mViewPager);
 
         initDrawer();
         checkStoragePermissions();
@@ -282,6 +286,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         Fragment fragment2 = getInternalStorageFragment();
         switchContentFragment(fragment1, 0);
         switchContentFragment(fragment2, 0);
+        mPageIndicator.setViewPager(mViewPager);
     }
 
     public void switchContentFragment(Fragment fragment, int index) {
@@ -539,15 +544,12 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     public static class FilesFragmentAdapter extends FragmentStatePagerAdapter {
-        private ViewPager viewPager;
         private FragmentManager fragmentManager;
         private ArrayList<Fragment> fragments;
         public FilesFragmentAdapter(ViewPager viewPager, FragmentManager fm) {
             super(fm);
-            this.viewPager = viewPager;
             this.fragmentManager = fm;
             this.fragments = new ArrayList<>(4);
-            this.viewPager.setAdapter(this);
         }
 
         public void addFragment(Fragment fragment) {
