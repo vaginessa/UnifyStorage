@@ -224,6 +224,7 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     private void setupBreadCrumb() {
+        mBreadCrumbLayout.setRootPathName(mPresenter.getStorageProviderName());
         mBreadCrumbLayout.setCallback(new BreadCrumbLayout.SelectionCallback() {
             @Override
             public void onCrumbSelection(Crumb crumb, int index) {
@@ -390,7 +391,7 @@ public class FilesFragment extends AbstractFragment implements
             mBreadCrumbLayout.setTopPath(path);
         }
 
-        Crumb crumb = new Crumb(getContext(), path);
+        Crumb crumb = new Crumb(getContext(), mBreadCrumbLayout.getRootPathName(),path);
         updateBreadcrumb(crumb, true, true);
     }
 
@@ -400,7 +401,7 @@ public class FilesFragment extends AbstractFragment implements
             mBreadCrumbLayout.clearHistory();
             String path = crumb.getPath();
             while (path != null) {
-                mBreadCrumbLayout.addHistory(new Crumb(getContext(), path));
+                mBreadCrumbLayout.addHistory(new Crumb(getContext(), mBreadCrumbLayout.getRootPathName(), path));
                 if (mBreadCrumbLayout.isTopPath(path)) {
                     break;
                 }

@@ -34,6 +34,8 @@ public interface FilesContract {
     }
 
     interface Presenter extends BasePresenter {
+        String getStorageProviderName();
+
         boolean showWatchChanges();
 
         StorageProviderInfo getStorageProviderInfo();

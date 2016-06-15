@@ -86,6 +86,11 @@ public class FilesPresenter implements FilesContract.Presenter {
     }
 
     @Override
+    public String getStorageProviderName() {
+        return mRxStorageProvider.getStorageProviderName();
+    }
+
+    @Override
     public boolean showWatchChanges() {
         return isLocalStorage();
     }

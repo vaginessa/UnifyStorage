@@ -48,6 +48,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
     private int mCrumbActiveColor;
     private int mArrowColor;
     private int mCrumbInactiveColor;
+    private String mRootPathName;
 
     public BreadCrumbLayout(Context context) {
         super(context);
@@ -82,6 +83,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
         setHorizontalScrollBarEnabled(false);
         mCrumbs = new ArrayList<>();
         mHistory = new ArrayList<>();
+        mRootPathName = getContext().getString(R.string.drawer_local_root);
         mCrumbActiveColor = ContextCompat.getColor(getContext(), R.color.crumb_active);
         mCrumbInactiveColor = ContextCompat.getColor(getContext(), R.color.crumb_inactive);
         mArrowColor = mCrumbInactiveColor;
@@ -243,7 +245,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
 
             for (int index = 0; index < newPathSet.size(); index++) {
                 final String path = newPathSet.get(index);
-                crumb = new Crumb(getContext(), path);
+                crumb = new Crumb(getContext(), mRootPathName, path);
 
                 // Restore scroll positions saved before clearing
                 if (mOldCrumbs != null) {
@@ -315,6 +317,14 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
         mArrowColor = arrowColor;
     }
 
+    public String getRootPathName() {
+        return mRootPathName;
+    }
+
+    public void setRootPathName(String rootPathName) {
+        this.mRootPathName = rootPathName;
+    }
+
     @Override
     public void onClick(View v) {
         if (mCallback != null) {
@@ -381,6 +391,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
         Crumb[] crumbs;
         int visibility;
         String topPath;
+        String rootPathName;
         Crumb[] history;
 
         SavedState(Parcelable superState, BreadCrumbLayout view) {
@@ -390,6 +401,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
             this.crumbs = view.mCrumbs.toArray(new Crumb[view.mCrumbs.size()]);
             this.visibility = view.getVisibility();
             this.topPath = view.mTopPath;
+            this.rootPathName = view.mRootPathName;
             this.history = view.mHistory.toArray(new Crumb[view.mHistory.size()]);
         }
 
@@ -399,6 +411,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
             this.crumbs = source.createTypedArray(Crumb.CREATOR);
             this.visibility = source.readInt();
             this.topPath = source.readString();
+            this.rootPathName = source.readString();
             this.history = source.createTypedArray(Crumb.CREATOR);
         }
 
@@ -409,6 +422,7 @@ public class BreadCrumbLayout extends HorizontalScrollView implements View.OnCli
             out.writeTypedArray(crumbs, 0);
             out.writeInt(visibility);
             out.writeString(topPath);
+            out.writeString(rootPathName);
             out.writeTypedArray(history, 0);
         }
     }
