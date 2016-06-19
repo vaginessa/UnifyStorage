@@ -4,13 +4,10 @@ import android.content.Context;
 import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
-import org.cryse.unifystorage.explorer.service.operation.OnOperationListener;
-import org.cryse.unifystorage.explorer.service.operation.Operation;
-import org.cryse.unifystorage.explorer.service.operation.OperationState;
-import org.cryse.unifystorage.explorer.service.operation.RemoteOperation;
-import org.cryse.unifystorage.explorer.service.operation.RemoteOperationResult;
+import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperation;
+import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperationResult;
 
 public class InStorageProviderCopyOperation extends RemoteOperation<InStorageProviderCopyOperation.Params> {
     public static final String OP_NAME = "OP_COPY";
@@ -30,13 +27,23 @@ public class InStorageProviderCopyOperation extends RemoteOperation<InStoragePro
     }
 
     @Override
-    protected void onBuildNotificationForState(OperationState state) {
-
+    public String getSummaryTitle(Context context) {
+        return null;
     }
 
     @Override
-    protected void onBuildNotificationForProgress(long currentRead, long currentSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
+    public String getSummaryContent(Context context) {
+        return null;
+    }
 
+    @Override
+    public String getSimpleSummaryContent(Context context) {
+        return null;
+    }
+
+    @Override
+    public double getSummaryProgress() {
+        return 0;
     }
 
     @Override

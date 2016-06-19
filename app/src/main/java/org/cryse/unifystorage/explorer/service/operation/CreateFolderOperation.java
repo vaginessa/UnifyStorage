@@ -5,7 +5,12 @@ import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageException;
+import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
+import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.base.OperationState;
+import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperation;
+import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperationResult;
 
 public class CreateFolderOperation extends RemoteOperation<CreateFolderOperation.Params> {
     public static final String OP_NAME = "OP_CREATE_FOLDER";
@@ -39,13 +44,37 @@ public class CreateFolderOperation extends RemoteOperation<CreateFolderOperation
     }
 
     @Override
-    protected void onBuildNotificationForState(OperationState state) {
-
+    public String getSummaryTitle(Context context) {
+        return context.getString(R.string.operation_title_creating_folder);
     }
 
     @Override
-    protected void onBuildNotificationForProgress(long currentRead, long currentSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
+    public String getSummaryContent(Context context) {
+        String content = "";
+        switch (getSummary().state) {
+            case NEW:
+            case PREPARING:
+                content = context.getString(R.string.operation_content_preparing);
+                break;
+            case RUNNING:
+                content = context.getString(
+                        R.string.operation_content_creating_folder,
+                        getParams().getFolderName(),
+                        getParams().getParentFile().getPath()
+                );
+                break;
+        }
+        return content;
+    }
 
+    @Override
+    public String getSimpleSummaryContent(Context context) {
+        return getSummaryContent(context);
+    }
+
+    @Override
+    public double getSummaryProgress() {
+        return -1;
     }
 
     public static class Params extends RemoteOperation.Params {

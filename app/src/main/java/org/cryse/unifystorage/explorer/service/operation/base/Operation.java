@@ -1,5 +1,6 @@
-package org.cryse.unifystorage.explorer.service.operation;
+package org.cryse.unifystorage.explorer.service.operation.base;
 
+import android.content.Context;
 import android.os.Handler;
 
 import org.cryse.unifystorage.explorer.executor.ServiceExecutors;
@@ -32,19 +33,25 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
         this.mParams = params;
         this.mListener = listener;
         this.mListenerHandler = listenerHandler;
-        notifyOperationState(OperationState.NEW);
+        setState(OperationState.NEW);
     }
 
     @Override
     public R call() {
         synchronized (mPauseLock) {
             R result = null;
-            notifyOperationState(OperationState.PREPARING);
+            // Prepare
+            setState(OperationState.PREPARING);
             prepareOperation();
-            notifyOperationState(OperationState.RUNNING);
+
+            // Run
+            setState(OperationState.RUNNING);
             result = runOperation();
-            notifyOperationState(OperationState.VERIFYING);
+
+            // Verify
+            setState(OperationState.VERIFYING);
             verifyOperation(result);
+
             mResult = result;
             if(mResult.isSuccess())
                 onOperationCompleted();
@@ -91,47 +98,28 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
     }
 
     protected void onOperationCompleted() {
-        notifyOperationState(OperationState.COMPLETED);
+        setState(OperationState.COMPLETED);
     }
 
     protected void onOperationPaused() {
-        notifyOperationState(OperationState.PAUSE);
+        setState(OperationState.PAUSE);
     }
 
     protected void onOperationBlocked() {
-        notifyOperationState(OperationState.BLOCKED);
+        setState(OperationState.BLOCKED);
     }
 
     protected void onOperationFailed() {
-        notifyOperationState(OperationState.FAILED);
+        setState(OperationState.FAILED);
     }
 
-    protected abstract void onBuildNotificationForState(OperationState state);
+    public abstract String getSummaryTitle(Context context);
 
-    protected abstract void onBuildNotificationForProgress(
-            final long currentRead,
-            final long currentSize,
-            final long itemIndex,
-            final long itemCount,
-            final long totalRead,
-            final long totalSize
-    );
+    public abstract String getSummaryContent(Context context);
 
-    protected void notifyOperationState(final OperationState state) {
-        setState(state);
-        onBuildNotificationForState(state);
-        if (getListenerHandler() != null && getListener() != null) {
-            getListenerHandler().post(new Runnable() {
-                @Override
-                public void run() {
-                    getListener().onOperationStateChanged(
-                            Operation.this,
-                            state
-                    );
-                }
-            });
-        }
-    }
+    public abstract String getSimpleSummaryContent(Context context);
+
+    public abstract double getSummaryProgress();
 
     protected void notifyOperationProgress(
             final long currentRead,
@@ -142,7 +130,6 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
             final long totalSize
     ) {
         mSummary.setProgress(currentRead, currentSize, itemIndex, itemCount, totalRead, totalSize);
-        onBuildNotificationForProgress(currentRead, currentSize, itemIndex, itemCount, totalRead, totalSize);
         if (getListenerHandler() != null && getListener() != null) {
             getListenerHandler().post(new Runnable() {
                 @Override
@@ -180,11 +167,22 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
     }
 
     public OperationState getState() {
-        return mSummary.mState.get();
+        return mSummary.state;
     }
 
-    public void setState(OperationState state) {
-        this.mSummary.mState.set(state);
+    protected void setState(final OperationState state) {
+        this.mSummary.state = state;
+        if (getListenerHandler() != null && getListener() != null) {
+            getListenerHandler().post(new Runnable() {
+                @Override
+                public void run() {
+                    getListener().onOperationStateChanged(
+                            Operation.this,
+                            state
+                    );
+                }
+            });
+        }
     }
 
     public void setListener(OnOperationListener listener, Handler listenerHandler) {

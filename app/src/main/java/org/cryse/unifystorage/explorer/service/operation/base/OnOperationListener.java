@@ -1,4 +1,4 @@
-package org.cryse.unifystorage.explorer.service.operation;
+package org.cryse.unifystorage.explorer.service.operation.base;
 
 public interface OnOperationListener {
     void onOperationStateChanged(Operation operation, OperationState state);

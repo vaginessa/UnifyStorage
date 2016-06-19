@@ -10,7 +10,8 @@ import android.content.IntentFilter;
 import android.support.v7.app.NotificationCompat;
 
 import org.cryse.unifystorage.explorer.R;
-import org.cryse.unifystorage.explorer.service.operation.OperationSummary;
+import org.cryse.unifystorage.explorer.service.operation.base.Operation;
+import org.cryse.unifystorage.explorer.service.operation.base.OperationSummary;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -57,27 +58,28 @@ public class NotificationHelper {
         }
     }
 
-    public void buildForSummary(OperationSummary summary) {
-        int notificationId = summary.tokenInt;
-        NotificationCompat.Builder notificationBuilder = mNotificationBuilderMap.get(notificationId);
+    public void buildForOperation(Operation operation) {
+        int tokenInt = operation.getTokenInt();
+        String token = operation.getToken();
+        NotificationCompat.Builder notificationBuilder = mNotificationBuilderMap.get(tokenInt);
         if(notificationBuilder == null) {
             notificationBuilder = new NotificationCompat.Builder(mService);
 
             Intent clickIntent = new Intent("org.cryse.unifystorage.ACTION_PAUSE_OPERATION");
             clickIntent.putExtra("type", "notification_action");
-            clickIntent.putExtra("tokenInt", notificationId);
-            clickIntent.putExtra("token", summary.token);
+            clickIntent.putExtra("tokenInt", tokenInt);
+            clickIntent.putExtra("token", token);
             PendingIntent clickPendingIntent =
                     PendingIntent.getBroadcast(mService, 0, clickIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
             Intent cancelIntent = new Intent("org.cryse.unifystorage.ACTION_CANCEL_OPERATION");
             cancelIntent.putExtra("type", "notification_action");
-            cancelIntent.putExtra("tokenInt", notificationId);
-            cancelIntent.putExtra("token", summary.token);
+            cancelIntent.putExtra("tokenInt", tokenInt);
+            cancelIntent.putExtra("token", token);
             PendingIntent cancelPendingIntent = PendingIntent.getBroadcast(mService, 1, cancelIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
 
-            mNotificationBuilderMap.put(notificationId, notificationBuilder);
+            mNotificationBuilderMap.put(tokenInt, notificationBuilder);
             // status.setNotificationBuilder(notificationBuilder);
             notificationBuilder
                     .setContentIntent(clickPendingIntent)
@@ -85,10 +87,10 @@ public class NotificationHelper {
         }
 
         int iconResId = R.mipmap.ic_launcher;
-        String title = summary.title.get();
-        String content = summary.simpleContent.get();
-        int displayPercent = (int) (summary.displayPercent * 100.0d);
-        boolean indeterminate = false;
+        String title = operation.getSummaryTitle(mService);
+        String content = operation.getSimpleSummaryContent(mService);
+        int displayPercent = (int) (operation.getSummaryProgress());
+        boolean indeterminate = displayPercent < 0;
 
         notificationBuilder.setContentTitle(title)
                 .setContentText(content)
@@ -98,15 +100,15 @@ public class NotificationHelper {
                 .setOngoing(true);
 
         // startForeground(notificationId, progressNotificationBuilder.build());
-        mNotificationManager.notify(notificationId, notificationBuilder.build());
+        mNotificationManager.notify(tokenInt, notificationBuilder.build());
     }
 
-    public void updateNotification(OperationSummary summary) {
-        buildForSummary(summary);
+    public void updateNotification(Operation operation) {
+        buildForOperation(operation);
     }
 
-    public void cancelNotification(OperationSummary summary) {
-        cancelNotification(summary.tokenInt);
+    public void cancelNotification(Operation operation) {
+        cancelNotification(operation.getTokenInt());
     }
 
     public void cancelNotification(int tokenInt) {

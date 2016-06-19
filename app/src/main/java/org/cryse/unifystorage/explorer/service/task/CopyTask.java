@@ -5,10 +5,9 @@ import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
-import org.cryse.unifystorage.explorer.service.operation.OnOperationListener;
-import org.cryse.unifystorage.explorer.service.operation.Operation;
+import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.base.Operation;
 import org.cryse.unifystorage.explorer.service.operation.copy.InStorageProviderCopyOperation;
-import org.cryse.unifystorage.explorer.service.operation.RemoteOperation;
 import org.cryse.unifystorage.explorer.utils.HashUtils;
 
 import java.util.Locale;

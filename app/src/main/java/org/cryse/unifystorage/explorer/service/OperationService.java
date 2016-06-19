@@ -18,9 +18,9 @@ import org.cryse.unifystorage.explorer.event.FrontUIDismissEvent;
 import org.cryse.unifystorage.explorer.event.NewTaskEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
 import org.cryse.unifystorage.explorer.event.ShowProgressEvent;
-import org.cryse.unifystorage.explorer.service.operation.OnOperationListener;
-import org.cryse.unifystorage.explorer.service.operation.Operation;
-import org.cryse.unifystorage.explorer.service.operation.OperationState;
+import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.base.Operation;
+import org.cryse.unifystorage.explorer.service.operation.base.OperationState;
 import org.cryse.unifystorage.explorer.service.task.RemoteTask;
 import org.cryse.unifystorage.explorer.service.task.Task;
 import org.cryse.unifystorage.explorer.utils.RxSubscriptionUtils;
@@ -182,22 +182,24 @@ public class OperationService extends Service {
         public void onOperationStateChanged(Operation operation, OperationState state) {
             switch (state) {
                 case NEW:
-                    mNotificationHelper.buildForSummary(operation.getSummary());
+                    mNotificationHelper.buildForOperation(operation);
                     break;
                 case RUNNING:
                     break;
                 case COMPLETED:
-                    mNotificationHelper.cancelNotification(operation.getSummary());
+                    mNotificationHelper.cancelNotification(operation);
+                    mOperationMap.remove(operation.getToken());
                     break;
                 case FAILED:
-                    mNotificationHelper.cancelNotification(operation.getSummary());
+                    mNotificationHelper.cancelNotification(operation);
+                    mOperationMap.remove(operation.getToken());
                     break;
             }
         }
 
         @Override
         public void onOperationProgress(Operation operation, long currentItemRead, long currentItemSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
-            mNotificationHelper.updateNotification(operation.getSummary());
+            mNotificationHelper.updateNotification(operation);
         }
 
         /*@Override

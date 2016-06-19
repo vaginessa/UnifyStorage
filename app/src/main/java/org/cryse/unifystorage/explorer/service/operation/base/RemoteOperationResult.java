@@ -1,4 +1,4 @@
-package org.cryse.unifystorage.explorer.service.operation;
+package org.cryse.unifystorage.explorer.service.operation.base;
 
 
 import java.io.FileNotFoundException;
@@ -8,18 +8,13 @@ import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 
 import android.accounts.AccountsException;
-import android.text.TextUtils;
 
 import org.apache.http.conn.ConnectTimeoutException;
-import org.cryse.unifystorage.utils.http.HttpStatus;
 import org.json.JSONException;
 
 import javax.net.ssl.SSLException;
-
-import okhttp3.Headers;
 
 
 /**

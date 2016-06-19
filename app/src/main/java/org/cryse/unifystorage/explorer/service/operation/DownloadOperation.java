@@ -5,7 +5,12 @@ import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageProvider;
+import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
+import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.base.OperationState;
+import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperation;
+import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperationResult;
 import org.cryse.unifystorage.explorer.utils.http.ProgressResponseBody;
 import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.unifystorage.utils.Path;
@@ -63,6 +68,7 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
                                                     originalResponse.body(),
                                                     new ProgressResponseBody.ProgressListener() {
                                                         long lastReadBytes = 0;
+                                                        long lastReportMs = 0;
                                                         int lastPercent = 0;
                                                         @Override
                                                         public void update(final long bytesRead, final long contentLength, boolean done) {
@@ -72,7 +78,11 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
                                                             int newPercent = (int) Math.round(((double) bytesRead / (double) contentLength) * 100.0d);
                                                             if (done) {
                                                             } else {
-                                                                if ((bytesRead - lastReadBytes > 1024 * 1024 || newPercent > lastPercent)) {
+                                                                if (lastReadBytes == 0
+                                                                        || bytesRead - lastReadBytes > 1024 * 512
+                                                                        || newPercent > lastPercent
+                                                                        || System.currentTimeMillis() - lastReportMs > 3000 // A least report once for every 3 seconds
+                                                                        ) {
                                                                     notifyOperationProgress(
                                                                             bytesRead,
                                                                             contentLength,
@@ -81,6 +91,7 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
                                                                             0,
                                                                             0
                                                                     );
+                                                                    lastReportMs = System.currentTimeMillis();
                                                                 }
                                                                 lastReadBytes = bytesRead;
                                                                 lastPercent = newPercent;
@@ -117,20 +128,42 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
     }
 
     @Override
-    protected void onBuildNotificationForState(OperationState state) {
-        switch (state) {
-            case NEW:
-                getSummary().title.set("Downloading " + getParams().getRemoteFile().getName());
-                getSummary().content.set("Preparing...");
-                getSummary().simpleContent.set("Preparing...");
-        }
+    public String getSummaryTitle(Context context) {
+        return context.getString(R.string.operation_title_downloading_file);
     }
 
     @Override
-    protected void onBuildNotificationForProgress(long currentRead, long currentSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
-        getSummary().displayPercent = getSummary().currentSizePercent;
-        getSummary().content.set(String.format("%s / %s", FileSizeUtils.humanReadableByteCount(currentRead, false), FileSizeUtils.humanReadableByteCount(currentSize, false)));
-        getSummary().simpleContent.set(String.format("%s / %s", FileSizeUtils.humanReadableByteCount(currentRead, false), FileSizeUtils.humanReadableByteCount(currentSize, false)));
+    public String getSummaryContent(Context context) {
+        String content = "";
+        switch (getSummary().state) {
+            case NEW:
+            case PREPARING:
+                content = context.getString(R.string.operation_content_preparing);
+                break;
+            case RUNNING:
+                if(getSummaryProgress() < 0.5) {
+                    content = context.getString(R.string.operation_content_connecting);
+                } else {
+                    content = context.getString(
+                            R.string.operation_content_downloading_file,
+                            getParams().getRemoteFile().getName(),
+                            FileSizeUtils.humanReadableByteCount(getSummary().currentItemReadSize, false),
+                            FileSizeUtils.humanReadableByteCount(getSummary().currentItemSize, false)
+                    );
+                }
+                break;
+        }
+        return content;
+    }
+
+    @Override
+    public String getSimpleSummaryContent(Context context) {
+        return getSummaryContent(context);
+    }
+
+    @Override
+    public double getSummaryProgress() {
+        return getSummary().currentSizePercent * 100.0d;
     }
 
     public void setDebugInterceptor(Interceptor interceptor) {

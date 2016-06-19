@@ -3,6 +3,10 @@ package org.cryse.unifystorage.explorer.service.operation;
 import android.content.Context;
 import android.os.Handler;
 
+import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.base.Operation;
+import org.cryse.unifystorage.explorer.service.operation.base.OperationState;
+
 import java.util.ArrayList;
 
 public class OperationObserverManager implements OnOperationListener {

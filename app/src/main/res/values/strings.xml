@@ -66,9 +66,15 @@
 
     <string name="toast_double_click_to_exit">Please click BACK again to exit</string>
 
-    <string name="notification_title_deleting_files">Deleting files…</string>
-    <string name="notification_content_deleting_files">%1$d of %2$d</string>
-    <string name="notification_title_error_deleting_files">Deleting files error</string>
+    <string name="operation_title_creating_folder">Creating folder</string>
+    <string name="operation_title_deleting_files">Deleting files…</string>
+    <string name="operation_title_error_deleting_files">Deleting files error</string>
+    <string name="operation_title_downloading_file">Downloading</string>
+    <string name="operation_content_creating_folder">Creating folder %1$s in %2$s</string>
+    <string name="operation_content_downloading_file">Downloading %1$s \n %2$s / %3$s</string>
+    <string name="operation_content_preparing">Preparing…</string>
+    <string name="operation_content_connecting">Connecting…</string>
+    <string name="operation_content_deleting_files">%1$d of %2$d</string>
 
     <string name="info_message_empty_directory">This directory is empty.</string>
 
