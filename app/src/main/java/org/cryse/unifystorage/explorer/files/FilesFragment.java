@@ -37,6 +37,7 @@ import com.github.clans.fab.FloatingActionMenu;
 import com.malinskiy.superrecyclerview.OnMoreListener;
 import com.malinskiy.superrecyclerview.SuperRecyclerView;
 
+import org.apache.commons.io.FileUtils;
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
@@ -50,7 +51,6 @@ import org.cryse.unifystorage.explorer.event.ShowProgressEvent;
 import org.cryse.unifystorage.explorer.service.operation.CreateFolderOperation;
 import org.cryse.unifystorage.explorer.service.operation.DeleteOperation;
 import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
-import org.cryse.unifystorage.explorer.service.operation.OnRemoteOperationListener;
 import org.cryse.unifystorage.explorer.service.operation.Operation;
 import org.cryse.unifystorage.explorer.service.operation.OperationObserverManager;
 import org.cryse.unifystorage.explorer.service.operation.RemoteOperation;
@@ -88,8 +88,8 @@ public class FilesFragment extends AbstractFragment implements
         FilesContract.View,
         FilesAdapter.OnFileClickListener,
         SelectableRecyclerViewAdapter.OnSelectionListener,
-        MaterialCab.Callback,
-        OnRemoteOperationListener {
+        MaterialCab.Callback/*,
+        OnRemoteOperationListener*/ {
 
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
     private Handler mHandler = new Handler();
@@ -459,13 +459,13 @@ public class FilesFragment extends AbstractFragment implements
             if (mPresenter.getDirectory() != null && mPresenter.getDirectory().directory != null)
                 mFileWatcher.startWatching(mPresenter.getDirectory().directory.getPath());
         }
-        OperationObserverManager.instance().addOperationListener(this);
+        // OperationObserverManager.instance().addOperationListener(this);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        OperationObserverManager.instance().removeOperationListener(this);
+        // OperationObserverManager.instance().removeOperationListener(this);
         for (Iterator<Map.Entry<String, MaterialDialog>> iterator = mDialogMaps.entrySet().iterator(); iterator.hasNext(); ) {
             Map.Entry<String, MaterialDialog> entry = iterator.next();
             MaterialDialog dialog = entry.getValue();
@@ -724,8 +724,8 @@ public class FilesFragment extends AbstractFragment implements
                 mFabMenu.setVisibility(View.VISIBLE);
                 mFabPaste.setVisibility(View.GONE);
                 break;
-            case EventConst.EVENT_ID_SHOW_PROGRESS:
-                onRemoteOperationStart(((ShowProgressEvent)event).getOperation());
+            /*case EventConst.EVENT_ID_SHOW_PROGRESS:
+                onRemoteOperationStart(((ShowProgressEvent)event).getOperation());*/
         }
     }
 
@@ -735,8 +735,9 @@ public class FilesFragment extends AbstractFragment implements
 
     private ConcurrentHashMap<String, MaterialDialog> mDialogMaps = new ConcurrentHashMap<>();
 
-    @Override
+    /*@Override
     public void onRemoteOperationStart(Operation operation) {
+        FileUtils.copyFileToDirectory();
         if(operation instanceof RemoteOperation) {
             RemoteOperation remoteOperation = (RemoteOperation)operation;
             if (isCurrentStorageProvider(remoteOperation.getOperationContext().getStorageProviderId())) {
@@ -874,5 +875,5 @@ public class FilesFragment extends AbstractFragment implements
                 }
             }
         }}
-    }
+    }*/
 }

@@ -1,18 +1,16 @@
 package org.cryse.unifystorage.explorer.service;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
 import org.cryse.unifystorage.explorer.event.CancelTaskEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
@@ -20,18 +18,12 @@ import org.cryse.unifystorage.explorer.event.FrontUIDismissEvent;
 import org.cryse.unifystorage.explorer.event.NewTaskEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
 import org.cryse.unifystorage.explorer.event.ShowProgressEvent;
-import org.cryse.unifystorage.explorer.service.operation.CreateFolderOperation;
-import org.cryse.unifystorage.explorer.service.operation.DeleteOperation;
-import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
-import org.cryse.unifystorage.explorer.service.operation.OnRemoteOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.OnOperationListener;
 import org.cryse.unifystorage.explorer.service.operation.Operation;
-import org.cryse.unifystorage.explorer.service.operation.OperationObserverManager;
-import org.cryse.unifystorage.explorer.service.operation.OperationStatus;
-import org.cryse.unifystorage.explorer.service.operation.RemoteOperationResult;
+import org.cryse.unifystorage.explorer.service.operation.OperationState;
 import org.cryse.unifystorage.explorer.service.task.RemoteTask;
 import org.cryse.unifystorage.explorer.service.task.Task;
 import org.cryse.unifystorage.explorer.utils.RxSubscriptionUtils;
-import org.cryse.unifystorage.utils.FileSizeUtils;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,19 +32,43 @@ import rx.functions.Action1;
 
 public class OperationService extends Service {
     private static final String LOG_TAG = OperationService.class.getSimpleName();
-    private ConcurrentHashMap<String, OperationStatus> mOperationStatusMap;
+    private ConcurrentHashMap<String, Operation> mOperationMap;
     RxEventBus mEventBus = RxEventBus.instance();
     Subscription mEventSubscription;
     Handler mOperationListenerHandler;
-    NotificationManager mNotifyManager;
+    NotificationHelper mNotificationHelper;
+
+    BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int tokenInt = intent.getIntExtra("tokenInt", 0);
+            String token = intent.getStringExtra("token");
+
+            Operation operation = mOperationMap.get(token);
+            if(operation != null) {
+                switch (intent.getAction()) {
+                    case "org.cryse.unifystorage.ACTION_CANCEL_OPERATION":
+                        operation.cancel();
+                        break;
+                    case "org.cryse.unifystorage.ACTION_PAUSE_OPERATION":
+                            try {
+                                operation.pause();
+                            } catch (InterruptedException e) {
+                                Log.e("ABC", e.getMessage(), e);
+                            }
+                        break;
+                }
+            }
+
+        }
+    };
 
     @Override
     public void onCreate() {
         super.onCreate();
         mOperationListenerHandler = new Handler();
-        mOperationStatusMap = new ConcurrentHashMap<>();
-        mNotifyManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mOperationMap = new ConcurrentHashMap<>();
+        mNotificationHelper = new NotificationHelper(this);
         mEventSubscription = mEventBus.toObservable().subscribe(new Action1<AbstractEvent>() {
             @Override
             public void call(AbstractEvent abstractEvent) {
@@ -69,12 +85,20 @@ public class OperationService extends Service {
                 }
             }
         });
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("org.cryse.unifystorage.ACTION_DISMISS_OPERATION");
+        intentFilter.addAction("org.cryse.unifystorage.ACTION_CANCEL_OPERATION");
+        intentFilter.addAction("org.cryse.unifystorage.ACTION_PAUSE_OPERATION");
+        intentFilter.addAction("org.cryse.unifystorage.ACTION_SHOW_FRONT_OPERATION");
+        this.registerReceiver(mBroadcastReceiver, intentFilter);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         RxSubscriptionUtils.checkAndUnsubscribe(mEventSubscription);
+        unregisterReceiver(mBroadcastReceiver);
+        mNotificationHelper.destroy();
     }
 
     @Nullable
@@ -82,7 +106,6 @@ public class OperationService extends Service {
     public IBinder onBind(Intent intent) {
         return new OperationBinder(this);
     }
-
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -117,137 +140,67 @@ public class OperationService extends Service {
 
     private void onFrontUIDismissEvent(FrontUIDismissEvent event) {
         String token = event.getToken();
-        OperationStatus status = mOperationStatusMap.get(token);
+        /*OperationStatus status = mOperationMap.get(token);
         if(status != null) {
             status.setShouldShowNotification(true);
         } else {
 
-        }
+        }*/
     }
 
     private String newTask(Task task) {
-        Operation operation = task.getOperation(this);
-        String operationToken = operation.getOperationToken();
-        Operation.OperationContext operationContext = task.getOperationContext(this);
-        if(task.shouldQueue()) {
-            // Add to Queue
-            // Pair<RemoteTask, RemoteOperation> taskPair = Pair.create(task, operation);
-            Thread thread = operation.executeAsync(operationContext, mOnRemoteOperationListener, mOperationListenerHandler);
-            OperationStatus status = new OperationStatus.Builder()
-                    .token(operationToken)
-                    .operation(operation)
-                    .workThread(thread)
-                    .showNotification(false)
-                    .build();
-            mOperationStatusMap.put(operationToken, status);
-        } else {
-            // Run async parallel
-            Thread thread = operation.executeAsync(operationContext, mOnRemoteOperationListener, mOperationListenerHandler);
-            OperationStatus status = new OperationStatus.Builder()
-                    .token(operationToken)
-                    .operation(operation)
-                    .workThread(thread)
-                    .showNotification(false)
-                    .build();
-            mOperationStatusMap.put(operationToken, status);
+        String token = task.generateToken();
+        Operation operation = mOperationMap.get(token);
+        if(operation == null) {
+            operation = task.getOperation(this, mOnOperationListener, mOperationListenerHandler);
+            mOperationMap.put(token, operation);
+            if(task.shouldQueue()) {
+                operation.executeInBackground();
+            } else {
+                operation.executeInBackground();
+            }
         }
-        return operationToken;
+        return token;
     }
 
     public void cancelOperation(String token) {
-        OperationStatus status = mOperationStatusMap.get(token);
-        if(status != null) {
-            status.cancel();
+        Operation operation = mOperationMap.get(token);
+        if(operation != null) {
+            operation.cancel();
         }
     }
 
     public void showProgressDialog(String token) {
-        OperationStatus status = mOperationStatusMap.get(token);
-        if(status != null) {
-            RxEventBus.instance().sendEvent(new ShowProgressEvent(status.getOperation()));
+        Operation operation = mOperationMap.get(token);
+        if(operation != null) {
+            RxEventBus.instance().sendEvent(new ShowProgressEvent(operation));
         }
     }
 
-    public void showNotificationForOperation(OperationStatus status) {
-        NotificationCompat.Builder notificationBuilder = status.getNotificationBuilder();
-        if(notificationBuilder == null) {
-            notificationBuilder = new NotificationCompat.Builder(OperationService.this);
-
-            Intent clickIntent = new Intent(this, OperationService.class);
-            clickIntent.setAction("show_progress_dialog");
-            clickIntent.putExtra("type", "notification_action");
-            clickIntent.putExtra("token", status.getToken());
-            PendingIntent clickPendingIntent =
-                    PendingIntent.getService(this, 0, clickIntent, 0);
-
-            Intent cancelIntent = new Intent(this, OperationService.class);
-            cancelIntent.setAction("cancel_task");
-            cancelIntent.putExtra("type", "notification_action");
-            cancelIntent.putExtra("token", status.getToken());
-            PendingIntent cancelPendingIntent = PendingIntent.getService(this, 1, cancelIntent, 0);
-
-            Intent cancel2Intent = new Intent(this, OperationService.class);
-            cancel2Intent.setAction("asdf");
-            cancel2Intent.putExtra("type", "notification_action");
-            cancel2Intent.putExtra("token", status.getToken());
-            PendingIntent cancel2PendingIntent = PendingIntent.getService(this, 2, cancel2Intent, 0);
-
-
-            status.setNotificationBuilder(notificationBuilder);
-            notificationBuilder
-                    .setContentIntent(clickPendingIntent)
-                    .addAction(R.drawable.ic_action_cancel, getString(R.string.dialog_button_cancel), cancelPendingIntent)
-                    .addAction(R.drawable.ic_action_archive, getString(R.string.dialog_title_running), cancel2PendingIntent);
-        }
-
-        Operation operation = status.getOperation();
-        int notificationId = status.getTokenInt();
-        int iconResId = R.mipmap.ic_launcher;
-        String title = getString(R.string.dialog_title_running);
-        String content = getString(R.string.dialog_content_please_wait);
-        long current = status.getCurrent();
-        long total = status.getTotal();
-        int newPercent = (int) Math.round(((double) current / (double) total) * 100.0d);
-        boolean indeterminate = true;
-        if(operation instanceof DownloadOperation) {
-            title = getString(R.string.dialog_title_downloading_file);
-            content = getString(
-                    R.string.dialog_content_download_file_progress,
-                    FileSizeUtils.humanReadableByteCount(current, false),
-                    FileSizeUtils.humanReadableByteCount(total, false)
-            );
-            indeterminate = false;
-        } else if(operation instanceof DeleteOperation) {
-            title = getString(R.string.dialog_title_deleting_file);
-            content = getString(R.string.dialog_content_delete_file_progress, current, total);
-        } else if(operation instanceof CreateFolderOperation) {
-            title = getString(R.string.dialog_title_downloading_file);
-            content = getString(R.string.dialog_title_creating_directory);
-        } else {
-
-        }
-
-        notificationBuilder.setContentTitle(title)
-                .setContentText(content)
-                .setSmallIcon(iconResId).setStyle(new NotificationCompat.BigTextStyle()
-                .bigText(content))
-                .setProgress(100, newPercent, indeterminate)
-                .setOngoing(true);
-
-        // startForeground(notificationId, progressNotificationBuilder.build());
-        mNotifyManager.notify(notificationId, notificationBuilder.build());
-    }
-
-    private void cancelNotificationForOperation(OperationStatus status) {
-        mNotifyManager.cancel(status.getTokenInt());
-        status.setShouldShowNotification(false);
-        status.setNotificationBuilder(null);
-        /*if(mOperationStatusMap.isEmpty())
-            stopForeground(true);*/
-    }
-
-    private OnRemoteOperationListener mOnRemoteOperationListener = new OnRemoteOperationListener() {
+    private OnOperationListener mOnOperationListener = new OnOperationListener() {
         @Override
+        public void onOperationStateChanged(Operation operation, OperationState state) {
+            switch (state) {
+                case NEW:
+                    mNotificationHelper.buildForSummary(operation.getSummary());
+                    break;
+                case RUNNING:
+                    break;
+                case COMPLETED:
+                    mNotificationHelper.cancelNotification(operation.getSummary());
+                    break;
+                case FAILED:
+                    mNotificationHelper.cancelNotification(operation.getSummary());
+                    break;
+            }
+        }
+
+        @Override
+        public void onOperationProgress(Operation operation, long currentItemRead, long currentItemSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
+            mNotificationHelper.updateNotification(operation.getSummary());
+        }
+
+        /*@Override
         public void onRemoteOperationStart(Operation operation) {
             String token = operation.getOperationToken();
             OperationStatus status = mOperationStatusMap.get(token);
@@ -281,7 +234,7 @@ public class OperationService extends Service {
                     showNotificationForOperation(status);
                 }
             }
-        }
+        }*/
     };
 
     public static class OperationBinder extends Binder {

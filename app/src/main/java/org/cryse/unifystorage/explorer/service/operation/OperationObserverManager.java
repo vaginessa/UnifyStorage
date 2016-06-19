@@ -5,10 +5,10 @@ import android.os.Handler;
 
 import java.util.ArrayList;
 
-public class OperationObserverManager implements OnRemoteOperationListener {
+public class OperationObserverManager implements OnOperationListener {
     private static OperationObserverManager instance;
     private Handler mHandler;
-    private final ArrayList<OnRemoteOperationListener> mOperationListeners;
+    private final ArrayList<OnOperationListener> mOperationListeners;
 
     public static void init(Context context) {
         if (instance == null) {
@@ -29,13 +29,13 @@ public class OperationObserverManager implements OnRemoteOperationListener {
         mOperationListeners = new ArrayList<>();
     }
 
-    public void addOperationListener(OnRemoteOperationListener listener) {
+    public void addOperationListener(OnOperationListener listener) {
         synchronized (mOperationListeners) {
             mOperationListeners.add(listener);
         }
     }
 
-    public void removeOperationListener(OnRemoteOperationListener listener) {
+    public void removeOperationListener(OnOperationListener listener) {
         synchronized (mOperationListeners) {
             mOperationListeners.remove(listener);
         }
@@ -48,33 +48,22 @@ public class OperationObserverManager implements OnRemoteOperationListener {
     }
 
     @Override
-    public void onRemoteOperationStart(Operation operation) {
+    public void onOperationStateChanged(Operation operation, OperationState state) {
         synchronized (mOperationListeners) {
-            for (OnRemoteOperationListener listener : mOperationListeners) {
+            for (OnOperationListener listener : mOperationListeners) {
                 if (listener != null) {
-                    listener.onRemoteOperationStart(operation);
+                    listener.onOperationStateChanged(operation, state);
                 }
             }
         }
     }
 
     @Override
-    public void onRemoteOperationFinish(Operation operation, RemoteOperationResult result) {
+    public void onOperationProgress(Operation operation, long currentRead, long currentSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
         synchronized (mOperationListeners) {
-            for (OnRemoteOperationListener listener : mOperationListeners) {
+            for (OnOperationListener listener : mOperationListeners) {
                 if (listener != null) {
-                    listener.onRemoteOperationFinish(operation, result);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onRemoteOperationProgress(Operation operation, long current, long total) {
-        synchronized (mOperationListeners) {
-            for (OnRemoteOperationListener listener : mOperationListeners) {
-                if (listener != null) {
-                    listener.onRemoteOperationProgress(operation, current, total);
+                    listener.onOperationProgress(operation, currentRead, currentSize, itemIndex, itemCount, totalRead, totalSize);
                 }
             }
         }

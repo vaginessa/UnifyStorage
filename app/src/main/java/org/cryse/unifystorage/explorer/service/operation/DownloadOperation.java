@@ -1,14 +1,19 @@
 package org.cryse.unifystorage.explorer.service.operation;
 
+import android.content.Context;
 import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
+import org.cryse.unifystorage.StorageProvider;
+import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.utils.http.ProgressResponseBody;
+import org.cryse.unifystorage.utils.FileSizeUtils;
 import org.cryse.unifystorage.utils.Path;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.concurrent.CancellationException;
 
 import okhttp3.Call;
 import okhttp3.Interceptor;
@@ -18,52 +23,28 @@ import okhttp3.Response;
 import okio.BufferedSink;
 import okio.Okio;
 
-public class DownloadOperation extends RemoteOperation {
+public class DownloadOperation extends RemoteOperation<DownloadOperation.Params> {
     public static final String OP_NAME = "OP_DOWNLOAD";
-    private String mToken;
-    private RemoteFile mRemoteFile;
-    private String mSavePath;
     private Call mCall;
+    private Request mRequest;
+    private OkHttpClient mOkHttpClient;
     private WeakReference<Interceptor> mDebugInterceptor;
 
-    public DownloadOperation(String operationToken, RemoteFile remoteFile, String savePath) {
-        super(operationToken);
-        this.mToken = operationToken;
-        this.mRemoteFile = remoteFile;
-        this.mSavePath = savePath;
+    public DownloadOperation(String token, DownloadOperation.Params params) {
+        super(token, params);
     }
 
-    public void setDebugInterceptor(Interceptor interceptor) {
-        mDebugInterceptor = new WeakReference<>(interceptor);
+    public DownloadOperation(String token, Params params, OnOperationListener listener, Handler listenerHandler) {
+        super(token, params, listener, listenerHandler);
     }
 
     @Override
-    public boolean shouldRefresh() {
-        return false;
-    }
-
-    @Override
-    public String getOperationName() {
-        return OP_NAME;
-    }
-
-    @Override
-    protected RemoteOperationResult run(RemoteOperationContext operationContext, final OnRemoteOperationListener listener, final Handler listenerHandler) {
-        if (listenerHandler != null && listener != null) {
-            listenerHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onRemoteOperationStart(
-                            DownloadOperation.this
-                    );
-                }
-            });
-        }
+    protected RemoteOperationResult runOperation() {
+        StorageProvider storageProvider = getParams().getSourceStorageProvider();
         try {
-            Request request = operationContext.getStorageProvider().download(mRemoteFile);
-
-            final File targetFile = new File(mSavePath);
-            String parentDirectoryPath = Path.getDirectory(mSavePath);
+            mRequest = storageProvider.download(getParams().getRemoteFile());
+            final File targetFile = new File(getParams().getSavePath());
+            String parentDirectoryPath = Path.getDirectory(getParams().getSavePath());
             if (parentDirectoryPath != null) {
                 File parentDirectory = new File(parentDirectoryPath);
                 if (!parentDirectory.exists()) parentDirectory.mkdirs();
@@ -85,20 +66,21 @@ public class DownloadOperation extends RemoteOperation {
                                                         int lastPercent = 0;
                                                         @Override
                                                         public void update(final long bytesRead, final long contentLength, boolean done) {
+                                                            if(shouldCancel()) {
+                                                                throw new CancellationException();
+                                                            }
                                                             int newPercent = (int) Math.round(((double) bytesRead / (double) contentLength) * 100.0d);
                                                             if (done) {
                                                             } else {
-                                                                if (listenerHandler != null && listener != null && (bytesRead - lastReadBytes > 1024 * 1024 || newPercent > lastPercent)) {
-                                                                    listenerHandler.post(new Runnable() {
-                                                                        @Override
-                                                                        public void run() {
-                                                                            listener.onRemoteOperationProgress(
-                                                                                    DownloadOperation.this,
-                                                                                    bytesRead,
-                                                                                    contentLength
-                                                                            );
-                                                                        }
-                                                                    });
+                                                                if ((bytesRead - lastReadBytes > 1024 * 1024 || newPercent > lastPercent)) {
+                                                                    notifyOperationProgress(
+                                                                            bytesRead,
+                                                                            contentLength,
+                                                                            0,
+                                                                            0,
+                                                                            0,
+                                                                            0
+                                                                    );
                                                                 }
                                                                 lastReadBytes = bytesRead;
                                                                 lastPercent = newPercent;
@@ -113,14 +95,16 @@ public class DownloadOperation extends RemoteOperation {
             if (mDebugInterceptor != null && mDebugInterceptor.get() != null) {
                 builder.addNetworkInterceptor(mDebugInterceptor.get());
             }
-            OkHttpClient okHttpClient = builder.build();
+            mOkHttpClient = builder.build();
             try {
-                mCall = okHttpClient.newCall(request);
+                mCall = mOkHttpClient.newCall(mRequest);
                 Response response = mCall.execute();
                 BufferedSink sink = Okio.buffer(Okio.sink(targetFile));
                 sink.writeAll(response.body().source());
                 sink.close();
             } catch (final IOException e) {
+                return new RemoteOperationResult(e);
+            } catch (final CancellationException e) {
                 return new RemoteOperationResult(e);
             }
             // Maybe should call mDownloadListener.onFinished() here.
@@ -132,7 +116,62 @@ public class DownloadOperation extends RemoteOperation {
         return new RemoteOperationResult(RemoteOperationResult.ResultCode.OK);
     }
 
+    @Override
+    protected void onBuildNotificationForState(OperationState state) {
+        switch (state) {
+            case NEW:
+                getSummary().title.set("Downloading " + getParams().getRemoteFile().getName());
+                getSummary().content.set("Preparing...");
+                getSummary().simpleContent.set("Preparing...");
+        }
+    }
+
+    @Override
+    protected void onBuildNotificationForProgress(long currentRead, long currentSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
+        getSummary().displayPercent = getSummary().currentSizePercent;
+        getSummary().content.set(String.format("%s / %s", FileSizeUtils.humanReadableByteCount(currentRead, false), FileSizeUtils.humanReadableByteCount(currentSize, false)));
+        getSummary().simpleContent.set(String.format("%s / %s", FileSizeUtils.humanReadableByteCount(currentRead, false), FileSizeUtils.humanReadableByteCount(currentSize, false)));
+    }
+
+    public void setDebugInterceptor(Interceptor interceptor) {
+        mDebugInterceptor = new WeakReference<>(interceptor);
+    }
+
+    @Override
+    public boolean shouldRefresh() {
+        return false;
+    }
+
+    @Override
+    public String getOperationName() {
+        return OP_NAME;
+    }
+
     public String getSavePath() {
-        return mSavePath;
+        return getParams().getSavePath();
+    }
+
+    public static class Params extends RemoteOperation.Params {
+        private RemoteFile mRemoteFile;
+        private String mSavePath;
+        public Params(
+                Context context,
+                StorageProviderInfo sourceProviderInfo,
+                StorageProviderInfo targetProviderInfo,
+                RemoteFile remoteFile,
+                String savePath
+        ) {
+            super(context, sourceProviderInfo, targetProviderInfo);
+            this.mRemoteFile = remoteFile;
+            this.mSavePath = savePath;
+        }
+
+        public RemoteFile getRemoteFile() {
+            return mRemoteFile;
+        }
+
+        public String getSavePath() {
+            return mSavePath;
+        }
     }
 }

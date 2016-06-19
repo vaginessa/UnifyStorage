@@ -53,18 +53,16 @@ public class FilesPresenter implements FilesContract.Presenter {
 
     protected FilesPresenter(
             FilesContract.View filesView,
-            int storageProviderRecordId,
-            Credential credential,
+            StorageProviderInfo storageProviderInfo,
             StorageProvider storageProvider,
             ThreadExecutor threadExecutor,
             PostExecutionThread postExecutionThread,
-            FileCacheRepository fileCacheRepository,
-            String[] extras
+            FileCacheRepository fileCacheRepository
     ) {
         this.mFilesView = filesView;
         this.mRxStorageProvider = new RxStorageProvider(storageProvider);
-        this.mStorageProviderInfo = new StorageProviderInfo(storageProviderRecordId, credential, extras);
-        this.mStorageProviderRecord = StorageProviderManager.instance().loadStorageProviderRecord(storageProviderRecordId);
+        this.mStorageProviderInfo = storageProviderInfo;
+        this.mStorageProviderRecord = StorageProviderManager.instance().loadStorageProviderRecord(storageProviderInfo.getStorageProviderId());
         this.mThreadExecutor = threadExecutor;
         this.mPostExecutionThread = postExecutionThread;
         this.mFileCacheRepository = fileCacheRepository;
@@ -379,8 +377,7 @@ public class FilesPresenter implements FilesContract.Presenter {
     }
 
     public static class Builder extends BasePresenter.Builder<FilesContract.Presenter, FilesContract.View> {
-        private int providerId;
-        private Credential credential;
+        private StorageProviderInfo storageProviderInfo;
         private StorageProvider storageProvider;
         private ThreadExecutor threadExecutor;
         private PostExecutionThread postExecutionThread;
@@ -395,13 +392,11 @@ public class FilesPresenter implements FilesContract.Presenter {
         public FilesPresenter build() {
             return new FilesPresenter(
                     view,
-                    providerId,
-                    credential,
+                    storageProviderInfo,
                     storageProvider,
                     threadExecutor,
                     postExecutionThread,
-                    fileCacheRepository,
-                    extras
+                    fileCacheRepository
             );
         }
 
@@ -427,23 +422,13 @@ public class FilesPresenter implements FilesContract.Presenter {
             return this;
         }
 
-        public Builder providerId(int providerId) {
-            this.providerId = providerId;
-            return this;
-        }
-
-        public Builder credential(Credential credential) {
-            this.credential = credential;
+        public Builder storageProviderInfo(StorageProviderInfo storageProviderInfo) {
+            this.storageProviderInfo = storageProviderInfo;
             return this;
         }
 
         public Builder storageProvider(StorageProvider storageProvider) {
             this.storageProvider = storageProvider;
-            return this;
-        }
-
-        public Builder extras(String[] extras) {
-            this.extras = extras;
             return this;
         }
     }

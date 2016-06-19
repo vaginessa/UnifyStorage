@@ -66,6 +66,8 @@ dependencies {
 
     compile libDependencies.commons_io
 
+    compile libDependencies.bolts_tasks
+
     compile libDependencies.rxjava
     compile libDependencies.rxandroid
 

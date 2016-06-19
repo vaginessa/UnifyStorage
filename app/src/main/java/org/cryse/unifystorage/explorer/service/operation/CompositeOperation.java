@@ -1,20 +1,21 @@
 package org.cryse.unifystorage.explorer.service.operation;
 
 import android.os.Handler;
-import android.support.v4.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 
-public class CompositeOperation extends Operation<CompositeOperation.CompositeOperationContext, CompositeOperation.CompositeOperationResult> {
-    public static final String OP_NAME = "OP_DELETE";
-    private boolean mBreakOnError;
+public class CompositeOperation extends Operation<CompositeOperation.Params, CompositeOperation.Result> {
+    public static final String OP_NAME = "OP_COMPOSITE";
 
-    public CompositeOperation(String operationToken, boolean breakOnError) {
-        super(operationToken);
-        mBreakOnError = breakOnError;
+    public CompositeOperation(String token, Params params) {
+        super(token, params);
+    }
+
+    public CompositeOperation(String token, Params params, OnOperationListener listener, Handler listenerHandler) {
+        super(token, params, listener, listenerHandler);
     }
 
     @Override
@@ -23,62 +24,71 @@ public class CompositeOperation extends Operation<CompositeOperation.CompositeOp
     }
 
     @Override
-    protected CompositeOperationResult run(CompositeOperationContext operationContext, OnRemoteOperationListener listener, Handler listenerHandler) {
-        CompositeOperationResult compositeOperationResult = new CompositeOperationResult();
-        for(Pair<OperationContext, Operation> operationPair : operationContext.getOperations()) {
-            compositeOperationResult.addResult(operationPair.second.run(operationPair.first, listener, listenerHandler));
+    protected Result runOperation() {
+        Result compositeOperationResult = new Result();
+        List<Operation> operations = getParams().getOperations();
+        int operationCount = operations.size();
+        for (int i = 0; i < operations.size(); i++) {
+            Operation operation = operations.get(i);
+            try {
+                notifyOperationProgress(0, 0, i + 1, operationCount, 0, 0);
+                compositeOperationResult.addResult(operation.call());
+            } catch (Exception e) {
+                compositeOperationResult.addResult(new RemoteOperationResult(e));
+                break;
+            }
         }
         return compositeOperationResult;
     }
 
     @Override
-    public void run() {
+    protected void onBuildNotificationForState(OperationState state) {
 
     }
 
     @Override
-    public CompositeOperationResult execute(CompositeOperationContext operationContext, OnRemoteOperationListener listener, Handler listenerHandler) {
-        return null;
+    protected void onBuildNotificationForProgress(long currentRead, long currentSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
+
     }
 
-    @Override
-    public Thread executeAsync(CompositeOperationContext operationContext, OnRemoteOperationListener listener, Handler listenerHandler) {
-        return null;
-    }
+    public static class Params extends Operation.Params {
+        private ArrayList<Operation> mOperations;
 
-    @Override
-    public CompositeOperationContext getOperationContext() {
-        return null;
-    }
-
-    public static class CompositeOperationContext extends Operation.OperationContext {
-        private ArrayList<Pair<OperationContext, Operation>> mOperations;
-
-        public CompositeOperationContext() {
+        public Params() {
             mOperations = new ArrayList<>();
         }
 
-        public void addOperation(OperationContext context, Operation operation) {
-            mOperations.add(Pair.create(context, operation));
+        public void addOperation(Operation operation) {
+            mOperations.add(operation);
         }
 
-        public List<Pair<OperationContext, Operation>> getOperations() {
+        public List<Operation> getOperations() {
             return mOperations;
         }
     }
 
-    public static class CompositeOperationResult extends Operation.OperationResult {
-        private ArrayList<OperationResult> mResults;
-        public CompositeOperationResult() {
+    public static class Result extends Operation.Result {
+        private ArrayList<Operation.Result> mResults;
+        public Result() {
             mResults = new ArrayList<>();
         }
 
-        public void addResult(OperationResult result) {
+        public void addResult(Operation.Result result) {
             mResults.add(result);
         }
 
-        public Collection<OperationResult> getResults() {
+        public Collection<Operation.Result> getResults() {
             return mResults;
+        }
+
+        @Override
+        public boolean isSuccess() {
+            return true;
+        }
+
+        @Override
+        public Exception getException() {
+            return null;
         }
     }
 }

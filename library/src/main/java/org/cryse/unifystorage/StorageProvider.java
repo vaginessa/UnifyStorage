@@ -6,12 +6,13 @@ import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.ProgressCallback;
 
 import java.io.InputStream;
+import java.util.List;
 
-import okhttp3.Call;
 import okhttp3.Request;
-import okhttp3.ResponseBody;
 
 public interface StorageProvider {
+    boolean isRemote();
+
     String getStorageProviderName();
 
     RemoteFile getRootDirectory() throws StorageException;
@@ -19,6 +20,8 @@ public interface StorageProvider {
     DirectoryInfo list(DirectoryInfo directoryInfo) throws StorageException;
 
     DirectoryInfo list() throws StorageException;
+
+    List<RemoteFile> listRecursive(RemoteFile[] remoteFiles) throws StorageException;
 
     RemoteFile createDirectory(RemoteFile parent, String name) throws StorageException;
 
@@ -56,9 +59,13 @@ public interface StorageProvider {
 
     OperationResult deleteFile(RemoteFile file);
 
-    void copyFile(RemoteFile target, final ProgressCallback callback, RemoteFile...files);
+    void copyFile(RemoteFile targetParent, RemoteFile file) throws StorageException;
 
-    void moveFile(RemoteFile target, final ProgressCallback callback, RemoteFile...files);
+    void copyFile(RemoteFile targetParent, RemoteFile file, final ProgressCallback callback) throws StorageException;
+
+    void moveFile(RemoteFile targetParent, RemoteFile file) throws StorageException;
+
+    void moveFile(RemoteFile targetParent, RemoteFile file, final ProgressCallback callback) throws StorageException;
 
     RemoteFile getFileDetail(RemoteFile file) throws StorageException;
 

@@ -23,7 +23,7 @@ allprojects {
     ext.appMinSdkVersion = 19
     ext.appTargetSdkVersion = 23
     ext.appCompileSdkVersion = 23
-    ext.appBuildToolsVersion = '24 rc4'
+    ext.appBuildToolsVersion = '24'
 }
 
 task clean(type: Delete) {

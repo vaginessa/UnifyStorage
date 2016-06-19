@@ -347,28 +347,7 @@ public class RxStorageProvider {
                     }
                     final int totalFileCount = files.length;
                     final int[] currentFileCount = new int[]{0};
-                    mStorageProvider.copyFile(target, new ProgressCallback() {
-                        @Override
-                        public void onSuccess() {
-                            currentFileCount[0]++;
-                            // subscriber.onNext(Pair.create(file, true));
-                            if (currentFileCount[0] == totalFileCount)
-                                subscriber.onCompleted();
-                        }
-
-                        @Override
-                        public void onFailure(Throwable throwable) {
-                            currentFileCount[0]++;
-                            // subscriber.onNext(Pair.create(file, false));
-                            if (currentFileCount[0] == totalFileCount)
-                                subscriber.onCompleted();
-                        }
-
-                        @Override
-                        public void onProgress(long current, long max) {
-
-                        }
-                    }, files);
+                    // mStorageProvider.copyFile(target, files);
                 } catch (Throwable throwable) {
                     subscriber.onError(throwable);
                 }

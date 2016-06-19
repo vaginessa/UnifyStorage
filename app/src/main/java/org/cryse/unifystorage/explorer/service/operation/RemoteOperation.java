@@ -7,90 +7,61 @@ import org.cryse.unifystorage.StorageProvider;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 
-public abstract class RemoteOperation extends Operation<RemoteOperation.RemoteOperationContext, RemoteOperationResult> {
+
+public abstract class RemoteOperation<P extends RemoteOperation.Params> extends Operation<P, RemoteOperationResult> {
     private static final String TAG = RemoteOperation.class.getSimpleName();
 
-    private RemoteOperationContext mOperationContext;
-
-    private OnRemoteOperationListener mListener = null;
-    private Handler mListenerHandler = null;
-
-    public RemoteOperation(String operationToken) {
-        super(operationToken);
+    public RemoteOperation(String token, P params) {
+        super(token, params);
     }
 
-    @Override
-    protected abstract RemoteOperationResult run(RemoteOperationContext operationContext, OnRemoteOperationListener listener, Handler listenerHandler);
+    public RemoteOperation(String token, P params, OnOperationListener listener, Handler listenerHandler) {
+        super(token, params, listener, listenerHandler);
+    }
 
     public boolean shouldRefresh() {
         return true;
     }
 
-    @Override
-    public RemoteOperationResult execute(RemoteOperationContext operationContext,
-                                   OnRemoteOperationListener listener, Handler listenerHandler) {
-        mOperationContext = operationContext;
-        return run(mOperationContext, listener, listenerHandler);
-    }
+    public static class Params extends Operation.Params {
+        private StorageProvider mSourceStorageProvider;
+        private StorageProvider mTargetStorageProvider;
+        private StorageProviderInfo mSourceStorageProviderInfo;
+        private StorageProviderInfo mTargetStorageProviderInfo;
 
-    public Thread executeAsync(RemoteOperationContext context,
-                               OnRemoteOperationListener listener, Handler listenerHandler) {
-        mOperationContext = context;
-        mListener = listener;
-        mListenerHandler = listenerHandler;
+        public Params(Context context, StorageProviderInfo sourceProviderInfo, StorageProviderInfo targetProviderInfo) {
+            this.mSourceStorageProviderInfo = sourceProviderInfo;
+            this.mTargetStorageProviderInfo = targetProviderInfo;
 
-        Thread runnerThread = new Thread(this);
-        runnerThread.start();
-        return runnerThread;
-    }
-
-    @Override
-    public final void run() {
-        RemoteOperationResult result = null;
-        if(mOperationContext == null || mOperationContext.getStorageProvider() == null) {
-                // Log_OC.e(TAG, "Error while trying to access to " + mAccount.name, e);
-                result = new RemoteOperationResult(new IllegalArgumentException());
-        }
-
-        // First Check status here
-
-        // If there's no error, run
-        if (result == null)
-            result = run(mOperationContext, mListener, mListenerHandler);
-
-        final RemoteOperationResult resultToSend = result;
-        if (mListenerHandler != null && mListener != null) {
-            mListenerHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mListener.onRemoteOperationFinish(RemoteOperation.this, resultToSend);
-                }
-            });
-        }
-    }
-
-    public final RemoteOperationContext getOperationContext() {
-        return mOperationContext;
-    }
-
-    public static class RemoteOperationContext extends Operation.OperationContext {
-        private StorageProvider mStorageProvider;
-        private StorageProviderInfo mStorageProviderInfo;
-
-        public RemoteOperationContext(Context context, StorageProviderInfo providerInfo) {
-            mStorageProviderInfo = providerInfo;
-            mStorageProvider = StorageProviderManager.instance().createStorageProvider(
+            mSourceStorageProvider = StorageProviderManager.instance().createStorageProvider(
                     context,
-                    providerInfo
+                    mSourceStorageProviderInfo
             );
+            if(targetProviderInfo.getStorageProviderId() == sourceProviderInfo.getStorageProviderId() &&
+                    targetProviderInfo.getStorageProviderType() == sourceProviderInfo.getStorageProviderType()) {
+                mTargetStorageProvider = mSourceStorageProvider;
+            } else {
+                mTargetStorageProvider = StorageProviderManager.instance().createStorageProvider(
+                        context,
+                        mTargetStorageProviderInfo
+                );
+            }
         }
 
-        public StorageProvider getStorageProvider() {
-            return mStorageProvider;
+        public StorageProvider getSourceStorageProvider() {
+            return mSourceStorageProvider;
         }
 
-        public int getStorageProviderId() {
-            return mStorageProviderInfo.getStorageProviderId();
+        public StorageProvider getTargetStorageProvider() {
+            return mTargetStorageProvider;
+        }
+
+        public int getSourceStorageProviderId() {
+            return mSourceStorageProviderInfo.getStorageProviderId();
+        }
+
+        public int getTargetStorageProviderId() {
+            return mTargetStorageProviderInfo.getStorageProviderId();
         }
     }
 }

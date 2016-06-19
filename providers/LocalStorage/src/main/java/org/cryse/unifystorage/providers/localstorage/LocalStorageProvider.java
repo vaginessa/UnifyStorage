@@ -53,6 +53,11 @@ public class LocalStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
+    public boolean isRemote() {
+        return false;
+    }
+
+    @Override
     public String getStorageProviderName() {
         return LocalProviderConst.NAME_STORAGE_PROVIDER;
     }
@@ -159,47 +164,13 @@ public class LocalStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public void copyFile(RemoteFile target, final ProgressCallback callback, RemoteFile...files) {
-        List<File> sourceFileList = new ArrayList<>();
-        List<File> targetFileList = new ArrayList<>();
-        for(RemoteFile remoteFile : files) {
-            LocalStorageFile file = (LocalStorageFile)remoteFile;
-            File localFile = file.getFile();
-            if(localFile.isDirectory()) {
-                Collection<File> allSubFiles = LocalStorageUtils.listFilesRecursive(localFile);
-                sourceFileList.addAll(allSubFiles);
-                for(File subFile : allSubFiles) {
-                    File targetFile = new File(subFile.getPath().replace(Path.getDirectory(localFile.getPath()), target.getPath()));
-                    targetFileList.add(targetFile);
-                }
-            } else {
-                sourceFileList.add(localFile);
-                File targetFile = new File(localFile.getPath().replace(Path.getDirectory(localFile.getPath()), target.getPath()));
-                targetFileList.add(targetFile);
-            }
-        }
-        int sourceFileListCount = sourceFileList.size();
+    public void copyFile(RemoteFile targetParent, RemoteFile file) throws StorageException {
 
-        for(int i = 0; i < sourceFileListCount; i++) {
-            copyFileSingle(sourceFileList.get(i), targetFileList.get(i), callback);
-        }
+    }
 
-        /*File fromFile = file.getFile();
-        if(fromFile.isDirectory()) {
-            StringBuilder builder = new StringBuilder();
-            StringBuilder stargetBuilder = new StringBuilder();
-            Collection<File> allSubFiles = FileUtils.listFiles(fromFile, null, true);
-            for (File sub : allSubFiles) {
-                builder.append(sub.getPath()).append("\n");
-                stargetBuilder.append(sub.getPath().replace(Path.getDirectory(fromFile.getPath()), target.getPath())).append("\n");
-            }
-            String fileList = builder.toString();
-            String newfileList = stargetBuilder.toString();
-            int len = fileList.length();
-            int len2 = newfileList.length();
-        } else {
-            copyFileSingle(fromFile, new File(Path.combine(target.getPath(), file.getName())), callback);
-        }*/
+    @Override
+    public void copyFile(RemoteFile targetParent, RemoteFile file, ProgressCallback callback) throws StorageException {
+
     }
 
     private void copyFileSingle(File sourceFile, File targetFile, final ProgressCallback callback) {
@@ -265,7 +236,7 @@ public class LocalStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public void moveFile(RemoteFile target, final ProgressCallback callback, RemoteFile...files){
+    public void moveFile(RemoteFile targetParent, RemoteFile file) throws StorageException {
         /*try {
             InputStream input = new FileInputStream(file.getFile());
             ProgressInputStream progressInputStream = new ProgressInputStream(input, file.size());progressInputStream.addListener(new StreamProgressListener() {
@@ -285,6 +256,11 @@ public class LocalStorageProvider extends AbstractStorageProvider {
             if(callback != null)
                 callback.onFailure(e);
         }*/
+    }
+
+    @Override
+    public void moveFile(RemoteFile targetParent, RemoteFile file, ProgressCallback callback) throws StorageException {
+
     }
 
     @Override

@@ -1,19 +1,21 @@
 package org.cryse.unifystorage.explorer.service.operation;
 
+import android.content.Context;
 import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageException;
+import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 
-public class CreateFolderOperation extends RemoteOperation {
+public class CreateFolderOperation extends RemoteOperation<CreateFolderOperation.Params> {
     public static final String OP_NAME = "OP_CREATE_FOLDER";
-    private RemoteFile mParent;
-    private String mFolderName;
 
-    public CreateFolderOperation(String operationToken, RemoteFile parent, String folderName) {
-        super(operationToken);
-        this.mParent = parent;
-        this.mFolderName = folderName;
+    public CreateFolderOperation(String token, Params params) {
+        super(token, params);
+    }
+
+    public CreateFolderOperation(String token, Params params, OnOperationListener listener, Handler listenerHandler) {
+        super(token, params, listener, listenerHandler);
     }
 
     @Override
@@ -22,22 +24,46 @@ public class CreateFolderOperation extends RemoteOperation {
     }
 
     @Override
-    protected RemoteOperationResult run(RemoteOperationContext operationContext, final OnRemoteOperationListener listener, Handler listenerHandler) {
-        if (listenerHandler != null && listener != null) {
-            listenerHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    listener.onRemoteOperationStart(
-                            CreateFolderOperation.this
-                    );
-                }
-            });
-        }
+    protected RemoteOperationResult runOperation() {
+        RemoteOperationResult result;
         try {
-            RemoteFile remoteFile = operationContext.getStorageProvider().createDirectory(mParent, mFolderName);
-            return new RemoteOperationResult(remoteFile);
+            RemoteFile remoteFile = getParams().getSourceStorageProvider().createDirectory(
+                    getParams().getParentFile(),
+                    getParams().getFolderName()
+            );
+            result = new RemoteOperationResult(remoteFile);
         } catch (StorageException ex) {
-            return new RemoteOperationResult(ex);
+            result = new RemoteOperationResult(ex);
+        }
+        return result;
+    }
+
+    @Override
+    protected void onBuildNotificationForState(OperationState state) {
+
+    }
+
+    @Override
+    protected void onBuildNotificationForProgress(long currentRead, long currentSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
+
+    }
+
+    public static class Params extends RemoteOperation.Params {
+        private RemoteFile mParentFile;
+        private String mFolderName;
+
+        public Params(Context context, StorageProviderInfo providerInfo, RemoteFile parentFile, String name) {
+            super(context, providerInfo, providerInfo);
+            this.mParentFile = parentFile;
+            this.mFolderName = name;
+        }
+
+        public RemoteFile getParentFile() {
+            return mParentFile;
+        }
+
+        public String getFolderName() {
+            return mFolderName;
         }
     }
 }

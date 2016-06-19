@@ -1,10 +1,13 @@
 package org.cryse.unifystorage.explorer.service.task;
 
 import android.content.Context;
+import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
+import org.cryse.unifystorage.explorer.service.operation.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.Operation;
 import org.cryse.unifystorage.explorer.service.operation.RemoteOperation;
 import org.cryse.unifystorage.explorer.utils.HashUtils;
 
@@ -22,16 +25,23 @@ public class DownloadTask extends RemoteTask {
     }
 
     @Override
-    public DownloadOperation getOperation(Context context) {
+    public Operation getOperation(Context context, OnOperationListener listener, Handler listenerHandler) {
         return new DownloadOperation(
                 generateToken(),
-                mRemoteFile,
-                mSavePath
+                new DownloadOperation.Params(
+                        context,
+                        getProviderInfo(),
+                        getProviderInfo(),
+                        mRemoteFile,
+                        mSavePath
+                ),
+                listener,
+                listenerHandler
         );
     }
 
     @Override
-    protected String generateToken() {
+    public String generateToken() {
         return String.format(
                 Locale.getDefault(),
                 "%s-%d-%s-%s-%s",

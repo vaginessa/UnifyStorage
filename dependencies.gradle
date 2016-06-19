@@ -15,6 +15,7 @@ ext {
     commonsioVersion = '2.4'
     fabVersion = '1.6.2'
     retrofitVersion = '2.0.0'
+    boltsVersion = '1.4.0'
 
     libDependencies = [
             // Test
@@ -40,6 +41,8 @@ ext {
             // RX
             rxjava: "io.reactivex:rxjava:$rxVersion",
             rxandroid: "io.reactivex:rxandroid:$rxVersion",
+
+            bolts_tasks: "com.parse.bolts:bolts-tasks:$boltsVersion",
 
             // Network
             okhttp: "com.squareup.okhttp3:okhttp:$okhttpVersion",

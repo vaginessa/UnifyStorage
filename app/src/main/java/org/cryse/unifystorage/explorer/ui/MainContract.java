@@ -4,6 +4,7 @@ import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import org.cryse.unifystorage.explorer.base.BasePresenter;
 import org.cryse.unifystorage.explorer.base.BaseView;
+import org.cryse.unifystorage.explorer.model.StorageProviderType;
 
 public interface MainContract {
     interface View extends BaseView<Presenter> {
@@ -16,6 +17,6 @@ public interface MainContract {
 
         void onNavigationSelected(IDrawerItem drawerItem);
 
-        void addNewProvider(String displayName, String userName, int providerType, String credentialData, String extraData);
+        void addNewProvider(String displayName, String userName, StorageProviderType providerType, String credentialData, String extraData);
     }
 }

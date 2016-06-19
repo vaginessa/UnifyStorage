@@ -30,7 +30,7 @@ import okhttp3.Headers;
  *
  * @author David A. Velasco
  */
-public class RemoteOperationResult extends Operation.OperationResult implements Serializable {
+public class RemoteOperationResult extends Operation.Result implements Serializable {
 
     /** Generated - should be refreshed every time the class changes!! */;
     private static final long serialVersionUID = 1129130415603799707L;

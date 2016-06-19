@@ -61,6 +61,11 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
+    public boolean isRemote() {
+        return true;
+    }
+
+    @Override
     public String getStorageProviderName() {
         return DropboxConst.NAME_STORAGE_PROVIDER;
     }
@@ -265,12 +270,22 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public void copyFile(RemoteFile target, ProgressCallback callback, RemoteFile... files) {
+    public void copyFile(RemoteFile targetParent, RemoteFile file) throws StorageException {
 
     }
 
     @Override
-    public void moveFile(RemoteFile target, ProgressCallback callback, RemoteFile... files) {
+    public void copyFile(RemoteFile targetParent, RemoteFile file, ProgressCallback callback) throws StorageException {
+
+    }
+
+    @Override
+    public void moveFile(RemoteFile targetParent, RemoteFile file) throws StorageException {
+
+    }
+
+    @Override
+    public void moveFile(RemoteFile targetParent, RemoteFile file, ProgressCallback callback) throws StorageException {
 
     }
 

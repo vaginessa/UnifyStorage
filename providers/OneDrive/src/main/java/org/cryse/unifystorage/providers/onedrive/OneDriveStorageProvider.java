@@ -14,6 +14,7 @@ import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
+import org.cryse.unifystorage.io.FileUtils;
 import org.cryse.unifystorage.providers.onedrive.model.RefreshToken;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.unifystorage.utils.OperationResult;
@@ -125,6 +126,11 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
         } catch (IOException ex) {
             throw new StorageException();
         }
+    }
+
+    @Override
+    public boolean isRemote() {
+        return true;
     }
 
     @Override
@@ -353,7 +359,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public void copyFile(RemoteFile target, final ProgressCallback callback, RemoteFile...files) throws StorageException {
+    public void copyFile(RemoteFile targetParent, RemoteFile file) throws StorageException {
         /*final ItemReference parentReference = new ItemReference();
         parentReference.id = target.getId();
 
@@ -403,7 +409,17 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public void moveFile(RemoteFile targe, final ProgressCallback callback, RemoteFile...files) throws StorageException {
+    public void copyFile(RemoteFile targetParent, RemoteFile file, ProgressCallback callback) throws StorageException {
+
+    }
+
+    @Override
+    public void moveFile(RemoteFile targetParent, RemoteFile file) throws StorageException {
+
+    }
+
+    @Override
+    public void moveFile(RemoteFile targetParent, RemoteFile file, ProgressCallback callback) throws StorageException {
 
     }
 

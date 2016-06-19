@@ -1,11 +1,13 @@
 package org.cryse.unifystorage.explorer.service.task;
 
 import android.content.Context;
+import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.service.operation.CreateFolderOperation;
-import org.cryse.unifystorage.explorer.service.operation.RemoteOperation;
+import org.cryse.unifystorage.explorer.service.operation.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.Operation;
 import org.cryse.unifystorage.explorer.utils.HashUtils;
 
 import java.util.Locale;
@@ -22,16 +24,23 @@ public class CreateFolderTask extends RemoteTask {
     }
 
     @Override
-    public CreateFolderOperation getOperation(Context context) {
+    public Operation getOperation(Context context, OnOperationListener listener, Handler listenerHandler) {
+
         return new CreateFolderOperation(
                 generateToken(),
-                mParentFile,
-                mName
+                new CreateFolderOperation.Params(
+                        context,
+                        getProviderInfo(),
+                        mParentFile,
+                        mName
+                ),
+                listener,
+                listenerHandler
         );
     }
 
     @Override
-    protected String generateToken() {
+    public String generateToken() {
         return String.format(
                 Locale.getDefault(),
                 "%s-%d-%s-%s-%s",

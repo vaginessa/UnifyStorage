@@ -1,7 +1,9 @@
 package org.cryse.unifystorage.explorer.service.task;
 
 import android.content.Context;
+import android.os.Handler;
 
+import org.cryse.unifystorage.explorer.service.operation.OnOperationListener;
 import org.cryse.unifystorage.explorer.service.operation.Operation;
 
 public abstract class Task {
@@ -11,12 +13,15 @@ public abstract class Task {
         this.mShouldQueue = shouldQueue;
     }
 
-    public abstract Operation getOperation(Context context);
-    public abstract Operation.OperationContext getOperationContext(Context context);
+    public Operation getOperation(Context context) {
+        return getOperation(context, null, null);
+    }
+
+    public abstract Operation getOperation(Context context, OnOperationListener listener, Handler listenerHandler);
 
     public boolean shouldQueue() {
         return mShouldQueue;
     }
 
-    protected abstract String generateToken();
+    public abstract String generateToken();
 }

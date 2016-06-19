@@ -12,6 +12,7 @@ import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
+import org.cryse.unifystorage.explorer.model.StorageProviderType;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
 import org.cryse.unifystorage.providers.dropbox.DropboxStorageProvider;
@@ -99,7 +100,7 @@ public class StorageProviderManager {
             record.setId(externalStorageTypes[i]);
             record.setUserName("");
             record.setCredentialData("");
-            record.setProviderType(StorageProviderRecord.PROVIDER_LOCAL_STORAGE);
+            record.setProviderType(StorageProviderType.LOCAL_STORAGE.getValue());
             record.setExtraData(externalStoragePaths[i]);
             record.setSortKey(externalStorageTypes[i]);
             record.setUuid("");
@@ -136,14 +137,15 @@ public class StorageProviderManager {
             // Other StorageProvider
             StorageProvider storageProvider = null;
             StorageProviderRecord record = mUnifyStorageDatabase.getSavedStorageProvider(id);
-            switch (record.getProviderType()) {
-                case StorageProviderRecord.PROVIDER_DROPBOX:
+            StorageProviderType type = StorageProviderType.fromInt(record.getProviderType());
+            switch (type) {
+                case DROPBOX:
                     storageProvider = new DropboxStorageProvider(mOkHttpClient, (DropboxCredential) credential, (String)extra[0]);
                     break;
-                case StorageProviderRecord.PROVIDER_ONE_DRIVE:
+                case ONE_DRIVE:
                     storageProvider = new OneDriveStorageProvider(mOkHttpClient, (OneDriveCredential) credential, (String)extra[0]);
                     break;
-                case StorageProviderRecord.PROVIDER_GOOGLE_DRIVE:
+                case GOOGLE_DRIVE:
                     break;
             }
             return storageProvider;

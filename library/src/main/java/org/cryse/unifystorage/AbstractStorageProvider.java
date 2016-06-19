@@ -5,6 +5,8 @@ import org.cryse.unifystorage.utils.DirectoryInfo;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class AbstractStorageProvider implements StorageProvider {
     protected OnTokenRefreshListener mOnTokenRefreshListener = null;
@@ -15,6 +17,28 @@ public abstract class AbstractStorageProvider implements StorageProvider {
 
     public DirectoryInfo list() throws StorageException {
         return list(DirectoryInfo.fromDirectory(getRootDirectory()));
+    }
+
+    @Override
+    public List<RemoteFile> listRecursive(RemoteFile[] remoteFiles) throws StorageException {
+        List<RemoteFile> resultList = new ArrayList<>();
+        for(RemoteFile remoteFile : remoteFiles) {
+            listFilesRecursive(resultList, remoteFile);
+        }
+        return resultList;
+    }
+
+    private void listFilesRecursive(List<RemoteFile> list, RemoteFile file) {
+        list.add(file);
+        if(file.isDirectory()) {
+            DirectoryInfo directoryInfo = list(DirectoryInfo.fromDirectory(file));
+            while(directoryInfo.hasMore) {
+                directoryInfo = list(directoryInfo);
+            }
+            for(RemoteFile childFile : directoryInfo.files) {
+                listFilesRecursive(list, childFile);
+            }
+        }
     }
 
     public abstract RemoteFile createDirectory(RemoteFile parent, String name) throws StorageException;

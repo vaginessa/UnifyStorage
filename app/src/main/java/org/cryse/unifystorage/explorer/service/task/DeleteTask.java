@@ -1,10 +1,13 @@
 package org.cryse.unifystorage.explorer.service.task;
 
 import android.content.Context;
+import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.service.operation.DeleteOperation;
+import org.cryse.unifystorage.explorer.service.operation.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.Operation;
 import org.cryse.unifystorage.explorer.service.operation.RemoteOperation;
 import org.cryse.unifystorage.explorer.utils.HashUtils;
 
@@ -20,15 +23,22 @@ public class DeleteTask extends RemoteTask {
     }
 
     @Override
-    public RemoteOperation getOperation(Context context) {
+    public Operation getOperation(Context context, OnOperationListener listener, Handler listenerHandler) {
         return new DeleteOperation(
                 generateToken(),
-                mFiles
+                new DeleteOperation.Params(
+                        context,
+                        getProviderInfo(),
+                        getProviderInfo(),
+                        mFiles
+                ),
+                listener,
+                listenerHandler
         );
     }
 
     @Override
-    protected String generateToken() {
+    public String generateToken() {
         StringBuilder builder = new StringBuilder();
         for(RemoteFile remoteFile : mFiles) {
             builder.append(remoteFile.getId()).append("$\\/$");

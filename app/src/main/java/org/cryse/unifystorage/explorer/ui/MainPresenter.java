@@ -6,9 +6,13 @@ import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
+import org.cryse.unifystorage.StorageProvider;
+import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.StorageProviderManager;
+import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
+import org.cryse.unifystorage.explorer.model.StorageProviderType;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 
 import java.util.ArrayList;
@@ -35,36 +39,39 @@ public class MainPresenter implements MainContract.Presenter {
     private void buildDrawerItems() {
         List<IDrawerItem> drawerItems = new ArrayList<>();
         List<StorageProviderRecord> storageProviderRecords = StorageProviderManager.instance().loadStorageProviderRecordsWithLocal(mContext);
-        for(StorageProviderRecord record : storageProviderRecords) {
+        for(StorageProviderRecord record1 : storageProviderRecords) {
+            StorageProviderInfo providerInfo = StorageProviderInfo.fromRecord(record1);
             PrimaryDrawerItem item = new PrimaryDrawerItem();
-            item.withName(record.getDisplayName()).withSelectable(false).withIdentifier(record.getId());
-            switch (record.getProviderType()) {
-                case StorageProviderRecord.PROVIDER_LOCAL_STORAGE:
-                    if(record.getId() == DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE) {
-                        item.withTag(record.getExtraData())
+            item.withName(providerInfo.getDisplayName()).withSelectable(false).withIdentifier(providerInfo.getStorageProviderId());
+            switch (providerInfo.getStorageProviderType()) {
+                case LOCAL_STORAGE:
+                    if(providerInfo.getStorageProviderId() == DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE) {
+                        item.withTag(providerInfo)
                                 .withIcon(R.drawable.ic_drawer_internal_storage);
-                    } else if(record.getId() <= DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START) {
-                        item.withTag(record.getExtraData())
+                    } else if(providerInfo.getStorageProviderId() <= DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START) {
+                        item.withTag(providerInfo)
                                 .withIcon(R.drawable.ic_drawer_sdcard);
                     } else {
-                        item.withTag(record)
+                        item.withTag(providerInfo)
                                 .withIcon(R.drawable.ic_format_folder);
                     }
                     break;
-                case StorageProviderRecord.PROVIDER_DROPBOX:
-                    item.withTag(record)
+                case DROPBOX:
+                    providerInfo.setExtras(new String[] {DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER});
+                    item.withTag(providerInfo)
                             .withIcon(R.drawable.ic_icon_dropbox);
                     break;
-                case StorageProviderRecord.PROVIDER_ONE_DRIVE:
-                    item.withTag(record)
+                case ONE_DRIVE:
+                    providerInfo.setExtras(new String[] {DataContract.CONST_ONEDRIVE_CLIENT_ID});
+                    item.withTag(providerInfo)
                             .withIcon(R.drawable.ic_icon_onedrive);
                     break;
-                case StorageProviderRecord.PROVIDER_GOOGLE_DRIVE:
-                    item.withTag(record)
+                case GOOGLE_DRIVE:
+                    item.withTag(providerInfo)
                             .withIcon(R.drawable.ic_icon_googledrive);
                     break;
                 default:
-                    item.withTag(record)
+                    item.withTag(providerInfo)
                             .withIcon(R.drawable.ic_drawer_cloud);
             }
             drawerItems.add(item);
@@ -95,8 +102,8 @@ public class MainPresenter implements MainContract.Presenter {
     }
 
     @Override
-    public void addNewProvider(String displayName, String userName, int providerType, String credentialData, String extraData) {
-        StorageProviderManager.instance().addStorageProviderRecord(displayName, userName, providerType, credentialData, extraData);
+    public void addNewProvider(String displayName, String userName, StorageProviderType providerType, String credentialData, String extraData) {
+        StorageProviderManager.instance().addStorageProviderRecord(displayName, userName, providerType.getValue(), credentialData, extraData);
     }
 
     @Override
