@@ -128,12 +128,13 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
     protected void notifyOperationProgress(
             final long currentRead,
             final long currentSize,
+            final long currentSpeed,
             final long itemIndex,
             final long itemCount,
             final long totalRead,
             final long totalSize
     ) {
-        mSummary.setProgress(currentRead, currentSize, itemIndex, itemCount, totalRead, totalSize);
+        mSummary.setProgress(currentRead, currentSize, currentSpeed, itemIndex, itemCount, totalRead, totalSize);
         if (getListenerHandler() != null && getListener() != null) {
             getListenerHandler().post(new Runnable() {
                 @Override
@@ -142,6 +143,7 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
                             Operation.this,
                             currentRead,
                             currentSize,
+                            currentSpeed,
                             itemIndex,
                             itemCount,
                             totalRead,

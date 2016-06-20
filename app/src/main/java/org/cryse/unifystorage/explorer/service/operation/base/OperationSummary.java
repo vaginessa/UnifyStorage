@@ -11,6 +11,7 @@ public class OperationSummary {
     public long totalSize;
     public long currentItemSize;
     public long currentItemReadSize;
+    public long currentSpeed;
     public double totalCountPercent;
     public double totalSizePercent;
     public double currentSizePercent;
@@ -25,16 +26,19 @@ public class OperationSummary {
         totalSize = 0;
         currentItemSize = 0;
         currentItemReadSize = 0;
+        currentSpeed = 0;
     }
 
     public void setProgress(long currentItemReadSize,
                             long currentItemSize,
+                            long currentSpeed,
                             long itemIndex,
                             long itemCount,
                             long totalReadSize,
                             long totalSize) {
         this.currentItemReadSize = currentItemReadSize;
         this.currentItemSize = currentItemSize;
+        this.currentSpeed = currentSpeed;
         this.itemIndex = itemIndex;
         this.itemCount = itemCount;
         this.totalReadSize = totalReadSize;

@@ -200,7 +200,7 @@ public class OperationService extends Service {
         }
 
         @Override
-        public void onOperationProgress(Operation operation, long currentItemRead, long currentItemSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
+        public void onOperationProgress(Operation operation, long currentItemRead, long currentItemSize, long currentSpeed, long itemIndex, long itemCount, long totalRead, long totalSize) {
             mNotificationHelper.updateNotification(operation);
         }
 

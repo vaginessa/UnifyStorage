@@ -6,6 +6,7 @@ public interface OnOperationListener {
             Operation operation,
             long currentItemRead,
             long currentItemSize,
+            long currentSpeed,
             long itemIndex,
             long itemCount,
             long totalRead,

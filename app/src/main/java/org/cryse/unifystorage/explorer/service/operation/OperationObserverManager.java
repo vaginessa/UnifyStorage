@@ -63,11 +63,11 @@ public class OperationObserverManager implements OnOperationListener {
     }
 
     @Override
-    public void onOperationProgress(Operation operation, long currentRead, long currentSize, long itemIndex, long itemCount, long totalRead, long totalSize) {
+    public void onOperationProgress(Operation operation, long currentRead, long currentSize, long currentSpeed, long itemIndex, long itemCount, long totalRead, long totalSize) {
         synchronized (mOperationListeners) {
             for (OnOperationListener listener : mOperationListeners) {
                 if (listener != null) {
-                    listener.onOperationProgress(operation, currentRead, currentSize, itemIndex, itemCount, totalRead, totalSize);
+                    listener.onOperationProgress(operation, currentRead, currentSize, currentSpeed, itemIndex, itemCount, totalRead, totalSize);
                 }
             }
         }

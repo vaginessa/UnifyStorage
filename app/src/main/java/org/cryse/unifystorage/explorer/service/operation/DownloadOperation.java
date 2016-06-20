@@ -44,6 +44,12 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
     }
 
     @Override
+    protected void prepareOperation() {
+        super.prepareOperation();
+        getSummary().currentItemSize = getParams().getRemoteFile().size();
+    }
+
+    @Override
     protected RemoteOperationResult runOperation() {
         StorageProvider storageProvider = getParams().getSourceStorageProvider();
         try {
@@ -86,14 +92,15 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
                                                                     notifyOperationProgress(
                                                                             bytesRead,
                                                                             contentLength,
+                                                                            bytesRead - lastReadBytes,
                                                                             0,
                                                                             0,
                                                                             0,
                                                                             0
                                                                     );
                                                                     lastReportMs = System.currentTimeMillis();
+                                                                    lastReadBytes = bytesRead;
                                                                 }
-                                                                lastReadBytes = bytesRead;
                                                                 lastPercent = newPercent;
                                                             }
                                                         }
