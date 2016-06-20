@@ -16,6 +16,8 @@ public interface FilesContract {
 
         void onLeaveDirectory(DirectoryInfo directory);
 
+        void updatePath(String path);
+
         void showFiles(DirectoryInfo directory, @Nullable CollectionViewState collectionViewState);
 
         void showError(DirectoryInfo directory, Throwable throwable);
@@ -55,6 +57,8 @@ public interface FilesContract {
         void loadFiles(DirectoryInfo directoryInfo, boolean forceUpdate);
 
         void loadFiles(DirectoryInfo directoryInfo, boolean forceUpdate, boolean showLoadingUI, CollectionViewState collectionViewState);
+
+        void loadFiles(String targetPath, boolean forceUpdate, boolean showLoadingUI, CollectionViewState collectionViewState);
 
         void createFile();
 

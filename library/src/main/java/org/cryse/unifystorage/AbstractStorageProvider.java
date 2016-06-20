@@ -20,6 +20,11 @@ public abstract class AbstractStorageProvider implements StorageProvider {
     }
 
     @Override
+    public DirectoryInfo list(String path) throws StorageException {
+        return list(DirectoryInfo.fromDirectory(getFile(path)));
+    }
+
+    @Override
     public List<RemoteFile> listRecursive(RemoteFile[] remoteFiles) throws StorageException {
         List<RemoteFile> resultList = new ArrayList<>();
         for(RemoteFile remoteFile : remoteFiles) {
@@ -82,9 +87,7 @@ public abstract class AbstractStorageProvider implements StorageProvider {
 
     public abstract RemoteFile getFile(RemoteFile parent, String name) throws StorageException;
 
-    public RemoteFile getFile(String name) throws StorageException {
-        return getFile(getRootDirectory(), name);
-    }
+    public abstract RemoteFile getFile(String path) throws StorageException;
 
     public abstract RemoteFile getFileById(String id) throws StorageException;
 

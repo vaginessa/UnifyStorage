@@ -492,6 +492,11 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     @Override
+    public void updatePath(String path) {
+        updateBreadcrumb(path);
+    }
+
+    @Override
     public void showFiles(DirectoryInfo directory, @Nullable CollectionViewState collectionViewState) {
         if (mCollectionView.isLoadingMore()) {
             isLoadingMore.set(false);
@@ -511,7 +516,7 @@ public class FilesFragment extends AbstractFragment implements
             } else {
                 showNoFilesView();
             }
-            updateBreadcrumb(directory.directory.getPath());
+            // updateBreadcrumb(directory.directory.getPath());
         } else {
             showNoFilesView();
         }
@@ -520,7 +525,7 @@ public class FilesFragment extends AbstractFragment implements
     @Override
     public void showError(DirectoryInfo directory, Throwable throwable) {
         if (directory != null && directory.directory != null) {
-            updateBreadcrumb(directory.directory.getPath());
+            // updateBreadcrumb(directory.directory.getPath());
         }
         if (directory != null)
             mCollectionAdapter.replaceWith(directory.files);

@@ -123,6 +123,11 @@ public class LocalStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
+    public LocalStorageFile getFile(String path) throws StorageException {
+        return new LocalStorageFile(new File(path));
+    }
+
+    @Override
     public LocalStorageFile getFileById(String id) throws StorageException {
         File target = new File(id);
         if(target.exists())

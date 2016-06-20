@@ -1,6 +1,7 @@
 package org.cryse.unifystorage.explorer.interactor;
 
-import org.cryse.unifystorage.RemoteFile;
+import android.text.TextUtils;
+
 import org.cryse.unifystorage.RxStorageProvider;
 import org.cryse.unifystorage.explorer.executor.PostExecutionThread;
 import org.cryse.unifystorage.explorer.executor.ThreadExecutor;
@@ -20,10 +21,12 @@ public class GetFilesUseCase extends UseCase<GetFilesUseCase.RequestValues, UseC
 
     @Override public Observable<SingleResponseValue<DirectoryInfo>> buildUseCaseObservable(RequestValues requestValues) {
         Observable<DirectoryInfo> observable;
-        if(requestValues.directoryInfo == null)
-            observable = this.rxStorageProvider.list();
-        else
+        if(requestValues.directoryInfo != null)
             observable = this.rxStorageProvider.list(requestValues.directoryInfo);
+        else if(!TextUtils.isEmpty(requestValues.path))
+            observable = this.rxStorageProvider.list(requestValues.path);
+        else
+            observable = this.rxStorageProvider.list();
         return observable.map(new Func1<DirectoryInfo, SingleResponseValue<DirectoryInfo>>() {
             @Override
             public SingleResponseValue<DirectoryInfo> call(DirectoryInfo directoryInfo) {
@@ -34,9 +37,16 @@ public class GetFilesUseCase extends UseCase<GetFilesUseCase.RequestValues, UseC
 
     public static class RequestValues extends UseCase.RequestValues {
         public final DirectoryInfo directoryInfo;
+        public final String path;
 
         public RequestValues(DirectoryInfo directoryInfo) {
             this.directoryInfo = directoryInfo;
+            this.path = null;
+        }
+
+        public RequestValues(String path) {
+            this.directoryInfo = null;
+            this.path = path;
         }
     }
 }

@@ -1,6 +1,8 @@
 package org.cryse.unifystorage.explorer.files;
 
 
+import android.text.TextUtils;
+
 import org.cryse.unifystorage.AbstractFile;
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RxStorageProvider;
@@ -123,6 +125,7 @@ public class FilesPresenter implements FilesContract.Presenter {
                     mFilesView.onLeaveDirectory(mDirectory);
                     this.mDirectory = mBackwardStack.get(i).directory;
                     mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
+                    mFilesView.updatePath(mDirectory.directory.getPath());
                     mFilesView.showFiles(mDirectory, mBackwardStack.get(i).collectionViewState);
                     // mFilesView.onCollectionViewStateRestore(mBackwardStack.get(i).collectionViewState);
                 }
@@ -131,9 +134,10 @@ public class FilesPresenter implements FilesContract.Presenter {
                 mFilesView.showFiles(mDirectory);
                 mFilesView.setLoadingIndicator(false);
                 mFilesView.onCollectionViewStateRestore(mBackwardStack.get(i).collectionViewState);*/
-                break;
+                return;
             }
         }
+        loadFiles(targetPath, true, true, null);
     }
 
     public boolean onBackPressed() {
@@ -147,6 +151,7 @@ public class FilesPresenter implements FilesContract.Presenter {
             } else {
                 mFilesView.onLeaveDirectory(mDirectory);
                 mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
+                mFilesView.updatePath(mDirectory.directory.getPath());
                 mFilesView.showFiles(mDirectory, currentState.collectionViewState);
                 // mFilesView.onCollectionViewStateRestore(currentState.collectionViewState);
             }
@@ -173,6 +178,16 @@ public class FilesPresenter implements FilesContract.Presenter {
         if (showLoadingUI/* && ((directoryInfo != null && !directoryInfo.hasMore) || (directoryInfo == null))*/) {
             mFilesView.setLoadingIndicator(true);
         }
+        String path;
+        if(directoryInfo == null) {
+            if(mRxStorageProvider.getStorageProvider().isRemote())
+                path = "/";
+            else
+                path = mRxStorageProvider.getStorageProvider().getRootDirectory().getPath();
+        } else {
+            path = directoryInfo.directory.getPath();
+        }
+        mFilesView.updatePath(path);
         this.mGetFilesUseCase.execute(
                 new GetFilesUseCase.RequestValues(directoryInfo),
                 new DefaultSubscriber<UseCase.SingleResponseValue<DirectoryInfo>>() {
@@ -187,6 +202,51 @@ public class FilesPresenter implements FilesContract.Presenter {
                         super.onError(e);
                         mFilesView.setLoadingIndicator(false);
                         mDirectory = directoryInfo;
+                        mFilesView.showError(mDirectory, e);
+                    }
+
+                    @Override
+                    public void onNext(UseCase.SingleResponseValue<DirectoryInfo> singleResponseValue) {
+                        super.onNext(singleResponseValue);
+                        mFilesView.onLeaveDirectory(mDirectory);
+                        mDirectory = singleResponseValue.getValue();
+                        mDirectory.setShowHiddenFiles(mShowHiddenFile, mFileComparator);
+                        mFilesView.showFiles(mDirectory, state);
+                    }
+                }
+        );
+    }
+
+    @Override
+    public void loadFiles(String targetPath, boolean forceUpdate, final boolean showLoadingUI, final CollectionViewState state) {
+        if(!forceUpdate) return;
+        if (showLoadingUI/* && ((directoryInfo != null && !directoryInfo.hasMore) || (directoryInfo == null))*/) {
+            mFilesView.setLoadingIndicator(true);
+        }
+        String path;
+        if(TextUtils.isEmpty(targetPath)) {
+            if(mRxStorageProvider.getStorageProvider().isRemote())
+                path = "/";
+            else
+                path = mRxStorageProvider.getStorageProvider().getRootDirectory().getPath();
+        } else {
+            path = targetPath;
+        }
+        mFilesView.updatePath(path);
+        this.mGetFilesUseCase.execute(
+                new GetFilesUseCase.RequestValues(targetPath),
+                new DefaultSubscriber<UseCase.SingleResponseValue<DirectoryInfo>>() {
+                    @Override
+                    public void onCompleted() {
+                        super.onCompleted();
+                        mFilesView.setLoadingIndicator(false);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        super.onError(e);
+                        mFilesView.setLoadingIndicator(false);
+                        mDirectory = null;
                         mFilesView.showError(mDirectory, e);
                     }
 

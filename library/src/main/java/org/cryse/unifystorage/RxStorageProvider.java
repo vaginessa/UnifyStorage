@@ -38,6 +38,20 @@ public class RxStorageProvider {
         });
     }
 
+    public Observable<DirectoryInfo> list(final String path) {
+        return Observable.create(new Observable.OnSubscribe<DirectoryInfo>() {
+            @Override
+            public void call(Subscriber<? super DirectoryInfo> subscriber) {
+                try {
+                    subscriber.onNext(mStorageProvider.list(path));
+                    subscriber.onCompleted();
+                } catch (Throwable throwable) {
+                    subscriber.onError(throwable);
+                }
+            }
+        });
+    }
+
     public Observable<DirectoryInfo> list(final DirectoryInfo directoryInfo) {
         return Observable.create(new Observable.OnSubscribe<DirectoryInfo>() {
             @Override

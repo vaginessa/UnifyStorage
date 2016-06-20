@@ -286,9 +286,14 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     }
 
     @Override
-    public RemoteFile getFile(RemoteFile parent, String name) throws StorageException {
+    public OneDriveFile getFile(RemoteFile parent, String name) throws StorageException {
+        return getFile(Path.combine(parent.getPath(), name));
+    }
+
+    @Override
+    public OneDriveFile getFile(String path) throws StorageException {
         OneDriveFile fileMetaData = null;
-        Call<JsonObject> call = mOneDriveService.getMetaDataByPath(mAuthenticationHeader, Path.combine(parent.getPath(), name));
+        Call<JsonObject> call = mOneDriveService.getMetaDataByPath(mAuthenticationHeader, path);
         try {
             Response<JsonObject> response = call.execute();
             int responseCode = response.code();

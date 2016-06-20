@@ -21,6 +21,8 @@ public interface StorageProvider {
 
     DirectoryInfo list() throws StorageException;
 
+    DirectoryInfo list(String path) throws StorageException;
+
     List<RemoteFile> listRecursive(RemoteFile[] remoteFiles) throws StorageException;
 
     RemoteFile createDirectory(RemoteFile parent, String name) throws StorageException;
@@ -43,9 +45,9 @@ public interface StorageProvider {
 
     boolean exists(String name) throws StorageException;
 
-    RemoteFile getFile(RemoteFile parent, String name) throws StorageException;
+    RemoteFile getFile(String path) throws StorageException;
 
-    RemoteFile getFile(String name) throws StorageException;
+    RemoteFile getFile(RemoteFile parent, String name) throws StorageException;
 
     RemoteFile getFileById(String id) throws StorageException;
 

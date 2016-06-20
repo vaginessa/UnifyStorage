@@ -195,9 +195,14 @@ public class DropboxStorageProvider extends AbstractStorageProvider {
 
     @Override
     public DropboxFile getFile(RemoteFile parent, String name) throws StorageException {
+        return getFile(Path.combine(parent.getPath(), name));
+    }
+
+    @Override
+    public DropboxFile getFile(String path) throws StorageException {
         DropboxFile fileMetaData = null;
         JsonObject requestData = new DropboxRequestDataBuilder()
-                .getMetaData(Path.combine(parent.getPath(), name))
+                .getMetaData(path)
                 .build();
         Call<JsonObject> call = mDropboxService.getMetaData(mAuthenticationHeader, requestData);
         try {
