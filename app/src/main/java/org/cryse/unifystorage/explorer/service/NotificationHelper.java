@@ -9,7 +9,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v7.app.NotificationCompat;
 
+import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
+import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
 import org.cryse.unifystorage.explorer.service.operation.base.Operation;
 import org.cryse.unifystorage.explorer.service.operation.base.OperationState;
 import org.cryse.unifystorage.explorer.service.operation.base.OperationSummary;
@@ -28,13 +30,11 @@ public class NotificationHelper {
     BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            int tokenInt = intent.getIntExtra("tokenInt", 0);
+            int tokenInt = intent.getIntExtra(DataContract.Argument.OperationTokenInt, 0);
             switch (intent.getAction()) {
-                case "org.cryse.unifystorage.ACTION_DISMISS_OPERATION":
+                case DataContract.Action.CancelOperation:
                     break;
-                case "org.cryse.unifystorage.ACTION_PAUSE_OPERATION":
-                    break;
-                case "org.cryse.unifystorage.ACTION_CANCEL_OPERATION":
+                case DataContract.Action.ShowOperationDialog:
                     break;
             }
         }
@@ -45,10 +45,8 @@ public class NotificationHelper {
         this.mNotificationManager = (NotificationManager) mService.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationBuilderMap = new ConcurrentHashMap<>();
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("org.cryse.unifystorage.ACTION_DISMISS_OPERATION");
-        intentFilter.addAction("org.cryse.unifystorage.ACTION_CANCEL_OPERATION");
-        intentFilter.addAction("org.cryse.unifystorage.ACTION_PAUSE_OPERATION");
-        intentFilter.addAction("org.cryse.unifystorage.ACTION_SHOW_FRONT_OPERATION");
+        intentFilter.addAction(DataContract.Action.CancelOperation);
+        intentFilter.addAction(DataContract.Action.ShowOperationDialog);
         this.mService.registerReceiver(mBroadcastReceiver, intentFilter);
     }
 
@@ -69,17 +67,15 @@ public class NotificationHelper {
             if(notificationBuilder == null) {
                 notificationBuilder = new NotificationCompat.Builder(mService);
 
-                Intent clickIntent = new Intent("org.cryse.unifystorage.ACTION_SHOW_FRONT_OPERATION");
-                clickIntent.putExtra("type", "notification_action");
-                clickIntent.putExtra("tokenInt", tokenInt);
-                clickIntent.putExtra("token", token);
+                Intent clickIntent = new Intent(DataContract.Action.ShowOperationDialog);
+                clickIntent.putExtra(DataContract.Argument.OperationTokenInt, tokenInt);
+                clickIntent.putExtra(DataContract.Argument.OperationToken, token);
                 PendingIntent clickPendingIntent =
                         PendingIntent.getBroadcast(mService, 0, clickIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-                Intent cancelIntent = new Intent("org.cryse.unifystorage.ACTION_CANCEL_OPERATION");
-                cancelIntent.putExtra("type", "notification_action");
-                cancelIntent.putExtra("tokenInt", tokenInt);
-                cancelIntent.putExtra("token", token);
+                Intent cancelIntent = new Intent(DataContract.Action.CancelOperation);
+                cancelIntent.putExtra(DataContract.Argument.OperationTokenInt, tokenInt);
+                cancelIntent.putExtra(DataContract.Argument.OperationToken, token);
                 PendingIntent cancelPendingIntent = PendingIntent.getBroadcast(mService, 1, cancelIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
 
@@ -91,9 +87,9 @@ public class NotificationHelper {
             }
 
             int iconResId = R.mipmap.ic_launcher;
-            String title = operation.getSummaryTitle(mService);
-            String content = operation.getSimpleSummaryContent(mService);
-            int displayPercent = (int) (operation.getSummaryProgress());
+            String title = operation.getSummaryTitle(mService, true);
+            String content = operation.getProgressDescForNotification(mService);
+            int displayPercent = (int) (operation.getProgressForNotification());
             boolean indeterminate = displayPercent < 0;
 
             notificationBuilder.setContentTitle(title)
@@ -129,10 +125,17 @@ public class NotificationHelper {
         synchronized (mNotificationLock) {
             if (operation.getState() == OperationState.COMPLETED || operation.getState() == OperationState.FAILED) {
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(mService);
-                builder.setContentTitle(operation.getSummaryCompletedTitle(mService))
-                        .setContentText(operation.getSummaryCompletedContent(mService))
+
+                builder.setContentTitle(operation.getSummaryFinishedTitle(mService))
+                        .setContentText(operation.getSummaryFinishedContent(mService))
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setAutoCancel(true);
+
+                PendingIntent pendingIntent = operation.getCompletedPendingIntentForNotification(mService);
+                if(pendingIntent != null) {
+                    builder.setContentIntent(pendingIntent);
+                }
+
                 mNotificationManager.cancel(operation.getTokenInt());
                 mNotificationManager.notify(operation.getTokenInt(), builder.build());
             }

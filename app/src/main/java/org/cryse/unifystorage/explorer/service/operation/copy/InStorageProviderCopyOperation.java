@@ -27,33 +27,33 @@ public class InStorageProviderCopyOperation extends RemoteOperation<InStoragePro
     }
 
     @Override
-    public String getSummaryTitle(Context context) {
+    public String getSummaryTitle(Context context, boolean notification) {
         return null;
     }
 
     @Override
-    public String getSummaryContent(Context context) {
+    public String getSummaryContent(Context context, boolean simple) {
         return null;
     }
 
     @Override
-    public String getSimpleSummaryContent(Context context) {
+    public String getSummaryFinishedTitle(Context context) {
         return null;
     }
 
     @Override
-    public double getSummaryProgress() {
+    public String getSummaryFinishedContent(Context context) {
+        return null;
+    }
+
+    @Override
+    public double getProgressForNotification() {
         return 0;
     }
 
     @Override
-    public String getSummaryCompletedTitle(Context context) {
-        return "";
-    }
-
-    @Override
-    public String getSummaryCompletedContent(Context context) {
-        return "";
+    public String getProgressDescForNotification(Context context) {
+        return null;
     }
 
     @Override

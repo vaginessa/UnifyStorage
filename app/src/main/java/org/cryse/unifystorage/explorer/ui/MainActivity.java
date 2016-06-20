@@ -244,14 +244,14 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                                 break;
                             case 1:
                                 OneDriveAuthenticator oneDriveAuthenticator = new OneDriveAuthenticator(
-                                        DataContract.CONST_ONEDRIVE_CLIENT_ID,
-                                        DataContract.CONST_ONEDRIVE_SCOPES
+                                        DataContract.ClientIds.OneDriveClientId,
+                                        DataContract.ClientIds.OneDriveScopes
                                 );
                                 oneDriveAuthenticator.startAuthenticate(MainActivity.this, RC_AUTHENTICATE_ONEDRIVE);
                                 break;
                             case 2:
                                 DropboxAuthenticator dropboxAuthenticator = new DropboxAuthenticator(
-                                        DataContract.CONST_DROPBOX_APP_KEY
+                                        DataContract.ClientIds.DropboxAppKey
                                 );
                                 dropboxAuthenticator.startAuthenticate(MainActivity.this, RC_AUTHENTICATE_DROPBOX);
                                 break;
@@ -529,6 +529,10 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     public void setPresenter(MainContract.Presenter presenter) {
         this.mPresenter = presenter;
+    }
+
+    public OperationService.OperationBinder getOperationBinder() {
+        return mOperationBinder;
     }
 
     public static class FilesFragmentAdapter extends FragmentStatePagerAdapter {

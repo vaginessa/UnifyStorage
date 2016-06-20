@@ -8,7 +8,6 @@ import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
-import org.cryse.unifystorage.explorer.service.operation.base.OperationState;
 import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperation;
 import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperationResult;
 
@@ -44,46 +43,32 @@ public class CreateFolderOperation extends RemoteOperation<CreateFolderOperation
     }
 
     @Override
-    public String getSummaryTitle(Context context) {
+    public String getSummaryTitle(Context context, boolean notification) {
         return context.getString(R.string.operation_title_creating_folder);
     }
 
     @Override
-    public String getSummaryContent(Context context) {
-        String content = "";
-        switch (getSummary().state) {
-            case NEW:
-            case PREPARING:
-                content = context.getString(R.string.operation_content_preparing);
-                break;
-            case RUNNING:
-                content = context.getString(
-                        R.string.operation_content_creating_folder,
-                        getParams().getFolderName(),
-                        getParams().getParentFile().getPath()
-                );
-                break;
-        }
-        return content;
+    public String getSummaryContent(Context context, boolean notification) {
+        return context.getString(R.string.operation_content_creating_folder, getParams().getFolderName(), getParams().getParentFile().getName());
     }
 
     @Override
-    public String getSimpleSummaryContent(Context context) {
-        return getSummaryContent(context);
-    }
-
-    @Override
-    public double getSummaryProgress() {
-        return -1;
-    }
-
-    @Override
-    public String getSummaryCompletedTitle(Context context) {
+    public String getSummaryFinishedTitle(Context context) {
         return "";
     }
 
     @Override
-    public String getSummaryCompletedContent(Context context) {
+    public String getSummaryFinishedContent(Context context) {
+        return "";
+    }
+
+    @Override
+    public double getProgressForNotification() {
+        return -1;
+    }
+
+    @Override
+    public String getProgressDescForNotification(Context context) {
         return "";
     }
 

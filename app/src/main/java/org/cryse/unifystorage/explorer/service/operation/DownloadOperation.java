@@ -1,10 +1,13 @@
 package org.cryse.unifystorage.explorer.service.operation;
 
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.StorageProvider;
+import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
@@ -82,27 +85,21 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
                                                                 throw new CancellationException();
                                                             }
                                                             int newPercent = (int) Math.round(((double) bytesRead / (double) contentLength) * 100.0d);
-                                                            if (done) {
-                                                            } else {
-                                                                if (/*lastReadBytes == 0
-                                                                        || bytesRead - lastReadBytes > 1024 * 512
-                                                                        || newPercent > lastPercent
-                                                                        || */System.currentTimeMillis() - lastReportMs > 1000 // A least report once for every 3 seconds
-                                                                        ) {
-                                                                    notifyOperationProgress(
-                                                                            bytesRead,
-                                                                            contentLength,
-                                                                            bytesRead - lastReadBytes,
-                                                                            0,
-                                                                            0,
-                                                                            0,
-                                                                            0
-                                                                    );
-                                                                    lastReportMs = System.currentTimeMillis();
-                                                                    lastReadBytes = bytesRead;
-                                                                }
-                                                                lastPercent = newPercent;
+                                                            if (done || System.currentTimeMillis() - lastReportMs > 1000) {
+                                                                notifyOperationProgress(
+                                                                        bytesRead,
+                                                                        contentLength,
+                                                                        bytesRead - lastReadBytes,
+                                                                        1,
+                                                                        1,
+                                                                        bytesRead,
+                                                                        contentLength
+                                                                );
+                                                                lastReportMs = System.currentTimeMillis();
+                                                                lastReadBytes = bytesRead;
                                                             }
+                                                            lastPercent = newPercent;
+
                                                         }
                                                     }
                                             )
@@ -134,13 +131,15 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
         return new RemoteOperationResult(RemoteOperationResult.ResultCode.OK);
     }
 
+
+
     @Override
-    public String getSummaryTitle(Context context) {
-        return context.getString(R.string.operation_title_downloading_file);
+    public String getSummaryTitle(Context context, boolean notification) {
+        return notification ? getParams().getRemoteFile().getName() : context.getString(R.string.operation_title_downloading_file);
     }
 
     @Override
-    public String getSummaryContent(Context context) {
+    public String getSummaryContent(Context context, boolean notification) {
         String content = "";
         switch (getSummary().state) {
             case NEW:
@@ -148,33 +147,14 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
                 content = context.getString(R.string.operation_content_preparing);
                 break;
             case RUNNING:
-                if(getSummaryProgress() < 0.5) {
-                    content = context.getString(R.string.operation_content_connecting);
-                } else {
-                    content = context.getString(
-                            R.string.operation_content_downloading_file,
-                            getParams().getRemoteFile().getName(),
-                            FileSizeUtils.humanReadableByteCount(getSummary().currentItemReadSize, false),
-                            FileSizeUtils.humanReadableByteCount(getSummary().currentItemSize, false)
-                    );
-                }
+                content = context.getString(R.string.operation_content_downloading_file, getParams().getRemoteFile().getName());
                 break;
         }
         return content;
     }
 
     @Override
-    public String getSimpleSummaryContent(Context context) {
-        return getSummaryContent(context);
-    }
-
-    @Override
-    public double getSummaryProgress() {
-        return getSummary().currentSizePercent * 100.0d;
-    }
-
-    @Override
-    public String getSummaryCompletedTitle(Context context) {
+    public String getSummaryFinishedTitle(Context context) {
         if(getState() == OperationState.COMPLETED) {
             return context.getString(R.string.operation_title_download_completed);
         } else if(getState() == OperationState.FAILED) {
@@ -185,7 +165,7 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
     }
 
     @Override
-    public String getSummaryCompletedContent(Context context) {
+    public String getSummaryFinishedContent(Context context) {
         if(getState() == OperationState.COMPLETED) {
             return context.getString(R.string.operation_content_download_completed, getParams().getRemoteFile().getName());
         } else if(getState() == OperationState.FAILED) {
@@ -193,6 +173,35 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
         } else {
             return "";
         }
+    }
+
+    @Override
+    public double getProgressForNotification() {
+        return getSummary().currentSizePercent * 100.0d;
+    }
+
+    @Override
+    public String getProgressDescForNotification(Context context) {
+        return getSummary().currentProgressDesc(context);
+    }
+
+    @Override
+    public PendingIntent getCompletedPendingIntentForNotification(Context context) {
+        PendingIntent pendingIntent = null;
+        switch (getState()) {
+            case COMPLETED:
+                Intent clickIntent = new Intent(DataContract.Action.OpenFile);
+                clickIntent.putExtra(DataContract.Argument.OperationTokenInt, getTokenInt());
+                clickIntent.putExtra(DataContract.Argument.OperationToken, getToken());
+                clickIntent.putExtra(DataContract.Argument.SavePath, getParams().getSavePath());
+                clickIntent.putExtra(DataContract.Argument.ProviderId, getParams().getSourceStorageProviderId());
+                pendingIntent =
+                        PendingIntent.getBroadcast(context, 0, clickIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+                break;
+            case FAILED:
+                break;
+        }
+        return pendingIntent;
     }
 
     public void setDebugInterceptor(Interceptor interceptor) {

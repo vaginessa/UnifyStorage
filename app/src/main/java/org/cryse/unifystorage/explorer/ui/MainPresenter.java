@@ -57,12 +57,12 @@ public class MainPresenter implements MainContract.Presenter {
                     }
                     break;
                 case DROPBOX:
-                    providerInfo.setExtras(new String[] {DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER});
+                    providerInfo.setExtras(new String[] {DataContract.ClientIds.DropboxClientIdentifier});
                     item.withTag(providerInfo)
                             .withIcon(R.drawable.ic_icon_dropbox);
                     break;
                 case ONE_DRIVE:
-                    providerInfo.setExtras(new String[] {DataContract.CONST_ONEDRIVE_CLIENT_ID});
+                    providerInfo.setExtras(new String[] {DataContract.ClientIds.OneDriveClientId});
                     item.withTag(providerInfo)
                             .withIcon(R.drawable.ic_icon_onedrive);
                     break;

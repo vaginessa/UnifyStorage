@@ -1,6 +1,11 @@
 package org.cryse.unifystorage.explorer.service.operation.base;
 
 
+import android.content.Context;
+
+import org.cryse.unifystorage.explorer.R;
+import org.cryse.unifystorage.utils.FileSizeUtils;
+
 public class OperationSummary {
     public String token;
     public int tokenInt;
@@ -46,5 +51,29 @@ public class OperationSummary {
         this.totalCountPercent = (double) itemIndex/ (double) itemCount ;
         this.currentSizePercent = (double) currentItemReadSize / (double) currentItemSize;
         this.totalSizePercent = (double) totalReadSize / (double) totalSize;
+    }
+
+    public String currentProgressDesc(Context context) {
+        return context.getString(
+                R.string.operation_progress_current_item,
+                FileSizeUtils.humanReadableByteCount(currentItemReadSize, false),
+                FileSizeUtils.humanReadableByteCount(currentItemSize, false)
+        );
+    }
+
+    public String totalCountProgressDesc(Context context) {
+        return context.getString(
+                R.string.operation_progress_total_count,
+                itemIndex,
+                itemCount
+        );
+    }
+
+    public String totalSizeProgressDesc(Context context) {
+        return context.getString(
+                R.string.operation_progress_total_size,
+                FileSizeUtils.humanReadableByteCount(totalReadSize, false),
+                FileSizeUtils.humanReadableByteCount(totalSize, false)
+        );
     }
 }

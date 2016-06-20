@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.support.v4.content.FileProvider;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 
@@ -23,7 +24,8 @@ public class AndroidOpenFileUtils implements OpenFileUtils {
 
     @Override
     public void openFileByPath(String filePath, boolean useSystemSelector) {
-        openFileByUri(Uri.fromFile(new File(filePath)).toString(), useSystemSelector);
+        Uri uri = FileProvider.getUriForFile(mContext, mContext.getString(R.string.authority_file_provider), new File(filePath));
+        openFileByUri(uri.toString(), useSystemSelector);
     }
 
     @Override

@@ -42,6 +42,7 @@ public class DeleteOperation extends RemoteOperation<DeleteOperation.Params> {
                 notifyOperationProgress(
                         0,
                         0,
+                        0,
                         count - i,
                         count,
                         0,
@@ -58,12 +59,12 @@ public class DeleteOperation extends RemoteOperation<DeleteOperation.Params> {
     }
 
     @Override
-    public String getSummaryTitle(Context context) {
+    public String getSummaryTitle(Context context, boolean notification) {
         return context.getString(R.string.operation_title_deleting_files);
     }
 
     @Override
-    public String getSummaryContent(Context context) {
+    public String getSummaryContent(Context context, boolean notification) {
         String content = "";
         switch (getSummary().state) {
             case NEW:
@@ -73,7 +74,6 @@ public class DeleteOperation extends RemoteOperation<DeleteOperation.Params> {
             case RUNNING:
                 content = context.getString(
                         R.string.operation_content_deleting_files,
-                        getSummary().itemIndex,
                         getSummary().itemCount
                 );
                 break;
@@ -82,17 +82,7 @@ public class DeleteOperation extends RemoteOperation<DeleteOperation.Params> {
     }
 
     @Override
-    public String getSimpleSummaryContent(Context context) {
-        return getSummaryContent(context);
-    }
-
-    @Override
-    public double getSummaryProgress() {
-        return getSummary().totalCountPercent * 100.0d;
-    }
-
-    @Override
-    public String getSummaryCompletedTitle(Context context) {
+    public String getSummaryFinishedTitle(Context context) {
         if(getState() == OperationState.COMPLETED) {
             return context.getString(R.string.operation_title_delete_completed);
         } else if(getState() == OperationState.FAILED) {
@@ -103,7 +93,7 @@ public class DeleteOperation extends RemoteOperation<DeleteOperation.Params> {
     }
 
     @Override
-    public String getSummaryCompletedContent(Context context) {
+    public String getSummaryFinishedContent(Context context) {
         if(getState() == OperationState.COMPLETED) {
             return context.getString(R.string.operation_content_delete_completed);
         } else if(getState() == OperationState.FAILED) {
@@ -111,6 +101,16 @@ public class DeleteOperation extends RemoteOperation<DeleteOperation.Params> {
         } else {
             return "";
         }
+    }
+
+    @Override
+    public double getProgressForNotification() {
+        return getSummary().totalCountPercent;
+    }
+
+    @Override
+    public String getProgressDescForNotification(Context context) {
+        return getSummary().totalCountProgressDesc(context);
     }
 
     @Override

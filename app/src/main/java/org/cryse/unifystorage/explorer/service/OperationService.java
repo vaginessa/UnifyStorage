@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
 import org.cryse.unifystorage.explorer.event.CancelTaskEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
@@ -25,6 +26,8 @@ import org.cryse.unifystorage.explorer.service.task.RemoteTask;
 import org.cryse.unifystorage.explorer.service.task.Task;
 import org.cryse.unifystorage.explorer.utils.RxSubscriptionUtils;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import rx.Subscription;
@@ -33,6 +36,7 @@ import rx.functions.Action1;
 public class OperationService extends Service {
     private static final String LOG_TAG = OperationService.class.getSimpleName();
     private ConcurrentHashMap<String, Operation> mOperationMap;
+    private Set<OnOperationListener> mListenerSet = new HashSet<>();
     RxEventBus mEventBus = RxEventBus.instance();
     Subscription mEventSubscription;
     Handler mOperationListenerHandler;
@@ -41,16 +45,16 @@ public class OperationService extends Service {
     BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            int tokenInt = intent.getIntExtra("tokenInt", 0);
-            String token = intent.getStringExtra("token");
+            int tokenInt = intent.getIntExtra(DataContract.Argument.OperationTokenInt, 0);
+            String token = intent.getStringExtra(DataContract.Argument.OperationToken);
 
             Operation operation = mOperationMap.get(token);
             if(operation != null) {
                 switch (intent.getAction()) {
-                    case "org.cryse.unifystorage.ACTION_CANCEL_OPERATION":
+                    case DataContract.Action.CancelOperation:
                         operation.cancel();
                         break;
-                    case "org.cryse.unifystorage.ACTION_PAUSE_OPERATION":
+                    case DataContract.Action.PauseOperation:
                             try {
                                 operation.pause();
                             } catch (InterruptedException e) {
@@ -86,10 +90,8 @@ public class OperationService extends Service {
             }
         });
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("org.cryse.unifystorage.ACTION_DISMISS_OPERATION");
-        intentFilter.addAction("org.cryse.unifystorage.ACTION_CANCEL_OPERATION");
-        intentFilter.addAction("org.cryse.unifystorage.ACTION_PAUSE_OPERATION");
-        intentFilter.addAction("org.cryse.unifystorage.ACTION_SHOW_FRONT_OPERATION");
+        intentFilter.addAction(DataContract.Action.CancelOperation);
+        intentFilter.addAction(DataContract.Action.PauseOperation);
         this.registerReceiver(mBroadcastReceiver, intentFilter);
     }
 
@@ -109,23 +111,6 @@ public class OperationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(LOG_TAG, "onStartCommand");
-        if(intent != null && intent.hasExtra("type")) {
-
-            Log.d(LOG_TAG, String.format("onStartCommand: %s", intent.getStringExtra("type")));
-            if("notification_action".compareTo(intent.getStringExtra("type")) == 0) {
-                String actionName = intent.getAction();
-                String token = intent.getStringExtra("token");
-                switch (actionName) {
-                    case "cancel_task":
-                        cancelOperation(token);
-                        break;
-                    case "show_progress_dialog":
-                        showProgressDialog(token);
-                        break;
-                }
-            }
-        }
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -177,12 +162,27 @@ public class OperationService extends Service {
         }
     }
 
+    public Operation getOperation(String token) {
+        return mOperationMap.get(token);
+    }
+
+    public void addOnOperationListener(OnOperationListener listener) {
+        mListenerSet.add(listener);
+    }
+
+    public void removeOnOperationListener(OnOperationListener listener) {
+        mListenerSet.remove(listener);
+    }
+
     private OnOperationListener mOnOperationListener = new OnOperationListener() {
         @Override
         public void onOperationStateChanged(Operation operation, OperationState state) {
             switch (state) {
                 case NEW:
                     mNotificationHelper.buildForOperation(operation);
+                    Intent argsIntent = new Intent(DataContract.Action.NewOperation);
+                    argsIntent.putExtra(DataContract.Argument.OperationToken, operation.getToken());
+                    sendBroadcast(argsIntent);
                     break;
                 case RUNNING:
                     break;
@@ -197,11 +197,17 @@ public class OperationService extends Service {
                     mNotificationHelper.showCompletedNotification(operation);
                     break;
             }
+            for (OnOperationListener listener : mListenerSet) {
+                listener.onOperationStateChanged(operation, state);
+            }
         }
 
         @Override
         public void onOperationProgress(Operation operation, long currentItemRead, long currentItemSize, long currentSpeed, long itemIndex, long itemCount, long totalRead, long totalSize) {
             mNotificationHelper.updateNotification(operation);
+            for (OnOperationListener listener : mListenerSet) {
+                listener.onOperationProgress(operation, currentItemRead, currentItemSize, currentSpeed, itemIndex, itemCount, totalRead, totalSize);
+            }
         }
 
         /*@Override
@@ -253,6 +259,18 @@ public class OperationService extends Service {
 
         public void cancelTask(String token) {
             mService.cancelOperation(token);
+        }
+
+        public Operation getOperation(String token) {
+            return mService.getOperation(token);
+        }
+
+        public void addOnOperationListener(OnOperationListener listener) {
+            mService.addOnOperationListener(listener);
+        }
+
+        public void removeOnOperationListener(OnOperationListener listener) {
+            mService.removeOnOperationListener(listener);
         }
     }
 }

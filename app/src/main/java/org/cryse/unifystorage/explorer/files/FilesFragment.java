@@ -1,5 +1,9 @@
 package org.cryse.unifystorage.explorer.files;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -33,6 +37,7 @@ import com.malinskiy.superrecyclerview.OnMoreListener;
 import com.malinskiy.superrecyclerview.SuperRecyclerView;
 
 import org.cryse.unifystorage.RemoteFile;
+import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
@@ -446,15 +451,22 @@ public class FilesFragment extends AbstractFragment implements
     @Override
     public void onPause() {
         super.onPause();
-        // OperationObserverManager.instance().removeOperationListener(this);
-        for (Iterator<Map.Entry<String, MaterialDialog>> iterator = mDialogMaps.entrySet().iterator(); iterator.hasNext(); ) {
-            Map.Entry<String, MaterialDialog> entry = iterator.next();
-            MaterialDialog dialog = entry.getValue();
-            if (dialog != null && !dialog.isCancelled()) {
-                dialog.dismiss();
-            }
-            iterator.remove();
-        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(DataContract.Action.NewOperation);
+        intentFilter.addAction(DataContract.Action.ShowOperationDialog);
+        intentFilter.addAction(DataContract.Action.OpenFile);
+        getActivity().registerReceiver(mOperationReceiver, intentFilter);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        getActivity().unregisterReceiver(mOperationReceiver);
     }
 
     @Override
@@ -714,147 +726,24 @@ public class FilesFragment extends AbstractFragment implements
         return mPresenter.getStorageProviderInfo().getStorageProviderId() == id;
     }
 
-    private ConcurrentHashMap<String, MaterialDialog> mDialogMaps = new ConcurrentHashMap<>();
+    private BroadcastReceiver mOperationReceiver = new BroadcastReceiver() {
 
-    /*@Override
-    public void onRemoteOperationStart(Operation operation) {
-        FileUtils.copyFileToDirectory();
-        if(operation instanceof RemoteOperation) {
-            RemoteOperation remoteOperation = (RemoteOperation)operation;
-            if (isCurrentStorageProvider(remoteOperation.getOperationContext().getStorageProviderId())) {
-            final String token = remoteOperation.getOperationToken();
-            // Toast.makeText(getActivity(), String.format("%s onStart.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
-            if (mDialogMaps.containsKey(token)) {
-                MaterialDialog dialog = mDialogMaps.get(token);
-                if (dialog != null && !dialog.isCancelled() && dialog.isShowing())
-                    dialog.dismiss();
-                mDialogMaps.remove(token);
-            } else {
-                String title = getString(R.string.dialog_title_running);
-                String content = getString(R.string.dialog_content_please_wait);
-                long current = 0;
-                long total = 0;
-                boolean indeterminate = false;
-                switch (remoteOperation.getOperationName()) {
-                    case CreateFolderOperation.OP_NAME:
-                        title = getString(R.string.dialog_title_creating_directory);
-                        content = getString(R.string.dialog_content_please_wait);
-                        indeterminate = true;
-                        break;
-                    case DeleteOperation.OP_NAME:
-                        title = getString(R.string.dialog_title_deleting_file);
-                        content = getString(R.string.dialog_content_please_wait);
-                        break;
-                    case DownloadOperation.OP_NAME:
-                        title = getString(R.string.dialog_title_downloading_file);
-                        content = getString(R.string.dialog_content_please_wait);
-                        break;
-                }
-                MaterialDialog dialog = new MaterialDialog.Builder(getContext())
-                        .title(title)
-                        .content(content)
-                        .progress(indeterminate, 100, false)
-                        .dismissListener(new DialogInterface.OnDismissListener() {
-                            @Override
-                            public void onDismiss(DialogInterface dialog) {
-                                RxEventBus.instance().sendEvent(new FrontUIDismissEvent(token));
-                                mDialogMaps.remove(token);
-                            }
-                        })
-                        .negativeText(R.string.dialog_button_cancel)
-                        .onNegative(new MaterialDialog.SingleButtonCallback() {
-                            @Override
-                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-                                RxEventBus.instance().sendEvent(new CancelTaskEvent(token));
-                            }
-                        })
-                        .show();
-                if (dialog != null) {
-                    mDialogMaps.put(token, dialog);
-                }
-            }
-        }}
-    }
-
-    @Override
-    public void onRemoteOperationFinish(Operation operation, RemoteOperationResult result) {
-        if(operation instanceof RemoteOperation) {
-            RemoteOperation remoteOperation = (RemoteOperation)operation;
-            if (isCurrentStorageProvider(remoteOperation.getOperationContext().getStorageProviderId())) {
-                // Toast.makeText(getActivity(), String.format("%s onFinish.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
-                String token = remoteOperation.getOperationToken();
-                if (mDialogMaps.containsKey(token)) {
-                    final MaterialDialog dialog = mDialogMaps.get(token);
-                    if (dialog != null && !dialog.isCancelled()) {
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                dialog.dismiss();
-                            }
-                        });
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getAction()) {
+                case DataContract.Action.NewOperation:
+                    String token = intent.getStringExtra(DataContract.Argument.OperationToken);
+                    OperationProgressDialog dialog = OperationProgressDialog.create(token);
+                    dialog.show(getChildFragmentManager(), null);
+                    break;
+                case DataContract.Action.OpenFile:
+                    if(!intent.hasExtra(DataContract.Argument.Opened)) {
+                        String savePath = intent.getStringExtra(DataContract.Argument.SavePath);
+                        intent.putExtra(DataContract.Argument.Opened, true);
+                        openFileByPath(savePath, true);
                     }
-                    mDialogMaps.remove(token);
-                }
-                if (!result.isSuccess()) {
-                    new MaterialDialog.Builder(getActivity())
-                            .title(R.string.dialog_title_error)
-                            .content(result.getLogMessage())
-                            .show();
-                } else {
-                    if (remoteOperation.shouldRefresh()) {
-                        if (mPresenter.getDirectory() != null) {
-                            mPresenter.getDirectory().clear();
-                        }
-                        mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
-                    }
-                    if (remoteOperation instanceof DownloadOperation) {
-                        String localPath = ((DownloadOperation) remoteOperation).getSavePath();
-                        Uri fileUri = FileProvider.getUriForFile(
-                                getActivity(),
-                                getActivity().getString(R.string.authority_file_provider),
-                                new File(localPath));
-                        openFileByUri(fileUri.toString(), true);
-                    }
-                }
+                    break;
             }
         }
-    }
-
-    @Override
-    public void onRemoteOperationProgress(Operation operation, final long current, final long total) {
-        if(operation instanceof RemoteOperation) {
-            RemoteOperation remoteOperation = (RemoteOperation)operation;
-            if (isCurrentStorageProvider(remoteOperation.getOperationContext().getStorageProviderId())) {
-            // Toast.makeText(getActivity(), String.format("%s onProgress.", caller.getOperationName()), Toast.LENGTH_SHORT).show();
-            final String token = remoteOperation.getOperationToken();
-            if (mDialogMaps.containsKey(token)) {
-                final MaterialDialog dialog = mDialogMaps.get(token);
-                if (dialog != null && !dialog.isCancelled()) {
-                    int lastPercent = dialog.getCurrentProgress();
-                    int newPercent = (int) Math.round(((double) current / (double) total) * 100.0d);
-
-                    String content = dialog.getContentView() == null ? "" : dialog.getContentView().getText().toString();
-                    switch (remoteOperation.getOperationName()) {
-                        case CreateFolderOperation.OP_NAME:
-                            break;
-                        case DeleteOperation.OP_NAME:
-                            content = getString(R.string.dialog_content_delete_file_progress, current, total);
-                            break;
-                        case DownloadOperation.OP_NAME:
-                            content = String.format(
-                                    Locale.getDefault(),
-                                    "%s / %s",
-                                    FileSizeUtils.humanReadableByteCount(current, false),
-                                    FileSizeUtils.humanReadableByteCount(total, false)
-                            );
-                            break;
-                    }
-                    dialog.setContent(content);
-                    if (lastPercent < newPercent) {
-                        dialog.incrementProgress(newPercent - lastPercent);
-                    }
-                }
-            }
-        }}
-    }*/
+    };
 }

@@ -1,5 +1,6 @@
 package org.cryse.unifystorage.explorer.service.operation.base;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Handler;
 
@@ -113,17 +114,21 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
         setState(OperationState.FAILED);
     }
 
-    public abstract String getSummaryTitle(Context context);
+    public abstract String getSummaryTitle(Context context, boolean notification);
 
-    public abstract String getSummaryContent(Context context);
+    public abstract String getSummaryContent(Context context, boolean notification);
 
-    public abstract String getSimpleSummaryContent(Context context);
+    public abstract String getSummaryFinishedTitle(Context context);
 
-    public abstract double getSummaryProgress();
+    public abstract String getSummaryFinishedContent(Context context);
 
-    public abstract String getSummaryCompletedTitle(Context context);
+    public abstract double getProgressForNotification();
 
-    public abstract String getSummaryCompletedContent(Context context);
+    public abstract String getProgressDescForNotification(Context context);
+
+    public PendingIntent getCompletedPendingIntentForNotification(Context context) {
+        return null;
+    }
 
     protected void notifyOperationProgress(
             final long currentRead,
@@ -164,7 +169,7 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
         return mTokenInt;
     }
 
-    protected P getParams() {
+    public P getParams() {
         return mParams;
     }
 
