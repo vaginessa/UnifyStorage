@@ -70,11 +70,19 @@
     <string name="operation_title_deleting_files">Deleting files…</string>
     <string name="operation_title_error_deleting_files">Deleting files error</string>
     <string name="operation_title_downloading_file">Downloading</string>
+    <string name="operation_title_download_completed">Download Completed</string>
+    <string name="operation_title_download_failed">Download Failed</string>
+    <string name="operation_title_delete_completed">Delete Completed</string>
+    <string name="operation_title_delete_failed">Delete Failed</string>
     <string name="operation_content_creating_folder">Creating folder %1$s in %2$s</string>
     <string name="operation_content_downloading_file">Downloading %1$s \n %2$s / %3$s</string>
     <string name="operation_content_preparing">Preparing…</string>
     <string name="operation_content_connecting">Connecting…</string>
     <string name="operation_content_deleting_files">%1$d of %2$d</string>
+    <string name="operation_content_download_completed">Download %1$s Completed</string>
+    <string name="operation_content_download_failed">Download %1$s Failed</string>
+    <string name="operation_content_delete_completed">Delete Completed</string>
+    <string name="operation_content_delete_failed">Delete Failed</string>
 
     <string name="info_message_empty_directory">This directory is empty.</string>
 

@@ -66,6 +66,16 @@ public class CompositeOperation extends Operation<CompositeOperation.Params, Com
         return 0;
     }
 
+    @Override
+    public String getSummaryCompletedTitle(Context context) {
+        return null;
+    }
+
+    @Override
+    public String getSummaryCompletedContent(Context context) {
+        return null;
+    }
+
     public static class Params extends Operation.Params {
         private ArrayList<Operation> mOperations;
 

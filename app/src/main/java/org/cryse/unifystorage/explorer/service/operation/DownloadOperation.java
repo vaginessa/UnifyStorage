@@ -78,10 +78,10 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
                                                             int newPercent = (int) Math.round(((double) bytesRead / (double) contentLength) * 100.0d);
                                                             if (done) {
                                                             } else {
-                                                                if (lastReadBytes == 0
+                                                                if (/*lastReadBytes == 0
                                                                         || bytesRead - lastReadBytes > 1024 * 512
                                                                         || newPercent > lastPercent
-                                                                        || System.currentTimeMillis() - lastReportMs > 3000 // A least report once for every 3 seconds
+                                                                        || */System.currentTimeMillis() - lastReportMs > 1000 // A least report once for every 3 seconds
                                                                         ) {
                                                                     notifyOperationProgress(
                                                                             bytesRead,
@@ -164,6 +164,28 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
     @Override
     public double getSummaryProgress() {
         return getSummary().currentSizePercent * 100.0d;
+    }
+
+    @Override
+    public String getSummaryCompletedTitle(Context context) {
+        if(getState() == OperationState.COMPLETED) {
+            return context.getString(R.string.operation_title_download_completed);
+        } else if(getState() == OperationState.FAILED) {
+            return context.getString(R.string.operation_title_download_completed);
+        } else {
+            return "";
+        }
+    }
+
+    @Override
+    public String getSummaryCompletedContent(Context context) {
+        if(getState() == OperationState.COMPLETED) {
+            return context.getString(R.string.operation_content_download_completed, getParams().getRemoteFile().getName());
+        } else if(getState() == OperationState.FAILED) {
+            return context.getString(R.string.operation_content_download_failed, getParams().getRemoteFile().getName());
+        } else {
+            return "";
+        }
     }
 
     public void setDebugInterceptor(Interceptor interceptor) {

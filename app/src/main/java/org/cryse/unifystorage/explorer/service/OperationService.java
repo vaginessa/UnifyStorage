@@ -189,10 +189,12 @@ public class OperationService extends Service {
                 case COMPLETED:
                     mNotificationHelper.cancelNotification(operation);
                     mOperationMap.remove(operation.getToken());
+                    mNotificationHelper.showCompletedNotification(operation);
                     break;
                 case FAILED:
                     mNotificationHelper.cancelNotification(operation);
                     mOperationMap.remove(operation.getToken());
+                    mNotificationHelper.showCompletedNotification(operation);
                     break;
             }
         }

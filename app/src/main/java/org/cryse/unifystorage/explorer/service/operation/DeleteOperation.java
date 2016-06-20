@@ -92,6 +92,28 @@ public class DeleteOperation extends RemoteOperation<DeleteOperation.Params> {
     }
 
     @Override
+    public String getSummaryCompletedTitle(Context context) {
+        if(getState() == OperationState.COMPLETED) {
+            return context.getString(R.string.operation_title_delete_completed);
+        } else if(getState() == OperationState.FAILED) {
+            return context.getString(R.string.operation_title_delete_failed);
+        } else {
+            return "";
+        }
+    }
+
+    @Override
+    public String getSummaryCompletedContent(Context context) {
+        if(getState() == OperationState.COMPLETED) {
+            return context.getString(R.string.operation_content_delete_completed);
+        } else if(getState() == OperationState.FAILED) {
+            return context.getString(R.string.operation_content_delete_failed);
+        } else {
+            return "";
+        }
+    }
+
+    @Override
     public String getOperationName() {
         return OP_NAME;
     }

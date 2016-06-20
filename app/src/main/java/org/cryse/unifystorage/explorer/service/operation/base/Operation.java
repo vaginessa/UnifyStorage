@@ -121,6 +121,10 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
 
     public abstract double getSummaryProgress();
 
+    public abstract String getSummaryCompletedTitle(Context context);
+
+    public abstract String getSummaryCompletedContent(Context context);
+
     protected void notifyOperationProgress(
             final long currentRead,
             final long currentSize,

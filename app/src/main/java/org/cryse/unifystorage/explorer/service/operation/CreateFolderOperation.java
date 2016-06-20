@@ -77,6 +77,16 @@ public class CreateFolderOperation extends RemoteOperation<CreateFolderOperation
         return -1;
     }
 
+    @Override
+    public String getSummaryCompletedTitle(Context context) {
+        return "";
+    }
+
+    @Override
+    public String getSummaryCompletedContent(Context context) {
+        return "";
+    }
+
     public static class Params extends RemoteOperation.Params {
         private RemoteFile mParentFile;
         private String mFolderName;

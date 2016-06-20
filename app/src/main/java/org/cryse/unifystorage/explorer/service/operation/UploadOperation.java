@@ -46,6 +46,16 @@ public class UploadOperation extends RemoteOperation<UploadOperation.Params> {
     }
 
     @Override
+    public String getSummaryCompletedTitle(Context context) {
+        return "";
+    }
+
+    @Override
+    public String getSummaryCompletedContent(Context context) {
+        return "";
+    }
+
+    @Override
     public String getOperationName() {
         return OP_NAME;
     }

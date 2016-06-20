@@ -47,6 +47,16 @@ public class InStorageProviderCopyOperation extends RemoteOperation<InStoragePro
     }
 
     @Override
+    public String getSummaryCompletedTitle(Context context) {
+        return "";
+    }
+
+    @Override
+    public String getSummaryCompletedContent(Context context) {
+        return "";
+    }
+
+    @Override
     public String getOperationName() {
         return OP_NAME;
     }
