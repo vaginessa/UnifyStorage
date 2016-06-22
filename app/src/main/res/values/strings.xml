@@ -105,6 +105,7 @@
     <string name="operation_progress_text_delete">%1$s of %2$s</string>
 
     <string name="info_message_empty_directory">This directory is empty.</string>
+    <string name="info_message_no_more">No more</string>
 
     <array name="array_storage_providers">
         <item>@string/storage_provider_name_local_path</item>

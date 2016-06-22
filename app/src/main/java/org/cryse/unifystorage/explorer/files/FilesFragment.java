@@ -11,9 +11,7 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -29,12 +27,11 @@ import android.widget.Toast;
 
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
 import com.afollestad.impression.widget.breadcrumbs.Crumb;
-import com.afollestad.materialcab.MaterialCab;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
-import com.malinskiy.superrecyclerview.OnMoreListener;
-import com.malinskiy.superrecyclerview.SuperRecyclerView;
+import com.jude.easyrecyclerview.EasyRecyclerView;
+import com.jude.easyrecyclerview.adapter.RecyclerArrayAdapter;
 
 import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.explorer.DataContract;
@@ -57,14 +54,11 @@ import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.utils.file.OnFileChangedListener;
 import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
-import org.cryse.utils.selector.SelectableRecyclerViewAdapter;
+import org.cryse.widget.cab.MaterialCab;
+import org.cryse.widget.SelectableRecyclerViewAdapter;
 import org.cryse.widget.StateView;
-import org.cryse.widget.recyclerview.Bookends;
 
 import java.io.File;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import butterknife.Bind;
@@ -72,7 +66,6 @@ import butterknife.ButterKnife;
 
 public class FilesFragment extends AbstractFragment implements
         FilesContract.View,
-        FilesAdapter.OnFileClickListener,
         SelectableRecyclerViewAdapter.OnSelectionListener,
         MaterialCab.Callback/*,
         OnRemoteOperationListener*/ {
@@ -90,7 +83,6 @@ public class FilesFragment extends AbstractFragment implements
     private AtomicBoolean isLoadingMore = new AtomicBoolean(false);
     private FilesContract.Presenter mPresenter;
     private FilesAdapter mCollectionAdapter;
-    private Bookends<FilesAdapter> mWrapperAdapter;
     private OpenFileUtils mOpenFileUtils;
     private LocalFileWatcher mFileWatcher;
 
@@ -101,7 +93,7 @@ public class FilesFragment extends AbstractFragment implements
     BreadCrumbLayout mBreadCrumbLayout;
 
     @Bind(R.id.fragment_files_recyclerview_files)
-    SuperRecyclerView mCollectionView;
+    EasyRecyclerView mCollectionView;
 
     @Bind(R.id.fragment_files_fab_menu)
     FloatingActionMenu mFabMenu;
@@ -114,14 +106,6 @@ public class FilesFragment extends AbstractFragment implements
 
     @Bind(R.id.fragment_files_fab_paste)
     FloatingActionButton mFabPaste;
-
-    @Bind(R.id.fragment_files_state_view)
-    StateView mStateView;
-
-    @Bind(R.id.fragment_files_loading_progressbar)
-    ProgressBar mLoadingProgress;
-
-    private ProgressBar mMoreProgressBar;
 
     protected MaterialCab mCab;
 
@@ -142,7 +126,6 @@ public class FilesFragment extends AbstractFragment implements
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         mCollectionAdapter = new FilesAdapter(getActivity());
-        mCollectionAdapter.setOnFileClickListener(this);
         mCollectionAdapter.setOnSelectionListener(this);
         mOpenFileUtils = new AndroidOpenFileUtils(getActivity());
         setupFileWatcher();
@@ -162,7 +145,6 @@ public class FilesFragment extends AbstractFragment implements
         setupRecyclerView();
         setupBreadCrumb();
         setupFab();
-        setupStateView();
         return fragmentView;
     }
 
@@ -272,6 +254,62 @@ public class FilesFragment extends AbstractFragment implements
 
     private void setupRecyclerView() {
         mCollectionView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        // DividerDecoration itemDecoration = new DividerDecoration(Color.GRAY, UIUtils.dip2px(getActivity(),0.5f), UIUtils.dip2px(getActivity(),72),0);
+        // itemDecoration.setDrawLastItem(false);
+        // mCollectionView.addItemDecoration(itemDecoration);
+        mCollectionView.setAdapterWithProgress(mCollectionAdapter = new FilesAdapter(getActivity()));
+        mCollectionAdapter.setMore(R.layout.view_more, new RecyclerArrayAdapter.OnLoadMoreListener() {
+            @Override
+            public void onLoadMore() {
+                if (!isLoadingMore.get() && mPresenter.getDirectory().hasMore) {
+                    mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
+                    isLoadingMore.set(true);
+                    // getPresenter().loadThreadList(mUserAccountManager.getAuthObject(), mForumId, mLastItemSortKey, mCurrentListType, true);
+                } else {
+                    mCollectionAdapter.stopMore();
+                }
+            }
+        });
+        mCollectionAdapter.setNoMore(R.layout.view_nomore);
+        mCollectionAdapter.setOnItemLongClickListener(new RecyclerArrayAdapter.OnItemLongClickListener() {
+            @Override
+            public boolean onItemClick(int position) {
+                mCollectionAdapter.toggleSelection(position);
+                mPresenter.onFileLongClick(mCollectionAdapter.getItem(position).getRemoteFile());
+                return true;
+            }
+        });
+        mCollectionAdapter.setOnItemClickListener(new RecyclerArrayAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(int position) {
+                if (mCollectionAdapter.isInSelection()) {
+                    mCollectionAdapter.toggleSelection(position);
+                } else {
+                    RemoteFile file = mCollectionAdapter.getItem(position).getRemoteFile();
+                    mPresenter.onFileClick(file, getCollectionViewState());
+                }
+            }
+        });
+        mCollectionAdapter.setError(R.layout.view_error).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // adapter.resumeMore();
+            }
+        });
+        mCollectionView.setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if (mPresenter.getDirectory() != null) {
+                    mPresenter.getDirectory().clear();
+                }
+                mPresenter.loadFiles(mPresenter.getDirectory(), true, false, null);
+            }
+        });
+        mCollectionAdapter.setOnSelectionListener(this);
+
+
+
+        /*mCollectionView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mCollectionView.getRecyclerView().setItemAnimator(new DefaultItemAnimator());
         mCollectionView.setOnMoreListener(new OnMoreListener() {
             @Override
@@ -307,7 +345,7 @@ public class FilesFragment extends AbstractFragment implements
         mMoreProgressBar.setLayoutParams(moreProgressLP);
         mMoreProgressBar.setVisibility(View.INVISIBLE);
         mWrapperAdapter.addFooter(mMoreProgressBar);
-        mWrapperAdapter.notifyDataSetChanged();
+        mWrapperAdapter.notifyDataSetChanged();*/
     }
 
     protected void setupFileWatcher() {
@@ -349,23 +387,6 @@ public class FilesFragment extends AbstractFragment implements
             @Override
             public boolean onFileEvent(int event, String path, String file) {
                 return false;
-            }
-        });
-    }
-
-    protected void setupStateView() {
-        mStateView.setOnStateChangeListener(new StateView.OnStateChangeListener() {
-            @Override
-            public void onStateChange(StateView.State state) {
-
-            }
-
-            @Override
-            public void onButtonClick(StateView.State state) {
-                if (state == StateView.State.ERROR) {
-                    if (mPresenter.getDirectory() != null)
-                        mPresenter.loadFiles(mPresenter.getDirectory(), true);
-                }
             }
         });
     }
@@ -480,9 +501,17 @@ public class FilesFragment extends AbstractFragment implements
         if (getView() == null) {
             return;
         }
-        if (active)
-            hideStateView();
-        mLoadingProgress.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
+        if(active)
+            mCollectionView.showProgress();
+        else {
+            if(mCollectionAdapter.getCount() > 0)
+                mCollectionView.showRecycler();
+            else
+                mCollectionView.showEmpty();
+        }
+        /*if (active)
+            hideStateView();*/
+        // mLoadingProgress.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
     }
 
     @Override
@@ -498,27 +527,25 @@ public class FilesFragment extends AbstractFragment implements
 
     @Override
     public void showFiles(DirectoryInfo directory, @Nullable CollectionViewState collectionViewState) {
-        if (mCollectionView.isLoadingMore()) {
-            isLoadingMore.set(false);
-            mCollectionView.setLoadingMore(false);
-            mCollectionView.hideMoreProgress();
-        }
+        isLoadingMore.set(false);
+        mCollectionAdapter.stopMore();
         if (directory != null && directory.files != null) {
             if (mPresenter.showWatchChanges())
                 mFileWatcher.startWatching(directory.directory.getPath());
-            mCollectionAdapter.replaceWith(directory.files);
+            mCollectionAdapter.replaceWith(RemoteFileWrapper.wrap(directory.files));
             if (directory.files.size() > 0) {
-                hideStateView();
+                // hideStateView();
                 if (collectionViewState != null) {
                     LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getRecyclerView().getLayoutManager();
                     manager.scrollToPositionWithOffset(collectionViewState.position, (int) collectionViewState.offset);
                 }
             } else {
-                showNoFilesView();
+                // showNoFilesView();
             }
             // updateBreadcrumb(directory.directory.getPath());
         } else {
-            showNoFilesView();
+            mCollectionAdapter.clear();
+            // showNoFilesView();
         }
     }
 
@@ -528,8 +555,9 @@ public class FilesFragment extends AbstractFragment implements
             // updateBreadcrumb(directory.directory.getPath());
         }
         if (directory != null)
-            mCollectionAdapter.replaceWith(directory.files);
-        showRetryView(ExceptionUtils.exceptionToStringRes(throwable));
+            mCollectionAdapter.replaceWith(RemoteFileWrapper.wrap(directory.files));
+        mCollectionView.showError();
+        // showRetryView(ExceptionUtils.exceptionToStringRes(throwable));
     }
 
     @Override
@@ -566,7 +594,7 @@ public class FilesFragment extends AbstractFragment implements
     public void setPresenter(FilesContract.Presenter presenter) {
         this.mPresenter = presenter;
     }
-
+/*
     private void showNoFilesView() {
         // mCollectionView.setVisibility(View.INVISIBLE);
         mStateView.showEmptyViewByRes(R.drawable.ic_icon_empty_folder, R.string.info_message_empty_directory);
@@ -580,7 +608,7 @@ public class FilesFragment extends AbstractFragment implements
     private void showRetryView(int errorMessageResId) {
         // mCollectionView.setVisibility(View.INVISIBLE);
         mStateView.showErrorViewByRes(R.drawable.ic_icon_error, errorMessageResId, R.string.label_refresh);
-    }
+    }*/
 
     private CollectionViewState getCollectionViewState() {
         LinearLayoutManager manager = (LinearLayoutManager) mCollectionView.getRecyclerView().getLayoutManager();
@@ -598,9 +626,9 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     protected void menuCopyFile() {
-        RemoteFile[] files = mCollectionAdapter.getSelectionItems(RemoteFile.class);
+        RemoteFileWrapper[] files = mCollectionAdapter.getSelectionItems(RemoteFileWrapper.class);
         mCollectionAdapter.clearSelection();
-        CopyManager.getInstance().setCopyTask(new CopyTask(mPresenter.getStorageProviderInfo(), files));
+        CopyManager.getInstance().setCopyTask(new CopyTask(mPresenter.getStorageProviderInfo(), RemoteFileWrapper.toArray(files)));
     }
 
     protected void menuPasteFile() {
@@ -624,9 +652,9 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     protected void menuDeleteFile() {
-        RemoteFile[] files = mCollectionAdapter.getSelectionItems(RemoteFile.class);
+        RemoteFileWrapper[] files = mCollectionAdapter.getSelectionItems(RemoteFileWrapper.class);
         mCollectionAdapter.clearSelection();
-        mPresenter.deleteFiles(files);
+        mPresenter.deleteFiles(RemoteFileWrapper.toArray(files));
     }
 
     protected MainActivity getMainActivity() {
@@ -634,23 +662,8 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     @Override
-    public void onFileClick(View view, int position, RemoteFile file) {
-        if (mCollectionAdapter.isInSelection()) {
-            mCollectionAdapter.toggleSelection(position);
-        } else {
-            mPresenter.onFileClick(file, getCollectionViewState());
-        }
-    }
-
-    @Override
-    public void onFileLongClick(View view, int position, RemoteFile file) {
-        mCollectionAdapter.toggleSelection(position);
-        mPresenter.onFileLongClick(file);
-    }
-
-    @Override
     public void onSelectionStart() {
-        mCab = new MaterialCab(getAppCompatActivity(), R.id.cab_stub)
+        mCab = new MaterialCab(getAppCompatActivity(), getView(), R.id.cab_stub)
                 .setMenu(R.menu.menu_cab_fileselection)
                 .setBackgroundColor(mPrimaryColor)
                 .setCloseDrawableRes(R.drawable.ic_action_menu_close)

@@ -87,7 +87,7 @@ dependencies {
         transitive = true
     }
 
-    compile(libDependencies.materialcab) {
+    compile(libDependencies.easy_recyclerview) {
         transitive = true
     }
 }

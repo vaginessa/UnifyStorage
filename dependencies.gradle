@@ -9,7 +9,8 @@ ext {
     oneDriveSdkVersion = '1.0.2'
     materialDrawerVersion = '5.1.6'
     materialDialogVersion = '0.8.5.8'
-    materialCabVersion = '0.1.6'
+    materialCabVersion = '0.1.12'
+    easyRecyclerViewVersion = '4.0.2'
     easyPermissionVersion = '0.1.0'
     okhttpVersion = '3.2.0'
     commonsioVersion = '2.4'
@@ -66,6 +67,7 @@ ext {
             materialdialog: "com.github.afollestad.material-dialogs:core:$materialDialogVersion@aar",
             materialdialog_commons: "com.github.afollestad.material-dialogs:commons:$materialDialogVersion@aar",
             materialcab: "com.afollestad:material-cab:$materialCabVersion@aar",
-            fab: "com.github.clans:fab:$fabVersion"
+            fab: "com.github.clans:fab:$fabVersion",
+            easy_recyclerview: "com.jude:easyrecyclerview:$easyRecyclerViewVersion"
     ]
 }
