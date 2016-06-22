@@ -191,6 +191,10 @@ public class FilesFragment extends AbstractFragment implements
         }
     }
 
+    public void onSelectedInViewPager() {
+        getAppCompatActivity().setSupportActionBar(mToolbar);
+    }
+
     private void setupBreadCrumb() {
         mBreadCrumbLayout.setRootPathName(mPresenter.getStorageProviderName());
         mBreadCrumbLayout.setCallback(new BreadCrumbLayout.SelectionCallback() {
@@ -293,7 +297,10 @@ public class FilesFragment extends AbstractFragment implements
         mCollectionAdapter.setError(R.layout.view_error).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // adapter.resumeMore();
+                if (mPresenter.getDirectory() != null) {
+                    mPresenter.getDirectory().clear();
+                }
+                mPresenter.loadFiles(mPresenter.getDirectory(), true, false, null);
             }
         });
         mCollectionView.setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -306,46 +313,6 @@ public class FilesFragment extends AbstractFragment implements
             }
         });
         mCollectionAdapter.setOnSelectionListener(this);
-
-
-
-        /*mCollectionView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mCollectionView.getRecyclerView().setItemAnimator(new DefaultItemAnimator());
-        mCollectionView.setOnMoreListener(new OnMoreListener() {
-            @Override
-            public void onMoreAsked(int overallItemsCount, int itemsBeforeMore, int maxLastVisiblePosition) {
-                if (!isLoadingMore.get() && mPresenter.getDirectory().hasMore) {
-                    mPresenter.loadFiles(mPresenter.getDirectory(), true, false, getCollectionViewState());
-                    isLoadingMore.set(true);
-                    // getPresenter().loadThreadList(mUserAccountManager.getAuthObject(), mForumId, mLastItemSortKey, mCurrentListType, true);
-                } else {
-                    mCollectionView.setLoadingMore(false);
-                    mCollectionView.hideMoreProgress();
-                }
-            }
-
-            @Override
-            public void onChangeMoreVisibility(int visibility) {
-                mMoreProgressBar.setVisibility(visibility);
-            }
-        });
-        mCollectionView.setRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                if (mPresenter.getDirectory() != null) {
-                    mPresenter.getDirectory().clear();
-                }
-                mPresenter.loadFiles(mPresenter.getDirectory(), true, false, null);
-            }
-        });
-        mWrapperAdapter = new Bookends<>(mCollectionAdapter);
-        mCollectionView.setAdapter(mWrapperAdapter);
-        mMoreProgressBar = new ProgressBar(getActivity());
-        RecyclerView.LayoutParams moreProgressLP = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mMoreProgressBar.setLayoutParams(moreProgressLP);
-        mMoreProgressBar.setVisibility(View.INVISIBLE);
-        mWrapperAdapter.addFooter(mMoreProgressBar);
-        mWrapperAdapter.notifyDataSetChanged();*/
     }
 
     protected void setupFileWatcher() {

@@ -139,6 +139,9 @@ public class StorageProviderManager {
             StorageProviderRecord record = mUnifyStorageDatabase.getSavedStorageProvider(id);
             StorageProviderType type = StorageProviderType.fromInt(record.getProviderType());
             switch (type) {
+                case LOCAL_STORAGE:
+                    storageProvider = new LocalStorageProvider(context, (String)extra[0]);
+                    break;
                 case DROPBOX:
                     storageProvider = new DropboxStorageProvider(mOkHttpClient, (DropboxCredential) credential, (String)extra[0]);
                     break;

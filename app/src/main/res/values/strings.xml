@@ -106,6 +106,7 @@
 
     <string name="info_message_empty_directory">This directory is empty.</string>
     <string name="info_message_no_more">No more</string>
+    <string name="info_message_error_pull_to_reload">Fail to load, pull down to retry.</string>
 
     <array name="array_storage_providers">
         <item>@string/storage_provider_name_local_path</item>
