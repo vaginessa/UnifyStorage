@@ -44,7 +44,9 @@
     <string name="dialog_content_error_download_file">Fail to download file.</string>
     <string name="dialog_content_download_file_progress">%1$s / %2$s</string>
     <string name="dialog_content_delete_file_progress">%1$d / %2$d</string>
-    <string name="dialog_button_cancel">Cancel</string>
+    <string name="dialog_title_open_file_is_not_local">Open File</string>
+    <string name="dialog_content_open_file_is_not_local">%1$s is on %2$s, you have to download before open it.</string>
+    <string name="dialog_button_download">Download</string>
 
     <string name="fab_lable_create_file">Create New File</string>
     <string name="fab_lable_create_directory">Create New Directory</string>
@@ -72,34 +74,38 @@
     <string name="operation_progress_total_count">%1$d of %2$d</string>
 
     <!-- Operation: Create Folder -->
-    <string name="operation_title_create_folder">Creating Folder</string>
+    <string name="operation_title_creating_folder">Creating Folder</string>
     <string name="operation_notification_title_create_folder">Creating Folder</string>
     <string name="operation_content_creating_folder">Creating %1$s in %2$s</string>
+    <string name="operation_title_creating_folder_completed">Create Folder Completed</string>
+    <string name="operation_title_creating_folder_failed">Create Folder Failed</string>
+    <string name="operation_content_creating_folder_completed">Create Folder %1$s Completed</string>
+    <string name="operation_content_creating_folder_failed">Create Folder %1$s Failed</string>
 
     <!-- Operation: Download -->
     <string name="operation_title_downloading_file">Downloading</string>
     <string name="operation_notification_title_downloading_file">%1$s</string>
     <string name="operation_content_downloading_file">Downloading %1$s</string>
+    <string name="operation_title_download_completed">Download Completed</string>
+    <string name="operation_title_download_failed">Download Failed</string>
+    <string name="operation_content_download_completed">Download %1$s Completed</string>
+    <string name="operation_content_download_failed">Download %1$s Failed</string>
 
     <!-- Operation: Delete -->
     <string name="operation_title_deleting_files">Deleting</string>
     <string name="operation_notification_title_deleting_files">Deleting</string>
     <string name="operation_content_deleting_files">Deleting %1$d files.</string>
-
-    <string name="operation_title_background_task">Running…</string>
-    <string name="operation_title_creating_folder">Creating folder</string>
-    <string name="operation_title_error_deleting_files">Deleting files error</string>
-    <string name="operation_title_download_completed">Download Completed</string>
-    <string name="operation_title_download_failed">Download Failed</string>
     <string name="operation_title_delete_completed">Delete Completed</string>
     <string name="operation_title_delete_failed">Delete Failed</string>
+    <string name="operation_content_delete_completed">Delete Completed</string>
+    <string name="operation_content_delete_failed">Delete Failed</string>
+
+
+    <string name="operation_title_background_task">Running…</string>
+    <string name="operation_title_error_deleting_files">Deleting files error</string>
 
     <string name="operation_content_preparing">Preparing…</string>
     <string name="operation_content_connecting">Connecting…</string>
-    <string name="operation_content_download_completed">Download %1$s Completed</string>
-    <string name="operation_content_download_failed">Download %1$s Failed</string>
-    <string name="operation_content_delete_completed">Delete Completed</string>
-    <string name="operation_content_delete_failed">Delete Failed</string>
 
     <string name="operation_progress_text_download">%1$s of %2$s</string>
     <string name="operation_progress_text_delete">%1$s of %2$s</string>

@@ -88,6 +88,14 @@ public abstract class Operation<P extends Operation.Params , R extends Operation
         return mCancel.get();
     }
 
+    public boolean isIndeterminate() {
+        return false;
+    }
+
+    public boolean showCompletedNotification() {
+        return true;
+    }
+
     protected void prepareOperation() {
 
     }

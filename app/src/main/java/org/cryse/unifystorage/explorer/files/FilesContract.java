@@ -32,6 +32,8 @@ public interface FilesContract {
 
         void openFileByPath(String filePath, boolean useSystemSelector);
 
+        void requestForDownload(RemoteFile remoteFile);
+
         void openFileByUri(String uriString, boolean useSystemSelector);
     }
 
@@ -67,6 +69,8 @@ public interface FilesContract {
         void openFileDetails(RemoteFile requestedFile);
 
         void deleteFiles(RemoteFile[] filesToDelete);
+
+        void downloadFile(final RemoteFile remoteFile, @Nullable String savePath, boolean openAfterDownload);
 
         void onFileClick(RemoteFile file, CollectionViewState collectionViewState);
 

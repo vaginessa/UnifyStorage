@@ -2,6 +2,7 @@ package org.cryse.unifystorage.explorer.files;
 
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import org.cryse.unifystorage.AbstractFile;
 import org.cryse.unifystorage.RemoteFile;
@@ -16,6 +17,7 @@ import org.cryse.unifystorage.explorer.executor.PostExecutionThread;
 import org.cryse.unifystorage.explorer.executor.ThreadExecutor;
 import org.cryse.unifystorage.explorer.interactor.CreateFolderUseCase;
 import org.cryse.unifystorage.explorer.interactor.DefaultSubscriber;
+import org.cryse.unifystorage.explorer.interactor.GetFileUseCase;
 import org.cryse.unifystorage.explorer.interactor.GetFilesUseCase;
 import org.cryse.unifystorage.explorer.interactor.UseCase;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
@@ -46,6 +48,7 @@ public class FilesPresenter implements FilesContract.Presenter {
     protected PostExecutionThread mPostExecutionThread;
     protected FileCacheRepository mFileCacheRepository;
     private GetFilesUseCase mGetFilesUseCase;
+    private GetFileUseCase mGetFileUseCase;
     private CreateFolderUseCase mCreateFolderUseCase;
     private boolean mFirstLoad = true;
     private boolean mShowHiddenFile = false;
@@ -71,6 +74,7 @@ public class FilesPresenter implements FilesContract.Presenter {
         this.mFileComparator = NameFileComparator.NAME_INSENSITIVE_COMPARATOR;
 
         this.mGetFilesUseCase = new GetFilesUseCase(mRxStorageProvider, mThreadExecutor, mPostExecutionThread);
+        this.mGetFileUseCase = new GetFileUseCase(mRxStorageProvider, mThreadExecutor, mPostExecutionThread);
         this.mCreateFolderUseCase = new CreateFolderUseCase(mRxStorageProvider, mThreadExecutor, mPostExecutionThread);
 
         this.mRxStorageProvider.getStorageProvider().setOnTokenRefreshListener(new StorageProvider.OnTokenRefreshListener() {
@@ -308,32 +312,49 @@ public class FilesPresenter implements FilesContract.Presenter {
     }
 
     @Override
-    public void onFileClick(RemoteFile file, CollectionViewState collectionViewState) {
-        if (file.isDirectory()) {
-            mBackwardStack.push(new BrowserState(mDirectory, collectionViewState));
-            loadFiles(DirectoryInfo.fromDirectory(file), true);
-        } else {
-            if(file.needsDownload()) {
-                downloadFile(file);
-            } else {
-                openFile(file);
-            }
-        }
+    public void onFileClick(final RemoteFile file, final CollectionViewState collectionViewState) {
+        mGetFileUseCase.execute(
+                new GetFileUseCase.RequestValues(file), new DefaultSubscriber<UseCase.SingleResponseValue<RemoteFile>>() {
+                    @Override
+                    public void onNext(UseCase.SingleResponseValue<RemoteFile> remoteFileSingleResponseValue) {
+                        super.onNext(remoteFileSingleResponseValue);
+                        RemoteFile checkedFile = remoteFileSingleResponseValue.getValue();
+                        if (checkedFile.isDirectory()) {
+                            mBackwardStack.push(new BrowserState(mDirectory, collectionViewState));
+                            loadFiles(DirectoryInfo.fromDirectory(checkedFile), true);
+                        } else {
+                            if (checkedFile.needsDownload()) {
+                                // Popup a dialog
+                                mFilesView.requestForDownload(checkedFile);
+                                // downloadFile(checkedFile);
+                            } else {
+                                mFilesView.openFileByPath(checkedFile.getPath(), true);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        super.onError(e);
+                        Log.e("ALIS", e.getMessage(), e);
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        super.onCompleted();
+                    }
+                }
+        );
+
     }
 
-    private void openFile(RemoteFile file) {
-        mFilesView.openFileByPath(file.getPath(), true);
-    }
-
-    private void downloadFile(final RemoteFile file) {
-        final int token = file.getId().hashCode();
-        final String fileName = file.getName();
-        final long fileSize = file.size();
-        final String localPath = mFileCacheRepository.getFullCachePathForFile(
+    @Override
+    public void downloadFile(final RemoteFile file, String savePath, boolean openAfterDownload) {
+        final String localPath = TextUtils.isEmpty(savePath) ? mFileCacheRepository.getFullCachePathForFile(
                 mRxStorageProvider.getStorageProviderName(),
                 mStorageProviderRecord.getUuid(),
                 file
-        );
+        ) : savePath;
 
         RxEventBus.instance().sendEvent(
                 new NewTaskEvent(
@@ -345,80 +366,6 @@ public class FilesPresenter implements FilesContract.Presenter {
                         )
                 )
         );
-
-        /*RxEventBus.getInstance().sendEvent(
-                new StartDownloadEvent(
-                        mStorageProviderInfo,
-                        token,
-                        file,
-                        localPath,
-                        true
-                )
-        );*/
-        /*final Subscription[] subscription = new Subscription[1];
-        final DownloadFileMessage downloadFileMessage = new DownloadFileMessage(file.getId().hashCode(), "", fileName);
-        downloadFileMessage.setCurrentSize(0);
-        downloadFileMessage.setFileSize(fileSize);
-        DialogInterface.OnDismissListener dismissListener = new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                mDownloadFileUseCase.unsubscribe();
-                RxSubscriptionUtils.checkAndUnsubscribe(subscription[0]);
-            }
-        };
-        downloadFileMessage.setOnDismissListener(dismissListener);
-        downloadFileMessage.setAction(BasicMessage.MessageAction.CREATE);
-        mFilesView.showMessage(downloadFileMessage);*/
-        /*mDownloadFileUseCase.execute(new DownloadFileUseCase.RequestValues(file, localPath),
-                new DefaultSubscriber<UseCase.SingleResponseValue<InputStream>>() {
-                    @Override
-                    public void onCompleted() {
-                        super.onCompleted();
-                        // downloadFileMessage.setAction(BasicMessage.MessageAction.DISMISS);
-                        // mFilesView.showMessage(downloadFileMessage);
-                        // String uriString = mFileCacheRepository.getUriForFile(new File(localPath));
-                        // mFilesView.openFileByUri(uriString, true);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        super.onError(e);
-                        // downloadFileMessage.setAction(BasicMessage.MessageAction.DISMISS);
-                        // mFilesView.showMessage(downloadFileMessage);
-                    }
-
-                    @Override
-                    public void onNext(final UseCase.SingleResponseValue<InputStream> inputStreamSingleResponseValue) {
-                        super.onNext(inputStreamSingleResponseValue);
-
-                        *//*subscription[0] = OperationObserables.downloadFileObservable(file, localPath, inputStreamSingleResponseValue.getValue())
-                                .subscribeOn(Schedulers.from(mThreadExecutor))
-                                .observeOn(mPostExecutionThread.getScheduler())
-                                .subscribe(new DefaultSubscriber<Long>() {
-                                    @Override
-                                    public void onCompleted() {
-                                        super.onCompleted();
-                                        downloadFileMessage.setAction(BasicMessage.MessageAction.DISMISS);
-                                        mFilesView.showMessage(downloadFileMessage);
-                                    }
-
-                                    @Override
-                                    public void onError(Throwable e) {
-                                        super.onError(e);
-                                        downloadFileMessage.setAction(BasicMessage.MessageAction.DISMISS);
-                                        mFilesView.showMessage(downloadFileMessage);
-                                    }
-
-                                    @Override
-                                    public void onNext(Long aLong) {
-                                        super.onNext(aLong);
-                                        downloadFileMessage.setAction(BasicMessage.MessageAction.UPDATE);
-                                        downloadFileMessage.setCurrentSize(aLong);
-                                        mFilesView.showMessage(downloadFileMessage);
-                                    }
-                                });*//*
-                    }
-                });*/
     }
 
     @Override

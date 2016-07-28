@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
@@ -15,6 +16,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -27,6 +29,7 @@ import android.widget.Toast;
 
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
 import com.afollestad.impression.widget.breadcrumbs.Crumb;
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
@@ -70,6 +73,7 @@ public class FilesFragment extends AbstractFragment implements
         MaterialCab.Callback/*,
         OnRemoteOperationListener*/ {
 
+    private static final Object sOpenFileLock = new Object();
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
     private Handler mHandler = new Handler();
 
@@ -553,6 +557,22 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     @Override
+    public void requestForDownload(final RemoteFile remoteFile) {
+        new MaterialDialog.Builder(getActivity())
+                .title(R.string.dialog_title_open_file_is_not_local)
+                .content(getString(R.string.dialog_content_open_file_is_not_local, remoteFile.getName(), mPresenter.getStorageProviderName()))
+                .negativeText(android.R.string.cancel)
+                .positiveText(R.string.dialog_button_download)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        mPresenter.downloadFile(remoteFile, null, true);
+                    }
+                })
+                .show();
+    }
+
+    @Override
     public void openFileByUri(String uriString, boolean useSystemSelector) {
         mOpenFileUtils.openFileByUri(uriString, useSystemSelector);
     }
@@ -722,10 +742,13 @@ public class FilesFragment extends AbstractFragment implements
                     dialog.show(getChildFragmentManager(), null);
                     break;
                 case DataContract.Action.OpenFile:
-                    if(!intent.hasExtra(DataContract.Argument.Opened)) {
-                        String savePath = intent.getStringExtra(DataContract.Argument.SavePath);
-                        intent.putExtra(DataContract.Argument.Opened, true);
-                        openFileByPath(savePath, true);
+                    Log.e("DDDD", "OpenFile");
+                    synchronized (sOpenFileLock) {
+                        if(!intent.hasExtra(DataContract.Argument.Opened)) {
+                            String savePath = intent.getStringExtra(DataContract.Argument.SavePath);
+                            intent.putExtra(DataContract.Argument.Opened, true);
+                            openFileByPath(savePath, true);
+                        }
                     }
                     break;
             }

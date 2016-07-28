@@ -242,13 +242,12 @@ public class RxStorageProvider {
         });
     }
 
-
-    public Observable<RemoteFile> getFile(final String name) {
+    public Observable<RemoteFile> getFile(final RemoteFile file) {
         return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
             @Override
             public void call(Subscriber<? super RemoteFile> subscriber) {
                 try {
-                    subscriber.onNext(mStorageProvider.getFile(name));
+                    subscriber.onNext(mStorageProvider.getFile(file));
                     subscriber.onCompleted();
                 } catch (Throwable throwable) {
                     subscriber.onError(throwable);
@@ -257,6 +256,19 @@ public class RxStorageProvider {
         });
     }
 
+    public Observable<RemoteFile> getFile(final String path) {
+        return Observable.create(new Observable.OnSubscribe<RemoteFile>() {
+            @Override
+            public void call(Subscriber<? super RemoteFile> subscriber) {
+                try {
+                    subscriber.onNext(mStorageProvider.getFile(path));
+                    subscriber.onCompleted();
+                } catch (Throwable throwable) {
+                    subscriber.onError(throwable);
+                }
+            }
+        });
+    }
 
     public Observable<RemoteFile> getFileById(final String id) {
         return Observable.create(new Observable.OnSubscribe<RemoteFile>() {

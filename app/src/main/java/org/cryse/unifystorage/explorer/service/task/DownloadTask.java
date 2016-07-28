@@ -16,11 +16,17 @@ public class DownloadTask extends RemoteTask {
     public static final String OPT_NAME = DownloadOperation.OP_NAME;
     private RemoteFile mRemoteFile;
     private String mSavePath;
+    private boolean mOpenAfterDownload = false;
 
     public DownloadTask(StorageProviderInfo providerInfo, RemoteFile file, String savePath, boolean shouldQueue) {
+        this(providerInfo, file, savePath, false, shouldQueue);
+    }
+
+    public DownloadTask(StorageProviderInfo providerInfo, RemoteFile file, String savePath, boolean openAfterDownload, boolean shouldQueue) {
         super(providerInfo, shouldQueue);
         mRemoteFile = file;
         mSavePath = savePath;
+        mOpenAfterDownload = openAfterDownload;
     }
 
     @Override

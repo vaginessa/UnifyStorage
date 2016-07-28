@@ -1,6 +1,7 @@
 package org.cryse.unifystorage.providers.onedrive;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -121,7 +122,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
                 }
             } else {
                 // Failure here
-                throw new StorageException();
+                throw parseError(responseCode, response.errorBody());
             }
         } catch (IOException ex) {
             throw new StorageException();
@@ -151,7 +152,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
                     mRootFile = gson.fromJson(responseObject, OneDriveFile.class);
                 } else {
                     // Failure here
-                    throw new StorageException();
+                    throw parseError(responseCode, response.errorBody());
                 }
                 //String resultString = responseObject.toString();
             } catch (IOException ex) {
@@ -180,6 +181,8 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
                     String responseString = responseBody.string();
                     JsonParser parser = new JsonParser();
                     responseJsonObject = parser.parse(responseString).getAsJsonObject();
+                } else {
+                    throw parseError(response.code(), response.body());
                 }
             } catch (IOException e) {
                 throw new StorageException(e);
@@ -193,6 +196,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
                     responseJsonObject = response.body();
                 } else {
                     // Failure here
+                    throw parseError(responseCode, response.errorBody());
                 }
                 //String resultString = responseObject.toString();
             } catch (IOException e) {
@@ -237,7 +241,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
                 fileMetaData = gson.fromJson(responseObject, OneDriveFile.class);
             } else {
                 // Failure here
-                throw new StorageException(String.format("Response Code: %d", responseCode));
+                throw parseError(responseCode, response.errorBody());
             }
             //String resultString = responseObject.toString();
         } catch (IOException ex) {
@@ -293,6 +297,8 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
     @Override
     public OneDriveFile getFile(String path) throws StorageException {
         OneDriveFile fileMetaData = null;
+        if(path.startsWith("/") && path.length() >= 1)
+            path = path.substring(1, path.length());
         Call<JsonObject> call = mOneDriveService.getMetaDataByPath(mAuthenticationHeader, path);
         try {
             Response<JsonObject> response = call.execute();
@@ -302,7 +308,7 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
                 fileMetaData = gson.fromJson(responseObject, OneDriveFile.class);
             } else {
                 // Failure here
-                throw new StorageException();
+                throw parseError(responseCode, response.errorBody());
             }
             //String resultString = responseObject.toString();
         } catch (IOException ex) {
@@ -491,5 +497,16 @@ public class OneDriveStorageProvider extends AbstractStorageProvider {
         } catch (IOException ex) {
             throw new StorageException(ex);
         }*/
+    }
+
+    public static StorageException parseError(int responseCode, ResponseBody responseBody) {
+        try {
+            JsonParser parser = new JsonParser();
+            JsonObject jsonObject = (JsonObject) parser.parse(responseBody.string());
+            String errorMessage = jsonObject.getAsJsonObject("error").get("message").getAsString();
+            return new StorageException(responseCode, errorMessage);
+        } catch (IOException e) {
+            return new StorageException(responseCode);
+        }
     }
 }

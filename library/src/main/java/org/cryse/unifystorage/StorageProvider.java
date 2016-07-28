@@ -49,6 +49,8 @@ public interface StorageProvider {
 
     RemoteFile getFile(RemoteFile parent, String name) throws StorageException;
 
+    RemoteFile getFile(RemoteFile file) throws StorageException;
+
     RemoteFile getFileById(String id) throws StorageException;
 
     RemoteFile updateFile(RemoteFile remote, InputStream input, FileUpdater updater) throws StorageException;

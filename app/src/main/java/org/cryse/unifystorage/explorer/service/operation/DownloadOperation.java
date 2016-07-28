@@ -158,7 +158,7 @@ public class DownloadOperation extends RemoteOperation<DownloadOperation.Params>
         if(getState() == OperationState.COMPLETED) {
             return context.getString(R.string.operation_title_download_completed);
         } else if(getState() == OperationState.FAILED) {
-            return context.getString(R.string.operation_title_download_completed);
+            return context.getString(R.string.operation_title_download_failed);
         } else {
             return "";
         }

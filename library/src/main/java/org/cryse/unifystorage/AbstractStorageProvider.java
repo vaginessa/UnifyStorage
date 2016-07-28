@@ -89,6 +89,11 @@ public abstract class AbstractStorageProvider implements StorageProvider {
 
     public abstract RemoteFile getFile(String path) throws StorageException;
 
+    @Override
+    public RemoteFile getFile(RemoteFile file) throws StorageException {
+        return getFile(file.getPath());
+    }
+
     public abstract RemoteFile getFileById(String id) throws StorageException;
 
     public abstract RemoteFile updateFile(RemoteFile remote, InputStream input, FileUpdater updater) throws StorageException;

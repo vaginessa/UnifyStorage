@@ -83,7 +83,7 @@ public class NotificationHelper {
                 // status.setNotificationBuilder(notificationBuilder);
                 notificationBuilder
                         .setContentIntent(clickPendingIntent)
-                        .addAction(R.drawable.ic_action_cancel, mService.getString(R.string.dialog_button_cancel), cancelPendingIntent);
+                        .addAction(R.drawable.ic_action_cancel, mService.getString(android.R.string.cancel), cancelPendingIntent);
             }
 
             int iconResId = R.mipmap.ic_launcher;
@@ -123,7 +123,7 @@ public class NotificationHelper {
 
     public void showCompletedNotification(Operation operation) {
         synchronized (mNotificationLock) {
-            if (operation.getState() == OperationState.COMPLETED || operation.getState() == OperationState.FAILED) {
+            if ((operation.showCompletedNotification() && operation.getState() == OperationState.COMPLETED) || operation.getState() == OperationState.FAILED) {
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(mService);
 
                 builder.setContentTitle(operation.getSummaryFinishedTitle(mService))

@@ -8,6 +8,7 @@ import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
+import org.cryse.unifystorage.explorer.service.operation.base.OperationState;
 import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperation;
 import org.cryse.unifystorage.explorer.service.operation.base.RemoteOperationResult;
 
@@ -20,6 +21,16 @@ public class CreateFolderOperation extends RemoteOperation<CreateFolderOperation
 
     public CreateFolderOperation(String token, Params params, OnOperationListener listener, Handler listenerHandler) {
         super(token, params, listener, listenerHandler);
+    }
+
+    @Override
+    public boolean isIndeterminate() {
+        return true;
+    }
+
+    @Override
+    public boolean showCompletedNotification() {
+        return false;
     }
 
     @Override
@@ -54,12 +65,24 @@ public class CreateFolderOperation extends RemoteOperation<CreateFolderOperation
 
     @Override
     public String getSummaryFinishedTitle(Context context) {
-        return "";
+        if(getState() == OperationState.COMPLETED) {
+            return context.getString(R.string.operation_title_creating_folder_completed);
+        } else if(getState() == OperationState.FAILED) {
+            return context.getString(R.string.operation_title_creating_folder_failed);
+        } else {
+            return "";
+        }
     }
 
     @Override
     public String getSummaryFinishedContent(Context context) {
-        return "";
+        if(getState() == OperationState.COMPLETED) {
+            return context.getString(R.string.operation_content_creating_folder_completed, getParams().getFolderName());
+        } else if(getState() == OperationState.FAILED) {
+            return context.getString(R.string.operation_content_creating_folder_failed, getParams().getFolderName());
+        } else {
+            return "";
+        }
     }
 
     @Override
@@ -69,7 +92,7 @@ public class CreateFolderOperation extends RemoteOperation<CreateFolderOperation
 
     @Override
     public String getProgressDescForNotification(Context context) {
-        return "";
+        return context.getString(R.string.dialog_title_running);
     }
 
     public static class Params extends RemoteOperation.Params {
