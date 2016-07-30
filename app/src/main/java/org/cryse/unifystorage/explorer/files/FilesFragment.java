@@ -50,7 +50,6 @@ import org.cryse.unifystorage.explorer.utils.MenuUtils;
 import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
 import org.cryse.unifystorage.explorer.utils.copy.CopyTask;
-import org.cryse.unifystorage.explorer.utils.exception.ExceptionUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
@@ -59,7 +58,6 @@ import org.cryse.utils.preference.BooleanPrefs;
 import org.cryse.utils.preference.Prefs;
 import org.cryse.widget.cab.MaterialCab;
 import org.cryse.widget.SelectableRecyclerViewAdapter;
-import org.cryse.widget.StateView;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -73,7 +71,6 @@ public class FilesFragment extends AbstractFragment implements
         MaterialCab.Callback/*,
         OnRemoteOperationListener*/ {
 
-    private static final Object sOpenFileLock = new Object();
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
     private Handler mHandler = new Handler();
 
@@ -448,17 +445,11 @@ public class FilesFragment extends AbstractFragment implements
     @Override
     public void onStart() {
         super.onStart();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(DataContract.Action.NewOperation);
-        intentFilter.addAction(DataContract.Action.ShowOperationDialog);
-        intentFilter.addAction(DataContract.Action.OpenFile);
-        getActivity().registerReceiver(mOperationReceiver, intentFilter);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        getActivity().unregisterReceiver(mOperationReceiver);
     }
 
     @Override
@@ -730,28 +721,4 @@ public class FilesFragment extends AbstractFragment implements
     protected boolean isCurrentStorageProvider(int id) {
         return mPresenter.getStorageProviderInfo().getStorageProviderId() == id;
     }
-
-    private BroadcastReceiver mOperationReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case DataContract.Action.NewOperation:
-                    String token = intent.getStringExtra(DataContract.Argument.OperationToken);
-                    OperationProgressDialog dialog = OperationProgressDialog.create(token);
-                    dialog.show(getChildFragmentManager(), null);
-                    break;
-                case DataContract.Action.OpenFile:
-                    Log.e("DDDD", "OpenFile");
-                    synchronized (sOpenFileLock) {
-                        if(!intent.hasExtra(DataContract.Argument.Opened)) {
-                            String savePath = intent.getStringExtra(DataContract.Argument.SavePath);
-                            intent.putExtra(DataContract.Argument.Opened, true);
-                            openFileByPath(savePath, true);
-                        }
-                    }
-                    break;
-            }
-        }
-    };
 }

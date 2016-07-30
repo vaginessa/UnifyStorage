@@ -6,11 +6,11 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.support.v4.content.FileProvider;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 
 import org.cryse.unifystorage.explorer.R;
+import org.cryse.unifystorage.explorer.utils.MimeUtils;
 
 import java.io.File;
 import java.util.List;
@@ -24,16 +24,19 @@ public class AndroidOpenFileUtils implements OpenFileUtils {
 
     @Override
     public void openFileByPath(String filePath, boolean useSystemSelector) {
-        Uri uri = FileProvider.getUriForFile(mContext, mContext.getString(R.string.authority_file_provider), new File(filePath));
+        Uri uri = null;
+        try {
+            uri = FileProvider.getUriForFile(mContext, mContext.getString(R.string.authority_file_provider), new File(filePath));
+        } catch (IllegalArgumentException exception) {
+            uri = Uri.fromFile(new File(filePath));
+        }
         openFileByUri(uri.toString(), useSystemSelector);
     }
 
     @Override
     public void openFileByUri(String uriString, boolean useSystemSelector) {
         Uri uri = Uri.parse(uriString);
-        MimeTypeMap mimeMap = MimeTypeMap.getSingleton();
-        String extension = MimeTypeMap.getFileExtensionFromUrl(uri.getPath());
-        String mime = mimeMap.getMimeTypeFromExtension(extension);
+        String mime = MimeUtils.getMime(uri.getPath().replace(" ",""));
         final Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

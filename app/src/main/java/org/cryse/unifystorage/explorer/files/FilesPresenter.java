@@ -1,6 +1,7 @@
 package org.cryse.unifystorage.explorer.files;
 
 
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -27,11 +28,14 @@ import org.cryse.unifystorage.explorer.service.task.DeleteTask;
 import org.cryse.unifystorage.explorer.service.task.DownloadTask;
 import org.cryse.unifystorage.explorer.utils.BrowserState;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
+import org.cryse.unifystorage.explorer.utils.MimeUtils;
 import org.cryse.unifystorage.explorer.utils.cache.FileCacheRepository;
 import org.cryse.unifystorage.io.comparator.NameFileComparator;
 import org.cryse.unifystorage.providers.localstorage.LocalStorageProvider;
 import org.cryse.unifystorage.utils.DirectoryInfo;
+import org.cryse.unifystorage.utils.Path;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.Stack;
 
@@ -350,11 +354,20 @@ public class FilesPresenter implements FilesContract.Presenter {
 
     @Override
     public void downloadFile(final RemoteFile file, String savePath, boolean openAfterDownload) {
-        final String localPath = TextUtils.isEmpty(savePath) ? mFileCacheRepository.getFullCachePathForFile(
-                mRxStorageProvider.getStorageProviderName(),
-                mStorageProviderRecord.getUuid(),
-                file
-        ) : savePath;
+        String remoteFileName = file.getName();
+        String mime = MimeUtils.getMime(remoteFileName);
+        String localPath = null;
+        if(MimeUtils.isApkMime(mime)) {
+            File downloadDir = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+            localPath = Path.combine(Path.combine(downloadDir.getAbsolutePath(), "UnifyStorage"), remoteFileName);
+        } else {
+            localPath = TextUtils.isEmpty(savePath) ? mFileCacheRepository.getFullCachePathForFile(
+                    mRxStorageProvider.getStorageProviderName(),
+                    mStorageProviderRecord.getUuid(),
+                    file
+            ) : savePath;
+        }
 
         RxEventBus.instance().sendEvent(
                 new NewTaskEvent(

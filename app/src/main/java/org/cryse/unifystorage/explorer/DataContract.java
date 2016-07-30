@@ -29,6 +29,7 @@ public class DataContract {
         public static final String OpenFile = PACKAGE_NAME + SEPERATOR + "OpenFile";
         public static final String CancelOperation = PACKAGE_NAME + SEPERATOR + "CancelOperation";
         public static final String NewOperation = PACKAGE_NAME + SEPERATOR + "NewOperation";
+        public static final String DownloadFinished = PACKAGE_NAME + SEPERATOR + "DownloadFinished";
         public static final String PauseOperation = PACKAGE_NAME + SEPERATOR + "PauseOperation";
     }
 }

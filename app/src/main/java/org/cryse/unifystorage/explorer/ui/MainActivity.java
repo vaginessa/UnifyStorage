@@ -2,18 +2,18 @@ package org.cryse.unifystorage.explorer.ui;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -24,7 +24,6 @@ import android.widget.Toast;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
-import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import org.cryse.unifystorage.credential.Credential;
@@ -36,13 +35,15 @@ import org.cryse.unifystorage.explorer.executor.JobExecutor;
 import org.cryse.unifystorage.explorer.executor.UIThread;
 import org.cryse.unifystorage.explorer.files.FilesFragment;
 import org.cryse.unifystorage.explorer.files.FilesPresenter;
+import org.cryse.unifystorage.explorer.files.OperationProgressDialog;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
-import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.model.StorageProviderType;
 import org.cryse.unifystorage.explorer.service.OperationService;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.explorer.utils.cache.AndroidFileCacheRepository;
+import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
+import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.providers.dropbox.DropboxAuthenticator;
 import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
 import org.cryse.unifystorage.providers.onedrive.OneDriveAuthenticator;
@@ -50,9 +51,7 @@ import org.cryse.unifystorage.providers.onedrive.OneDriveCredential;
 import org.cryse.widget.InkPageIndicator;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import butterknife.Bind;
@@ -175,12 +174,19 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         Intent operationServiceIntent = new Intent(this.getApplicationContext(), OperationService.class);
         startService(operationServiceIntent);
         this.bindService(operationServiceIntent, mOperationServiceConnection, Context.BIND_AUTO_CREATE);
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(DataContract.Action.NewOperation);
+        intentFilter.addAction(DataContract.Action.ShowOperationDialog);
+        intentFilter.addAction(DataContract.Action.OpenFile);
+        registerReceiver(mOperationReceiver, intentFilter);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         this.unbindService(mOperationServiceConnection);
+        unregisterReceiver(mOperationReceiver);
     }
 
     @Override
@@ -594,4 +600,32 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
             return fragments.size();
         }
     }
+
+
+    private static final Object sOpenFileLock = new Object();
+
+    private BroadcastReceiver mOperationReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getAction()) {
+                case DataContract.Action.NewOperation:
+                    String token = intent.getStringExtra(DataContract.Argument.OperationToken);
+                    OperationProgressDialog dialog = OperationProgressDialog.create(token);
+                    dialog.show(getSupportFragmentManager(), null);
+                    break;
+                case DataContract.Action.OpenFile:
+                    synchronized (sOpenFileLock) {
+                        if(!intent.hasExtra(DataContract.Argument.Opened)) {
+                            String savePath = intent.getStringExtra(DataContract.Argument.SavePath);
+                            intent.putExtra(DataContract.Argument.Opened, true);
+
+                            OpenFileUtils mOpenFileUtils = new AndroidOpenFileUtils(MainActivity.this);
+                            mOpenFileUtils.openFileByPath(savePath, true);
+                        }
+                    }
+                    break;
+            }
+        }
+    };
 }

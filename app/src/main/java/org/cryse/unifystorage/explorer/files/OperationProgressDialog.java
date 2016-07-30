@@ -2,8 +2,12 @@ package org.cryse.unifystorage.explorer.files;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
@@ -13,12 +17,14 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.afollestad.materialdialogs.Theme;
 
 import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.service.OperationService;
+import org.cryse.unifystorage.explorer.service.operation.DownloadOperation;
 import org.cryse.unifystorage.explorer.service.operation.base.OnOperationListener;
 import org.cryse.unifystorage.explorer.service.operation.base.Operation;
 import org.cryse.unifystorage.explorer.service.operation.base.OperationState;
@@ -170,6 +176,30 @@ public class OperationProgressDialog extends DialogFragment implements OnOperati
     public void onOperationStateChanged(Operation operation, OperationState state) {
         if(state == OperationState.COMPLETED) {
             this.dismiss();
+            if(operation instanceof DownloadOperation) {
+                final DownloadOperation downloadOperation = (DownloadOperation) operation;
+                new MaterialDialog.Builder(getActivity())
+                        .title(R.string.dialog_title_download_completed)
+                        .content(getString(R.string.dialog_content_download_completed, downloadOperation.getParams().getRemoteFile().getName()))
+                        .positiveText(R.string.dialog_button_open)
+                        .negativeText(android.R.string.cancel)
+                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                            @Override
+                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                Intent intent = new Intent(DataContract.Action.OpenFile);
+                                intent.putExtra(DataContract.Argument.OperationTokenInt, downloadOperation.getTokenInt());
+                                intent.putExtra(DataContract.Argument.OperationToken, downloadOperation.getToken());
+                                intent.putExtra(DataContract.Argument.SavePath, downloadOperation.getParams().getSavePath());
+                                intent.putExtra(DataContract.Argument.ProviderId, downloadOperation.getParams().getSourceStorageProviderId());
+                                Context context = dialog.getContext();
+                                NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                                notificationManager.cancel(downloadOperation.getTokenInt());
+                                context.sendBroadcast(intent);
+                                dialog.dismiss();
+                            }
+                        })
+                        .show();
+            }
         } else if(state == OperationState.FAILED) {
             RemoteOperationResult result = (RemoteOperationResult) operation.getResult();
             new MaterialDialog.Builder(getActivity())
