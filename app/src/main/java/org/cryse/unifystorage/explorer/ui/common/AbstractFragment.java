@@ -8,6 +8,7 @@ import android.view.View;
 
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
 import org.cryse.unifystorage.explorer.event.RxEventBus;
+import org.cryse.unifystorage.explorer.utils.ResourceUtils;
 import org.cryse.unifystorage.explorer.utils.RxSubscriptionUtils;
 
 import rx.Subscription;
@@ -16,8 +17,11 @@ import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 public abstract class AbstractFragment extends Fragment {
-    RxEventBus mEventBus = RxEventBus.getInstance();
+    protected RxEventBus mEventBus = RxEventBus.instance();
     private Subscription mEventBusSubscription;
+    protected int mPrimaryColor;
+    protected int mToolbarContentColor;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,6 +35,9 @@ public abstract class AbstractFragment extends Fragment {
                         onEvent(abstractEvent);
                     }
                 });
+
+        mPrimaryColor = ResourceUtils.primaryColor(getContext());
+        mToolbarContentColor = ResourceUtils.toolbarTextColor(getContext());
     }
 
     @Override

@@ -28,6 +28,6 @@ dependencies {
     compile libDependencies.support_v13
     compile libDependencies.appcompat
     compile libDependencies.rxjava
+    compile libDependencies.rxandroid
     compile libDependencies.okhttp
-    compile libDependencies.commons_io
 }

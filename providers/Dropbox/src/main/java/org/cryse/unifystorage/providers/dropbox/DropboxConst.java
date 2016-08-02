@@ -1,6 +1,9 @@
 package org.cryse.unifystorage.providers.dropbox;
 
 public class DropboxConst {
+    public static final int FILE_TYPE_FILE = 0;
+    public static final int FILE_TYPE_FOLDER = 1;
+    public static final int FILE_TYPE_DELETE = 2;
     public static final String NAME_ACCOUNT_TYPE = "Dropbox";
     public static final String NAME_ACCOUNT_NAME = "Dropbox";
     public static final String NAME_STORAGE_PROVIDER = "Dropbox";

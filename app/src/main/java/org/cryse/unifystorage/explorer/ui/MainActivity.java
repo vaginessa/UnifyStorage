@@ -2,18 +2,20 @@ package org.cryse.unifystorage.explorer.ui;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,74 +24,102 @@ import android.widget.Toast;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
-import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import org.cryse.unifystorage.credential.Credential;
 import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.R;
 import org.cryse.unifystorage.explorer.application.AppPermissions;
-import org.cryse.unifystorage.explorer.databinding.ActivityMainBinding;
-import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
-import org.cryse.unifystorage.explorer.service.LongOperationService;
+import org.cryse.unifystorage.explorer.application.StorageProviderManager;
+import org.cryse.unifystorage.explorer.executor.JobExecutor;
+import org.cryse.unifystorage.explorer.executor.UIThread;
+import org.cryse.unifystorage.explorer.files.FilesFragment;
+import org.cryse.unifystorage.explorer.files.FilesPresenter;
+import org.cryse.unifystorage.explorer.files.OperationProgressDialog;
+import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
+import org.cryse.unifystorage.explorer.model.StorageProviderType;
+import org.cryse.unifystorage.explorer.service.OperationService;
 import org.cryse.unifystorage.explorer.ui.common.AbstractActivity;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
-import org.cryse.unifystorage.explorer.viewmodel.MainViewModel;
+import org.cryse.unifystorage.explorer.utils.cache.AndroidFileCacheRepository;
+import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
+import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
 import org.cryse.unifystorage.providers.dropbox.DropboxAuthenticator;
 import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
 import org.cryse.unifystorage.providers.onedrive.OneDriveAuthenticator;
 import org.cryse.unifystorage.providers.onedrive.OneDriveCredential;
+import org.cryse.widget.InkPageIndicator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AbstractActivity implements EasyPermissions.PermissionCallbacks,
-        MainViewModel.DataListener {
+        MainContract.View {
     private static final int RC_AUTHENTICATE_ONEDRIVE = 101;
     private static final int RC_AUTHENTICATE_DROPBOX = 102;
-    private ActivityMainBinding mBinding;
-    private MainViewModel mMainViewModel;
+    // private MainViewModel mMainViewModel;
+    private MainContract.Presenter mPresenter;
 
     private Drawer mDrawer;
-    long mCurrentSelection = 0;
-    boolean mIsRestorePosition = false;
     private Handler mHandler = new Handler();
     private Runnable mPendingRunnable = null;
     AtomicBoolean mDoubleBackToExitPressedOnce = new AtomicBoolean(false);
 
-    ServiceConnection mLongOperationServiceConnection;
-    private LongOperationService.LongOperationBinder mLongOperationBinder;
+    ServiceConnection mOperationServiceConnection;
+    private OperationService.OperationBinder mOperationBinder;
+
+    @Bind(R.id.container_viewpager)
+    ViewPager mViewPager;
+    @Bind(R.id.indicator)
+    InkPageIndicator mPageIndicator;
+
+    FilesFragmentAdapter mFragmentAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Default config
         super.onCreate(savedInstanceState);
-        // setContentView(R.layout.activity_main);
-        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-        mMainViewModel = new MainViewModel(this, this);
-        mBinding.setViewModel(mMainViewModel);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+        setPresenter(new MainPresenter(this, this));
 
-        if (savedInstanceState != null && savedInstanceState.containsKey("selection_item_position")) {
-            mCurrentSelection = savedInstanceState.getInt("selection_item_position");
-            mIsRestorePosition = true;
-        } else {
-            mCurrentSelection = DrawerItemUtils.DRAWER_ITEM_NONE;
-            mIsRestorePosition = false;
-        }
+        mFragmentAdapter = new FilesFragmentAdapter(mViewPager, getSupportFragmentManager());
+        mViewPager.setAdapter(mFragmentAdapter);
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                FilesFragment filesFragment = (FilesFragment)mFragmentAdapter.getItem(position);
+                filesFragment.onSelectedInViewPager();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+        // mPageIndicator.setViewPager(mViewPager);
 
         initDrawer();
         checkStoragePermissions();
-        mLongOperationServiceConnection = new ServiceConnection() {
+        mOperationServiceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                mLongOperationBinder = (LongOperationService.LongOperationBinder) service;
+                mOperationBinder = (OperationService.OperationBinder) service;
             }
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-                mLongOperationBinder = null;
+                mOperationBinder = null;
             }
         };
     }
@@ -121,12 +151,12 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         mDrawer.setOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
             @Override
             public boolean onItemClick(View view, int position, final IDrawerItem drawerItem) {
-                if (drawerItem instanceof PrimaryDrawerItem && drawerItem.isSelectable())
-                    mCurrentSelection = drawerItem.getIdentifier();
+                /*if (drawerItem instanceof PrimaryDrawerItem && drawerItem.isSelectable())
+                    mCurrentSelection = drawerItem.getIdentifier();*/
                 mPendingRunnable = new Runnable() {
                     @Override
                     public void run() {
-                        mMainViewModel.onNavigationSelected(drawerItem);
+                        mPresenter.onNavigationSelected(drawerItem);
                         mPendingRunnable = null;
                     }
                 };
@@ -139,15 +169,24 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onStart() {
         super.onStart();
-        Intent service = new Intent(this.getApplicationContext(), LongOperationService.class);
-        startService(service);
-        this.bindService(service, mLongOperationServiceConnection, Context.BIND_AUTO_CREATE);
+
+        // Start OperationService
+        Intent operationServiceIntent = new Intent(this.getApplicationContext(), OperationService.class);
+        startService(operationServiceIntent);
+        this.bindService(operationServiceIntent, mOperationServiceConnection, Context.BIND_AUTO_CREATE);
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(DataContract.Action.NewOperation);
+        intentFilter.addAction(DataContract.Action.ShowOperationDialog);
+        intentFilter.addAction(DataContract.Action.OpenFile);
+        registerReceiver(mOperationReceiver, intentFilter);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        this.unbindService(mLongOperationServiceConnection);
+        this.unbindService(mOperationServiceConnection);
+        unregisterReceiver(mOperationReceiver);
     }
 
     @Override
@@ -192,12 +231,12 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     private void addStorageProviderItemsAndLoad() {
-        mMainViewModel.updateDrawerItems(DrawerItemUtils.DRAWER_ITEM_NONE);
-        if (mIsRestorePosition) {
+        mPresenter.updateDrawerItems();
+        /*if (mIsRestorePosition) {
             mDrawer.setSelection(mCurrentSelection, false);
         } else {
             mDrawer.setSelectionAtPosition(0, true);
-        }
+        }*/
         if (mPendingRunnable != null) {
             mHandler.post(mPendingRunnable);
         }
@@ -206,7 +245,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putLong("selection_item_position", mCurrentSelection);
+        // outState.putLong("selection_item_position", mCurrentSelection);
     }
 
     public void showAddProviderDialog() {
@@ -218,24 +257,24 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                     public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
                         switch (which) {
                             case 0:
-                            mMainViewModel.addNewProvider(
+                                mPresenter.addNewProvider(
                                     "Pictures",
                                     "Cryse Hillmes",
-                                    StorageProviderRecord.PROVIDER_LOCAL_STORAGE,
+                                    StorageProviderType.LOCAL_STORAGE,
                                     "",
                                     "/storage/emulated/0/Pictures"
                             );
                                 break;
                             case 1:
                                 OneDriveAuthenticator oneDriveAuthenticator = new OneDriveAuthenticator(
-                                        DataContract.CONST_ONEDRIVE_CLIENT_ID,
-                                        DataContract.CONST_ONEDRIVE_SCOPES
+                                        DataContract.ClientIds.OneDriveClientId,
+                                        DataContract.ClientIds.OneDriveScopes
                                 );
                                 oneDriveAuthenticator.startAuthenticate(MainActivity.this, RC_AUTHENTICATE_ONEDRIVE);
                                 break;
                             case 2:
                                 DropboxAuthenticator dropboxAuthenticator = new DropboxAuthenticator(
-                                        DataContract.CONST_DROPBOX_APP_KEY
+                                        DataContract.ClientIds.DropboxAppKey
                                 );
                                 dropboxAuthenticator.startAuthenticate(MainActivity.this, RC_AUTHENTICATE_DROPBOX);
                                 break;
@@ -255,7 +294,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
         return backStackCount > 0;
     }
 
-    public void switchContentFragment(Fragment targetFragment, String backStackTag) {
+    /*public void switchContentFragment(Fragment targetFragment, String backStackTag) {
         popEntireFragmentBackStack();
         FragmentTransaction fragmentTransaction = getSupportFragmentManager()
                 .beginTransaction();
@@ -265,26 +304,115 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
             fragmentTransaction.addToBackStack(backStackTag);
         fragmentTransaction.replace(R.id.frame_container, targetFragment);
         fragmentTransaction.commit();
+    }*/
+
+    public void showInitialFragments(IDrawerItem[] drawerItems) {
+        Fragment fragment1 = getInternalStorageFragment((StorageProviderInfo) drawerItems[0].getTag());
+        Fragment fragment2 = getInternalStorageFragment((StorageProviderInfo) drawerItems[0].getTag());
+        switchContentFragment(fragment1, 0);
+        switchContentFragment(fragment2, 0);
+        mPageIndicator.setViewPager(mViewPager);
     }
 
-    public void navigateToInternalStorage() {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(Environment.getExternalStorageDirectory().getAbsolutePath(), DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE);
-        switchContentFragment(fragment, null);
+    public void switchContentFragment(Fragment fragment, int index) {
+        if(mViewPager.getChildCount() < 2) {
+            mFragmentAdapter.addFragment(fragment);
+        } else {
+            mFragmentAdapter.replaceFragmentAt(index, fragment);
+        }
     }
 
-    public void navigateToOtherLocalStorage(String path, int storageProviderRecordId) {
-        LocalStorageFragment fragment = LocalStorageFragment.newInstance(path, storageProviderRecordId);
-        switchContentFragment(fragment, null);
+    public void navigateToStorageProvider(StorageProviderInfo providerInfo) {
+        switch (providerInfo.getStorageProviderType()) {
+            case LOCAL_STORAGE:
+                navigateToOtherLocalStorage(providerInfo);
+                break;
+            case DROPBOX:
+                navigateToDropboxStorage(providerInfo);
+                break;
+            case ONE_DRIVE:
+                navigateToOneDriveStorage(providerInfo);
+                break;
+        }
     }
 
-    public void navigateToOneDriveStorage(OneDriveCredential credential, int storageProviderRecordId) {
-        OneDriveStorageFragment fragment = OneDriveStorageFragment.newInstance(credential, storageProviderRecordId);
-        switchContentFragment(fragment, null);
+    public void navigateToInternalStorage(StorageProviderInfo storageProviderInfo) {
+        FilesFragment filesFragment = getInternalStorageFragment(storageProviderInfo);
+        switchContentFragment(filesFragment, mViewPager.getCurrentItem());
     }
 
-    public void navigateToDropboxStorage(DropboxCredential credential, int storageProviderRecordId) {
-        DropboxStorageFragment fragment = DropboxStorageFragment.newInstance(credential, storageProviderRecordId);
-        switchContentFragment(fragment, null);
+    private FilesFragment getInternalStorageFragment(StorageProviderInfo storageProviderInfo) {
+        FilesFragment filesFragment = FilesFragment.newInstance();
+        new FilesPresenter.Builder()
+                .view(filesFragment)
+                .storageProviderInfo(storageProviderInfo)
+                .threadExecutor(new JobExecutor())
+                .postExecutionThread(new UIThread())
+                .fileCacheRepository(new AndroidFileCacheRepository(this))
+                .storageProvider(StorageProviderManager
+                        .instance()
+                        .createStorageProvider(
+                                this,
+                                storageProviderInfo
+                        )
+                ).build();
+        return filesFragment;
+    }
+
+    public void navigateToOtherLocalStorage(StorageProviderInfo storageProviderInfo) {
+        FilesFragment filesFragment = FilesFragment.newInstance();
+        new FilesPresenter.Builder()
+                .view(filesFragment)
+                .storageProviderInfo(storageProviderInfo)
+                .threadExecutor(new JobExecutor())
+                .postExecutionThread(new UIThread())
+                .fileCacheRepository(new AndroidFileCacheRepository(this))
+                .storageProvider(StorageProviderManager
+                        .instance()
+                        .createStorageProvider(
+                                this,
+                                storageProviderInfo
+                        )
+                ).build();
+        switchContentFragment(filesFragment, mViewPager.getCurrentItem());
+    }
+
+    public void navigateToOneDriveStorage(StorageProviderInfo storageProviderInfo) {
+        FilesFragment filesFragment = FilesFragment.newInstance();
+        new FilesPresenter.Builder()
+                .view(filesFragment)
+                .storageProviderInfo(storageProviderInfo)
+                .threadExecutor(new JobExecutor())
+                .postExecutionThread(new UIThread())
+                .fileCacheRepository(new AndroidFileCacheRepository(this))
+                //.extras(new String[] {DataContract.CONST_ONEDRIVE_CLIENT_ID})
+                .storageProvider(StorageProviderManager
+                        .instance()
+                        .createStorageProvider(
+                                this,
+                                storageProviderInfo
+                        )
+                ).build();
+        switchContentFragment(filesFragment, mViewPager.getCurrentItem());
+    }
+
+    public void navigateToDropboxStorage(StorageProviderInfo storageProviderInfo) {
+        FilesFragment filesFragment = FilesFragment.newInstance();
+        new FilesPresenter.Builder()
+                .view(filesFragment)
+                .storageProviderInfo(storageProviderInfo)
+                .threadExecutor(new JobExecutor())
+                .postExecutionThread(new UIThread())
+                .fileCacheRepository(new AndroidFileCacheRepository(this))
+                //.extras(new String[] {DataContract.CONST_DROPBOX_CLIENT_IDENTIFIER})
+                .storageProvider(StorageProviderManager
+                        .instance()
+                        .createStorageProvider(
+                                this,
+                                storageProviderInfo
+                        )
+                ).build();
+        switchContentFragment(filesFragment, mViewPager.getCurrentItem());
     }
 
     public Drawer getNavigationDrawer() {
@@ -336,18 +464,18 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     }
 
     @Override
-    public void onDrawerItemsChanged(IDrawerItem[] drawerItems, int selectionIdentifier) {
+    public void onDrawerItemsChanged(IDrawerItem[] drawerItems) {
         mDrawer.removeAllItems();
         mDrawer.addItems(drawerItems);
-        if(selectionIdentifier >= 0)
-            mDrawer.setSelection(selectionIdentifier, false);
+        if(getFragmentManager().getBackStackEntryCount() == 0)
+            showInitialFragments(drawerItems);
     }
 
     @Override
     public void onNavigateTo(IDrawerItem drawerItem) {
         switch ((int)drawerItem.getIdentifier()) {
             case DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE:
-                navigateToInternalStorage();
+                navigateToInternalStorage((StorageProviderInfo) drawerItem.getTag());
                 break;
             case DrawerItemUtils.DRAWER_ITEM_ADD_PROVIDER:
                 showAddProviderDialog();
@@ -362,21 +490,7 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 showThemeSettingsActivity();
                 break;
             default:
-                if(drawerItem.getIdentifier() >= DrawerItemUtils.STORAGE_PROVIDER_START) {
-                    StorageProviderRecord record = (StorageProviderRecord) drawerItem.getTag();
-                    switch (record.getProviderType()) {
-                        case StorageProviderRecord.PROVIDER_LOCAL_STORAGE:
-                            navigateToOtherLocalStorage(record.getExtraData(), record.getId());
-                            break;
-                        case StorageProviderRecord.PROVIDER_ONE_DRIVE:
-                            navigateToOneDriveStorage(new OneDriveCredential(record.getCredentialData()), record.getId());
-                            break;
-                        case StorageProviderRecord.PROVIDER_DROPBOX:
-                            navigateToDropboxStorage(new DropboxCredential(record.getCredentialData()), record.getId());
-                            break;
-                    }
-                } else if(drawerItem.getIdentifier() <= DrawerItemUtils.STORAGE_DIRECTORY_EXTERNAl_STORAGE_START)
-                    navigateToOtherLocalStorage((String) drawerItem.getTag(), (int)drawerItem.getIdentifier());
+                navigateToStorageProvider((StorageProviderInfo) drawerItem.getTag());
         }
     }
 
@@ -387,14 +501,14 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 data.hasExtra(Credential.RESULT_KEY)) {
             if(resultCode == RESULT_OK) {
                 OneDriveCredential credential = data.getParcelableExtra(Credential.RESULT_KEY);
-                mMainViewModel.addNewProvider(
+                mPresenter.addNewProvider(
                         credential.getAccountType(),
                         credential.getAccountName(),
-                        StorageProviderRecord.PROVIDER_ONE_DRIVE,
+                        StorageProviderType.ONE_DRIVE,
                         credential.persist(),
                         ""
                 );
-                mMainViewModel.updateDrawerItems((int)mCurrentSelection);
+                mPresenter.updateDrawerItems();
             } else {
                 String errorMessage = data.getStringExtra(Credential.RESULT_KEY);
                 new MaterialDialog.Builder(this)
@@ -407,14 +521,14 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
                 data.hasExtra(Credential.RESULT_KEY)) {
             if(resultCode == RESULT_OK) {
                 DropboxCredential credential = data.getParcelableExtra(Credential.RESULT_KEY);
-                mMainViewModel.addNewProvider(
+                mPresenter.addNewProvider(
                         credential.getAccountType(),
                         credential.getAccountName(),
-                        StorageProviderRecord.PROVIDER_DROPBOX,
+                        StorageProviderType.DROPBOX,
                         credential.persist(),
                         ""
                 );
-                mMainViewModel.updateDrawerItems((int)mCurrentSelection);
+                mPresenter.updateDrawerItems();
             } else {
                 new MaterialDialog.Builder(this)
                         .title(R.string.dialog_title_error)
@@ -432,10 +546,86 @@ public class MainActivity extends AbstractActivity implements EasyPermissions.Pe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mMainViewModel.destroy();
+        mPresenter.destroy();
     }
 
-    public LongOperationService.LongOperationBinder getLongOperationBinder() {
-        return mLongOperationBinder;
+    @Override
+    public void setPresenter(MainContract.Presenter presenter) {
+        this.mPresenter = presenter;
     }
+
+    public OperationService.OperationBinder getOperationBinder() {
+        return mOperationBinder;
+    }
+
+    public static class FilesFragmentAdapter extends FragmentStatePagerAdapter {
+        private FragmentManager fragmentManager;
+        private ArrayList<Fragment> fragments;
+        public FilesFragmentAdapter(ViewPager viewPager, FragmentManager fm) {
+            super(fm);
+            this.fragmentManager = fm;
+            this.fragments = new ArrayList<>(4);
+        }
+
+        public void addFragment(Fragment fragment) {
+            fragments.add(fragment);
+            notifyDataSetChanged();
+        }
+
+        public void replaceFragmentAt(int index, Fragment fragment) {
+            Fragment oldFragment = getItem(index);
+            if(oldFragment == null) {
+                return;
+            }
+            fragments.set(index, fragment);
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public int getItemPosition(Object object) {
+            if(!fragments.contains(object)) {
+                return POSITION_NONE;
+            } else {
+                return super.getItemPosition(object);
+            }
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return fragments.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return fragments.size();
+        }
+    }
+
+
+    private static final Object sOpenFileLock = new Object();
+
+    private BroadcastReceiver mOperationReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getAction()) {
+                case DataContract.Action.NewOperation:
+                    String token = intent.getStringExtra(DataContract.Argument.OperationToken);
+                    OperationProgressDialog dialog = OperationProgressDialog.create(token);
+                    dialog.show(getSupportFragmentManager(), null);
+                    break;
+                case DataContract.Action.OpenFile:
+                    synchronized (sOpenFileLock) {
+                        if(!intent.hasExtra(DataContract.Argument.Opened)) {
+                            String savePath = intent.getStringExtra(DataContract.Argument.SavePath);
+                            intent.putExtra(DataContract.Argument.Opened, true);
+
+                            OpenFileUtils mOpenFileUtils = new AndroidOpenFileUtils(MainActivity.this);
+                            mOpenFileUtils.openFileByPath(savePath, true);
+                        }
+                    }
+                    break;
+            }
+        }
+    };
 }

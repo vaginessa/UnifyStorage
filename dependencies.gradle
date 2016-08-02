@@ -1,24 +1,30 @@
 ext {
     junitVersion = '4.12'
-    supportLibraryVersion = '23.2.0'
-    gsonVersion = '2.4'
+    stethoVersion = '1.3.1'
+    supportLibraryVersion = '23.4.0'
+    gsonVersion = '2.6.1'
     rxVersion = '1.1.0'
-    realmVersion = '0.87.0'
+    realmVersion = '0.88.2'
     butterknifeVersion = '7.0.1'
     oneDriveSdkVersion = '1.0.2'
-    msaAuthVersion = '0.8.4'
-    materialDrawerVersion = '5.1.1'
-    materialDialogVersion = '0.8.5.6'
-    materialCabVersion = '0.1.6'
+    materialDrawerVersion = '5.1.6'
+    materialDialogVersion = '0.8.5.8'
+    materialCabVersion = '0.1.12'
+    easyRecyclerViewVersion = '4.0.2'
     easyPermissionVersion = '0.1.0'
-    okhttpVersion = '2.4.0'
-    dropboxVersion = '2.0-beta-4'
+    okhttpVersion = '3.2.0'
     commonsioVersion = '2.4'
     fabVersion = '1.6.2'
+    retrofitVersion = '2.0.0'
+    boltsVersion = '1.4.0'
 
     libDependencies = [
             // Test
             junit: "junit:junit:$junitVersion",
+
+            // Debug
+            stetho: "com.facebook.stetho:stetho:$stethoVersion",
+            stetho_okhttp3: "com.facebook.stetho:stetho-okhttp3:$stethoVersion",
 
             // Support Library
             support_v13: "com.android.support:support-v13:$supportLibraryVersion",
@@ -37,11 +43,16 @@ ext {
             rxjava: "io.reactivex:rxjava:$rxVersion",
             rxandroid: "io.reactivex:rxandroid:$rxVersion",
 
+            bolts_tasks: "com.parse.bolts:bolts-tasks:$boltsVersion",
+
             // Network
-            okhttp: "com.squareup.okhttp:okhttp:$okhttpVersion",
+            okhttp: "com.squareup.okhttp3:okhttp:$okhttpVersion",
+            okhttp_logging: "com.squareup.okhttp3:logging-interceptor:$okhttpVersion",
+            retrofit: "com.squareup.retrofit2:retrofit:$retrofitVersion",
+            gsonConverter: "com.squareup.retrofit2:converter-gson:$retrofitVersion",
 
             // Database
-            realm: "io.realm:realm-android:$realmVersion",
+            realm: "io.realm:realm-android-library:$realmVersion",
 
             // IO
             commons_io: "commons-io:commons-io:$commonsioVersion",
@@ -50,15 +61,13 @@ ext {
             butterknife: "com.jakewharton:butterknife:$butterknifeVersion",
 
             // Cloud Drive dependencies
-            onedrive: "com.onedrive.sdk:onedrive-sdk-android:$oneDriveSdkVersion",
-            msa_auth: "com.microsoft.services.msa:msa-auth:$msaAuthVersion",
-            dropbox: "com.dropbox.core:dropbox-core-sdk:$dropboxVersion",
 
             // UI Elements
             materialdrawer: "com.mikepenz:materialdrawer:$materialDrawerVersion@aar",
             materialdialog: "com.github.afollestad.material-dialogs:core:$materialDialogVersion@aar",
             materialdialog_commons: "com.github.afollestad.material-dialogs:commons:$materialDialogVersion@aar",
             materialcab: "com.afollestad:material-cab:$materialCabVersion@aar",
-            fab: "com.github.clans:fab:$fabVersion"
+            fab: "com.github.clans:fab:$fabVersion",
+            easy_recyclerview: "com.jude:easyrecyclerview:$easyRecyclerViewVersion"
     ]
 }

@@ -4,10 +4,11 @@ import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 
 public class StorageProviderRecord extends RealmObject {
-    public static final int PROVIDER_LOCAL_STORAGE = 1010;
-    public static final int PROVIDER_ONE_DRIVE = 1011;
-    public static final int PROVIDER_DROPBOX = 1012;
-    public static final int PROVIDER_GOOGLE_DRIVE = 1013;
+//    public static final int PROVIDER_LOCAL_STORAGE = 1000;
+//    public static final int PROVIDER_REMOTE = 10000;
+//    public static final int PROVIDER_ONE_DRIVE = PROVIDER_REMOTE + 1;
+//    public static final int PROVIDER_DROPBOX = PROVIDER_REMOTE + 2;
+//    public static final int PROVIDER_GOOGLE_DRIVE = PROVIDER_REMOTE + 3;
 
     @PrimaryKey
     private int id;

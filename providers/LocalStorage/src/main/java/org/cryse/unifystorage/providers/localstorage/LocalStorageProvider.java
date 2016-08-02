@@ -4,19 +4,20 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.support.v4.provider.DocumentFile;
-import android.support.v4.util.Pair;
 
-import org.apache.commons.io.FileUtils;
 import org.cryse.unifystorage.AbstractStorageProvider;
 import org.cryse.unifystorage.ConflictBehavior;
+import org.cryse.unifystorage.RemoteFile;
 import org.cryse.unifystorage.RemoteFileDownloader;
 import org.cryse.unifystorage.FileUpdater;
 import org.cryse.unifystorage.HashAlgorithm;
 import org.cryse.unifystorage.StorageException;
 import org.cryse.unifystorage.StorageUserInfo;
+import org.cryse.unifystorage.io.FileUtils;
 import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
+import org.cryse.unifystorage.utils.OperationResult;
 import org.cryse.unifystorage.utils.DirectoryInfo;
-import org.cryse.unifystorage.utils.IOUtils;
+import org.cryse.unifystorage.io.IOUtils;
 import org.cryse.unifystorage.utils.Path;
 import org.cryse.unifystorage.utils.ProgressCallback;
 import org.cryse.unifystorage.utils.hash.Sha1HashAlgorithm;
@@ -33,7 +34,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFile, LocalCredential> {
+import okhttp3.Call;
+import okhttp3.Request;
+
+public class LocalStorageProvider extends AbstractStorageProvider {
     private Context mContext;
     private String mStartPath;
     private LocalStorageFile mStartFile;
@@ -46,6 +50,11 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
 
     public void setSdcardUri(Uri uri) {
         this.mSdcardUri = uri;
+    }
+
+    @Override
+    public boolean isRemote() {
+        return false;
     }
 
     @Override
@@ -63,24 +72,27 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public DirectoryInfo<LocalStorageFile, List<LocalStorageFile>> list(LocalStorageFile parent) throws StorageException {
-        if(parent == null) return list();
+    public DirectoryInfo list(DirectoryInfo directoryInfo) throws StorageException {
+        RemoteFile directory = directoryInfo.directory;
+        if(directory == null) return list();
 
-        File file = new File(parent.getPath());
-        List<LocalStorageFile> list = new ArrayList<LocalStorageFile>();
+        File file = new File(directory.getPath());
+        List<RemoteFile> list = new ArrayList<>();
         File[] children = file.listFiles();
         if(children != null) {
             for(File f : children){
                 list.add(new LocalStorageFile(f));
             }
         }
-        return DirectoryInfo.create(parent, list);
+        return DirectoryInfo.create(directory, list);
     }
 
     @Override
-    public LocalStorageFile createDirectory(LocalStorageFile parent, String name) throws StorageException {
+    public LocalStorageFile createDirectory(RemoteFile parent, String name) throws StorageException {
+        if(parent == null)
+            parent = getRootDirectory();
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && isOnExtSdCard(mContext, parent.getPath())) {
-            DocumentFile documentFile = getDocumentFile(mContext, mSdcardUri, parent.getFile(), true);
+            DocumentFile documentFile = getDocumentFile(mContext, mSdcardUri, ((LocalStorageFile)parent).getFile(), true);
             DocumentFile newFile = documentFile.createDirectory(name);
         } else {
             File file = new File(Path.combine(parent.getPath(), name));
@@ -92,22 +104,27 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public LocalStorageFile createFile(LocalStorageFile parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException {
+    public LocalStorageFile createFile(RemoteFile parent, String name, InputStream input, ConflictBehavior behavior) throws StorageException {
         return null;
     }
 
     @Override
-    public boolean exists(LocalStorageFile parent, String name) throws StorageException {
+    public boolean exists(RemoteFile parent, String name) throws StorageException {
         return new File(Path.combine(parent, name)).exists();
     }
 
     @Override
-    public LocalStorageFile getFile(LocalStorageFile parent, String name) throws StorageException {
+    public LocalStorageFile getFile(RemoteFile parent, String name) throws StorageException {
         File target = new File(Path.combine(parent, name));
         if(target.exists())
             return new LocalStorageFile(target);
         else
             return null;
+    }
+
+    @Override
+    public LocalStorageFile getFile(String path) throws StorageException {
+        return new LocalStorageFile(new File(path));
     }
 
     @Override
@@ -120,7 +137,7 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public LocalStorageFile updateFile(LocalStorageFile remote, InputStream input, FileUpdater updater) throws StorageException {
+    public LocalStorageFile updateFile(RemoteFile remote, InputStream input, FileUpdater updater) throws StorageException {
 
         // copy content
         try {
@@ -129,7 +146,7 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
             } else {
                 IOUtils.copyFile(input, new File(remote.getId()));
             }
-            return remote;
+            return (LocalStorageFile)remote;
         }
         catch (IOException e) {
             //Log.e(getName(), "update()", e);
@@ -138,60 +155,27 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public Pair<LocalStorageFile, Boolean> deleteFile(LocalStorageFile file) {
+    public OperationResult deleteFile(RemoteFile file) {
         if (isOnExtSdCard(mContext, file.getPath())) {
             if (mSdcardUri == null)
-                return Pair.create(file, false);
-            DocumentFile documentFile = getDocumentFile(mContext, mSdcardUri, file.getFile(), file.isDirectory());
+                return OperationResult.create(file, false);
+            DocumentFile documentFile = getDocumentFile(mContext, mSdcardUri, ((LocalStorageFile)file).getFile(), file.isDirectory());
             if (documentFile == null)
-                return Pair.create(file, false);
-            return Pair.create(file, documentFile.delete());
+                return OperationResult.create(file, false);
+            return OperationResult.create(file, documentFile.delete());
         } else {
-            return Pair.create(file, FileUtils.deleteQuietly(file.getFile()));
+            return OperationResult.create(file, FileUtils.deleteQuietly(((LocalStorageFile)file).getFile()));
         }
     }
 
     @Override
-    public void copyFile(LocalStorageFile target, final ProgressCallback callback, LocalStorageFile...files) {
-        List<File> sourceFileList = new ArrayList<>();
-        List<File> targetFileList = new ArrayList<>();
-        for(LocalStorageFile localStorageFile : files) {
-            File localFile = localStorageFile.getFile();
-            if(localFile.isDirectory()) {
-                Collection<File> allSubFiles = LocalStorageUtils.listFilesRecursive(localFile);
-                sourceFileList.addAll(allSubFiles);
-                for(File subFile : allSubFiles) {
-                    File targetFile = new File(subFile.getPath().replace(Path.getDirectory(localFile.getPath()), target.getPath()));
-                    targetFileList.add(targetFile);
-                }
-            } else {
-                sourceFileList.add(localFile);
-                File targetFile = new File(localFile.getPath().replace(Path.getDirectory(localFile.getPath()), target.getPath()));
-                targetFileList.add(targetFile);
-            }
-        }
-        int sourceFileListCount = sourceFileList.size();
+    public void copyFile(RemoteFile targetParent, RemoteFile file) throws StorageException {
 
-        for(int i = 0; i < sourceFileListCount; i++) {
-            copyFileSingle(sourceFileList.get(i), targetFileList.get(i), callback);
-        }
+    }
 
-        /*File fromFile = file.getFile();
-        if(fromFile.isDirectory()) {
-            StringBuilder builder = new StringBuilder();
-            StringBuilder stargetBuilder = new StringBuilder();
-            Collection<File> allSubFiles = FileUtils.listFiles(fromFile, null, true);
-            for (File sub : allSubFiles) {
-                builder.append(sub.getPath()).append("\n");
-                stargetBuilder.append(sub.getPath().replace(Path.getDirectory(fromFile.getPath()), target.getPath())).append("\n");
-            }
-            String fileList = builder.toString();
-            String newfileList = stargetBuilder.toString();
-            int len = fileList.length();
-            int len2 = newfileList.length();
-        } else {
-            copyFileSingle(fromFile, new File(Path.combine(target.getPath(), file.getName())), callback);
-        }*/
+    @Override
+    public void copyFile(RemoteFile targetParent, RemoteFile file, ProgressCallback callback) throws StorageException {
+
     }
 
     private void copyFileSingle(File sourceFile, File targetFile, final ProgressCallback callback) {
@@ -257,7 +241,7 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public void moveFile(LocalStorageFile target, final ProgressCallback callback, LocalStorageFile...files){
+    public void moveFile(RemoteFile targetParent, RemoteFile file) throws StorageException {
         /*try {
             InputStream input = new FileInputStream(file.getFile());
             ProgressInputStream progressInputStream = new ProgressInputStream(input, file.size());progressInputStream.addListener(new StreamProgressListener() {
@@ -280,17 +264,22 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public LocalStorageFile getFileDetail(LocalStorageFile file) throws StorageException {
+    public void moveFile(RemoteFile targetParent, RemoteFile file, ProgressCallback callback) throws StorageException {
+
+    }
+
+    @Override
+    public LocalStorageFile getFileDetail(RemoteFile file) throws StorageException {
         return null;
     }
 
     @Override
-    public LocalStorageFile getFilePermission(LocalStorageFile file) throws StorageException {
+    public LocalStorageFile getFilePermission(RemoteFile file) throws StorageException {
         return null;
     }
 
     @Override
-    public LocalStorageFile updateFilePermission(LocalStorageFile file) throws StorageException {
+    public LocalStorageFile updateFilePermission(RemoteFile file) throws StorageException {
         return null;
     }
 
@@ -300,18 +289,8 @@ public class LocalStorageProvider extends AbstractStorageProvider<LocalStorageFi
     }
 
     @Override
-    public LocalCredential getRefreshedCredential() {
+    public Request download(RemoteFile file) throws StorageException {
         return null;
-    }
-
-    @Override
-    public RemoteFileDownloader<LocalStorageFile> download(LocalStorageFile file) throws StorageException {
-        return null;
-    }
-
-    @Override
-    public boolean shouldRefreshCredential() {
-        return false;
     }
 
     @Override

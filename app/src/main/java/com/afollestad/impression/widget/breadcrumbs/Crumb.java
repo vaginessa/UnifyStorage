@@ -23,10 +23,18 @@ public class Crumb implements Parcelable {
     private int mScrollPos;
     private int mScrollOffset;
     private String mQuery;
+    private String mRootPathName;
 
-    public Crumb(Context context, String path) {
+    /*public Crumb(Context context, String path) {
         mContext = context;
         mPath = path;
+        mRootPathName = mContext.getString(R.string.drawer_local_root);
+    }*/
+
+    public Crumb(Context context, String rootPathName, String path) {
+        mContext = context;
+        mPath = path;
+        mRootPathName = rootPathName;
     }
 
     protected Crumb(Parcel in) {
@@ -34,6 +42,7 @@ public class Crumb implements Parcelable {
         this.mScrollPos = in.readInt();
         this.mScrollOffset = in.readInt();
         this.mQuery = in.readString();
+        this.mRootPathName = in.readString();
     }
 
     public String getQuery() {
@@ -62,7 +71,7 @@ public class Crumb implements Parcelable {
 
     public String getTitle() {
         if (mPath.equals("/")) {
-            return mContext.getString(R.string.drawer_local_root);
+            return mRootPathName;
         } else if (mPath.equals(Environment.getExternalStorageDirectory().getAbsolutePath())) {
             return mContext.getString(R.string.drawer_local_internal_storage);
         }
@@ -98,5 +107,6 @@ public class Crumb implements Parcelable {
         dest.writeInt(this.mScrollPos);
         dest.writeInt(this.mScrollOffset);
         dest.writeString(this.mQuery);
+        dest.writeString(this.mRootPathName);
     }
 }

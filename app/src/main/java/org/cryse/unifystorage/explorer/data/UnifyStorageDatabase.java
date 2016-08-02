@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import io.realm.RealmQuery;
 import io.realm.RealmResults;
 import io.realm.Sort;
@@ -32,14 +33,15 @@ public class UnifyStorageDatabase {
         }
     }
 
-    public static UnifyStorageDatabase getInstance() {
+    public static UnifyStorageDatabase instance() {
         return instance;
     }
 
 
     protected UnifyStorageDatabase(Context context) {
         this.mContext = context;
-        this.mRealm = Realm.getInstance(context);
+        RealmConfiguration realmConfig = new RealmConfiguration.Builder(context).build();
+        this.mRealm = Realm.getInstance(realmConfig);
     }
 
     public void saveStorageUriRecord(StorageUriRecord record) {

@@ -1,9 +1,8 @@
 package org.cryse.unifystorage.providers.onedrive;
 
-import com.onedrive.sdk.extensions.Identity;
-import com.onedrive.sdk.extensions.IdentitySet;
-
 import org.cryse.unifystorage.StorageUserInfo;
+import org.cryse.unifystorage.providers.onedrive.model.Identity;
+import org.cryse.unifystorage.providers.onedrive.model.IdentitySet;
 
 public class OneDriveUserInfo extends StorageUserInfo {
     public OneDriveUserInfo(String savedUserInfo) {

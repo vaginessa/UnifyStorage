@@ -3,10 +3,9 @@ package org.cryse.unifystorage.providers.onedrive;
 import android.os.Parcel;
 import android.text.TextUtils;
 
-import com.microsoft.services.msa.LiveConnectSession;
-
 import org.cryse.unifystorage.credential.OAuth2Credential;
 import org.cryse.unifystorage.utils.JsonUtils;
+import org.cryse.unifystorage.utils.oauth2.OAuth2AccessToken;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -51,21 +50,19 @@ public class OneDriveCredential extends OAuth2Credential {
     public OneDriveCredential(
             String accountName,
             String accountType,
-            LiveConnectSession session) {
+            OAuth2AccessToken token) {
         super(accountName, accountType);
-        this.tokenType = session.getTokenType();
-        this.authenticationToken = session.getAuthenticationToken();
-        this.accessToken = session.getAccessToken();
-        this.refreshToken = session.getRefreshToken();
-        this.expiresIn = session.getExpiresIn();
-        this.setScopes(session.getScopes());
+        this.tokenType = token.mTokenType;
+        this.accessToken = token.mAccessToken;
+        this.refreshToken = token.mRefreshToke;
+        this.expiresIn = token.mExpiresDate.getTime();
+        this.setScopes(token.mScope, " ");
     }
 
     @Override
     public boolean isAvailable() {
         return !TextUtils.isEmpty(accessToken) &&
-                !TextUtils.isEmpty(refreshToken) &&
-                !TextUtils.isEmpty(authenticationToken);
+                !TextUtils.isEmpty(refreshToken);
     }
 
     @Override

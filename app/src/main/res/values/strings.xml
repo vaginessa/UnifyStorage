@@ -27,16 +27,29 @@
     <string name="tag_directory">Directory</string>
 
     <string name="dialog_title_error">Error</string>
+    <string name="dialog_title_running">Running…</string>
+    <string name="dialog_title_deleting_file">Deleting</string>
     <string name="dialog_title_add_storage_provider">Add Storage Provider</string>
     <string name="dialog_title_permission_storage">Unify Storage needs Storage permission to access your device storage.</string>
     <string name="dialog_title_open_as_type">Open As</string>
-    <string name="dialog_title_opening_file">Opening file</string>
+    <string name="dialog_title_opening_file">Opening</string>
+    <string name="dialog_title_downloading_file">Downloading</string>
+    <string name="dialog_title_creating_directory">Creating</string>
     <string name="dialog_title_create_new_directory">Create a directory</string>
+    <string name="dialog_content_please_wait">Please wait for a while…</string>
     <string name="dialog_content_create_new_directory">Please enter the new folder name</string>
     <string name="dialog_content_error_dropbox_signin">Fail to sign in to Dropbox.</string>
     <string name="dialog_content_opening">Connecting…</string>
     <string name="dialog_content_error_open_file">Fail to open file.</string>
     <string name="dialog_content_error_download_file">Fail to download file.</string>
+    <string name="dialog_content_download_file_progress">%1$s / %2$s</string>
+    <string name="dialog_content_delete_file_progress">%1$d / %2$d</string>
+    <string name="dialog_title_open_file_is_not_local">Open File</string>
+    <string name="dialog_content_open_file_is_not_local">%1$s is on %2$s, you have to download before open it.</string>
+    <string name="dialog_title_download_completed">Download Completed</string>
+    <string name="dialog_content_download_completed">File %1$s downloaded, do you want to open it?</string>
+    <string name="dialog_button_download">Download</string>
+    <string name="dialog_button_open">Open</string>
 
     <string name="fab_lable_create_file">Create New File</string>
     <string name="fab_lable_create_directory">Create New Directory</string>
@@ -46,13 +59,63 @@
     <string name="storage_provider_name_dropbox">Dropbox</string>
     <string name="storage_provider_name_google_drive">Google Drive</string>
 
+
+    <string name="label_error_something_wrong">Something is wrong</string>
+    <string name="label_error_network_error">Network Error</string>
+    <string name="label_error_access_denied">Access Denied</string>
+    <string name="label_no_files_all">You have no Files!</string>
+    <string name="label_no_files_active">You have no active files!</string>
+    <string name="label_no_files_completed">You have no completed files!</string>
+    <string name="label_no_files_add">Add a file +</string>
+    <string name="label_refresh">Refresh</string>
+
     <string name="toast_double_click_to_exit">Please click BACK again to exit</string>
 
-    <string name="notification_title_deleting_files">Deleting files…</string>
-    <string name="notification_content_deleting_files">%1$d of %2$d</string>
-    <string name="notification_title_error_deleting_files">Deleting files error</string>
+
+    <string name="operation_progress_current_item">%1$s / %2$s</string>
+    <string name="operation_progress_total_size">%1$s / %2$s</string>
+    <string name="operation_progress_total_count">%1$d of %2$d</string>
+
+    <!-- Operation: Create Folder -->
+    <string name="operation_title_creating_folder">Creating Folder</string>
+    <string name="operation_notification_title_create_folder">Creating Folder</string>
+    <string name="operation_content_creating_folder">Creating %1$s in %2$s</string>
+    <string name="operation_title_creating_folder_completed">Create Folder Completed</string>
+    <string name="operation_title_creating_folder_failed">Create Folder Failed</string>
+    <string name="operation_content_creating_folder_completed">Create Folder %1$s Completed</string>
+    <string name="operation_content_creating_folder_failed">Create Folder %1$s Failed</string>
+
+    <!-- Operation: Download -->
+    <string name="operation_title_downloading_file">Downloading</string>
+    <string name="operation_notification_title_downloading_file">%1$s</string>
+    <string name="operation_content_downloading_file">Downloading %1$s</string>
+    <string name="operation_title_download_completed">Download Completed</string>
+    <string name="operation_title_download_failed">Download Failed</string>
+    <string name="operation_content_download_completed">Download %1$s Completed</string>
+    <string name="operation_content_download_failed">Download %1$s Failed</string>
+
+    <!-- Operation: Delete -->
+    <string name="operation_title_deleting_files">Deleting</string>
+    <string name="operation_notification_title_deleting_files">Deleting</string>
+    <string name="operation_content_deleting_files">Deleting %1$d files.</string>
+    <string name="operation_title_delete_completed">Delete Completed</string>
+    <string name="operation_title_delete_failed">Delete Failed</string>
+    <string name="operation_content_delete_completed">Delete Completed</string>
+    <string name="operation_content_delete_failed">Delete Failed</string>
+
+
+    <string name="operation_title_background_task">Running…</string>
+    <string name="operation_title_error_deleting_files">Deleting files error</string>
+
+    <string name="operation_content_preparing">Preparing…</string>
+    <string name="operation_content_connecting">Connecting…</string>
+
+    <string name="operation_progress_text_download">%1$s of %2$s</string>
+    <string name="operation_progress_text_delete">%1$s of %2$s</string>
 
     <string name="info_message_empty_directory">This directory is empty.</string>
+    <string name="info_message_no_more">No more</string>
+    <string name="info_message_error_pull_to_reload">Fail to load, pull down to retry.</string>
 
     <array name="array_storage_providers">
         <item>@string/storage_provider_name_local_path</item>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="widget_state_view_image"/>
+    <item type="id" name="widget_state_view_text"/>
+    <item type="id" name="widget_state_view_button"/>
+</resources>

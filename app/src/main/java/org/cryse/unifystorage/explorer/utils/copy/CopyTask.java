@@ -1,15 +1,14 @@
 package org.cryse.unifystorage.explorer.utils.copy;
 
 import org.cryse.unifystorage.RemoteFile;
+import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 
-public class CopyTask<RF extends RemoteFile> {
-    public int fromProviderId;
-    public RF[] fileToCopy;
-    public Class<RF> rfClass;
+public class CopyTask {
+    public StorageProviderInfo storageProviderInfo;
+    public RemoteFile[] fileToCopy;
 
-    public CopyTask(int fromProviderId, RF[] fileToCopy, Class<RF> rfClass) {
-        this.fromProviderId = fromProviderId;
+    public CopyTask(StorageProviderInfo storageProviderInfo, RemoteFile[] fileToCopy) {
+        this.storageProviderInfo = storageProviderInfo;
         this.fileToCopy = fileToCopy;
-        this.rfClass = rfClass;
     }
 }
