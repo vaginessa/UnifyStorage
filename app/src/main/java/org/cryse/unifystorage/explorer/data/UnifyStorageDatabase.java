@@ -82,7 +82,8 @@ public class UnifyStorageDatabase {
     }
 
     public List<StorageProviderRecord> getSavedStorageProviders() {
-        return mRealm.copyFromRealm(mRealm.allObjectsSorted(StorageProviderRecord.class, "sortKey", Sort.ASCENDING));
+        RealmQuery<StorageProviderRecord> query = mRealm.where(StorageProviderRecord.class);
+        return mRealm.copyFromRealm(query.findAllSorted("sortKey", Sort.ASCENDING));
     }
 
     public void addNewProvider(String displayName, String userName, int providerType, String credentialData, String extraData) {
@@ -108,7 +109,7 @@ public class UnifyStorageDatabase {
         query.equalTo("id", id);
         RealmResults<StorageProviderRecord> results = query.findAll();
         mRealm.beginTransaction();
-        results.removeLast();
+        results.deleteLastFromRealm();
         mRealm.commitTransaction();
     }
 
