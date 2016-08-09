@@ -1,11 +1,12 @@
 package org.cryse.unifystorage.explorer.files;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -16,7 +17,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,7 +24,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.afollestad.impression.widget.breadcrumbs.BreadCrumbLayout;
@@ -37,12 +36,13 @@ import com.jude.easyrecyclerview.EasyRecyclerView;
 import com.jude.easyrecyclerview.adapter.RecyclerArrayAdapter;
 
 import org.cryse.unifystorage.RemoteFile;
-import org.cryse.unifystorage.explorer.DataContract;
 import org.cryse.unifystorage.explorer.PrefsConst;
 import org.cryse.unifystorage.explorer.R;
+import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.event.AbstractEvent;
 import org.cryse.unifystorage.explorer.event.EventConst;
 
+import org.cryse.unifystorage.explorer.model.StorageUriRecord;
 import org.cryse.unifystorage.explorer.ui.MainActivity;
 import org.cryse.unifystorage.explorer.ui.common.AbstractFragment;
 import org.cryse.unifystorage.explorer.utils.CollectionViewState;
@@ -52,6 +52,7 @@ import org.cryse.unifystorage.explorer.utils.copy.CopyManager;
 import org.cryse.unifystorage.explorer.utils.copy.CopyTask;
 import org.cryse.unifystorage.explorer.utils.openfile.AndroidOpenFileUtils;
 import org.cryse.unifystorage.explorer.utils.openfile.OpenFileUtils;
+import org.cryse.unifystorage.providers.localstorage.utils.LocalStorageUtils;
 import org.cryse.unifystorage.utils.DirectoryInfo;
 import org.cryse.utils.file.OnFileChangedListener;
 import org.cryse.utils.preference.BooleanPrefs;
@@ -70,6 +71,8 @@ public class FilesFragment extends AbstractFragment implements
         SelectableRecyclerViewAdapter.OnSelectionListener,
         MaterialCab.Callback/*,
         OnRemoteOperationListener*/ {
+
+    public static final int RC_SDCARD_URI = 102;
 
     private AtomicBoolean mDoubleBackPressedOnce = new AtomicBoolean(false);
     private Handler mHandler = new Handler();
@@ -366,7 +369,7 @@ public class FilesFragment extends AbstractFragment implements
             mBreadCrumbLayout.setTopPath(path);
         }
 
-        Crumb crumb = new Crumb(getContext(), mBreadCrumbLayout.getRootPathName(),path);
+        Crumb crumb = new Crumb(getContext(), mBreadCrumbLayout.getRootPathName(), path);
         updateBreadcrumb(crumb, true, true);
     }
 
@@ -445,6 +448,44 @@ public class FilesFragment extends AbstractFragment implements
     @Override
     public void onStart() {
         super.onStart();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            final String startPath = mPresenter.getStorageProviderInfo().getExtras()[0];
+            boolean isOnSdcard = false;
+            if (LocalStorageUtils.isOnSdcard(getContext(), startPath)) {
+
+
+                // TODO: try to request sdcard uri here!
+                StorageUriRecord record = UnifyStorageDatabase.instance().getStorageUriRecord(LocalStorageUtils.getSdcardDirectory(getContext(), startPath));
+                if (record == null) {
+                    new MaterialDialog.Builder(getActivity())
+                            .title("Permission required")
+                            .content("You should choose root directory of your SD card. \nIf your SdCard not listed in drawer, click the Show SD card in overflow menu.")
+                            .positiveText(android.R.string.ok)
+                            .negativeText(android.R.string.cancel)
+                            .onPositive(new MaterialDialog.SingleButtonCallback() {
+                                @Override
+                                public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                    requestSdcardUri();
+                                }
+                            })
+                            .onNegative(new MaterialDialog.SingleButtonCallback() {
+                                @Override
+                                public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                    new MaterialDialog.Builder(getActivity())
+                                            .title("Warning")
+                                            .content("You only have Read access now")
+                                            .show();
+                                }
+                            })
+                            .show();
+                } else {
+                    Uri sdcardUri = Uri.parse(record.getUriData());
+                    mPresenter.setDocumentPrivilegeUri(sdcardUri);
+                }
+
+
+            }
+        }
     }
 
     @Override
@@ -459,14 +500,41 @@ public class FilesFragment extends AbstractFragment implements
     }
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_SDCARD_URI && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (resultCode == Activity.RESULT_OK) {
+                Uri sdcardUri = data.getData();
+                String startPath = mPresenter.getStorageProviderInfo().getExtras()[0];
+                getContext().getContentResolver().takePersistableUriPermission(sdcardUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                StorageUriRecord record = new StorageUriRecord();
+                record.setPath(LocalStorageUtils.getSdcardDirectory(getContext(), startPath));
+                record.setUriData(sdcardUri.toString());
+                UnifyStorageDatabase.instance().saveStorageUriRecord(record);
+                mPresenter.setDocumentPrivilegeUri(sdcardUri);
+            } else {
+                // TODO: show error here;
+            }
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void requestSdcardUri() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        startActivityForResult(intent, RC_SDCARD_URI);
+    }
+
+    @Override
     public void setLoadingIndicator(boolean active) {
         if (getView() == null) {
             return;
         }
-        if(active)
+        if (active)
             mCollectionView.showProgress();
         else {
-            if(mCollectionAdapter.getCount() > 0)
+            if (mCollectionAdapter.getCount() > 0)
                 mCollectionView.showRecycler();
             else
                 mCollectionView.showEmpty();

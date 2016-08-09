@@ -1,6 +1,7 @@
 package org.cryse.unifystorage.explorer.application;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Handler;
 
 import com.facebook.stetho.okhttp3.StethoInterceptor;
@@ -13,6 +14,7 @@ import org.cryse.unifystorage.explorer.data.UnifyStorageDatabase;
 import org.cryse.unifystorage.explorer.model.StorageProviderInfo;
 import org.cryse.unifystorage.explorer.model.StorageProviderRecord;
 import org.cryse.unifystorage.explorer.model.StorageProviderType;
+import org.cryse.unifystorage.explorer.model.StorageUriRecord;
 import org.cryse.unifystorage.explorer.utils.DrawerItemUtils;
 import org.cryse.unifystorage.providers.dropbox.DropboxCredential;
 import org.cryse.unifystorage.providers.dropbox.DropboxStorageProvider;
@@ -124,7 +126,17 @@ public class StorageProviderManager {
 
     public StorageProvider createStorageProvider(Context context, int id, Credential credential, Object...extra) {
         if(id < 0) {
-            return new LocalStorageProvider(context, (String)extra[0]);
+            LocalStorageProvider localStorageProvider = new LocalStorageProvider(context, (String)extra[0]);
+            if(LocalStorageUtils.isOnSdcard(context, (String)extra[0])) {
+                StorageUriRecord uriRecord = UnifyStorageDatabase.instance().getStorageUriRecord(LocalStorageUtils.getSdcardDirectory(context, (String) extra[0]));
+                if (uriRecord == null) {
+                    // requestSdcardUri();
+                } else {
+                    Uri sdcardUri = Uri.parse(uriRecord.getUriData());
+                    localStorageProvider.setSdcardUri(sdcardUri);
+                }
+            }
+            return localStorageProvider;
             // Local Storage Provider
             /*if(id == DrawerItemUtils.STORAGE_DIRECTORY_INTERNAL_STORAGE) {
                 // Internal Storage
@@ -140,7 +152,18 @@ public class StorageProviderManager {
             StorageProviderType type = StorageProviderType.fromInt(record.getProviderType());
             switch (type) {
                 case LOCAL_STORAGE:
-                    storageProvider = new LocalStorageProvider(context, (String)extra[0]);
+
+                    LocalStorageProvider localStorageProvider = new LocalStorageProvider(context, (String)extra[0]);
+                    if(LocalStorageUtils.isOnSdcard(context, (String)extra[0])) {
+                        StorageUriRecord uriRecord = UnifyStorageDatabase.instance().getStorageUriRecord(LocalStorageUtils.getSdcardDirectory(context, (String) extra[0]));
+                        if (uriRecord == null) {
+                            // requestSdcardUri();
+                        } else {
+                            Uri sdcardUri = Uri.parse(uriRecord.getUriData());
+                            localStorageProvider.setSdcardUri(sdcardUri);
+                        }
+                    }
+                    storageProvider = localStorageProvider;
                     break;
                 case DROPBOX:
                     storageProvider = new DropboxStorageProvider(mOkHttpClient, (DropboxCredential) credential, (String)extra[0]);

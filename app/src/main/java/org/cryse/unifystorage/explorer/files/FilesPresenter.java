@@ -1,6 +1,7 @@
 package org.cryse.unifystorage.explorer.files;
 
 
+import android.net.Uri;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
@@ -106,6 +107,14 @@ public class FilesPresenter implements FilesContract.Presenter {
     @Override
     public StorageProviderInfo getStorageProviderInfo() {
         return mStorageProviderInfo;
+    }
+
+    @Override
+    public void setDocumentPrivilegeUri(Uri uri) {
+        if(mRxStorageProvider != null && mRxStorageProvider.getStorageProvider() instanceof LocalStorageProvider) {
+            LocalStorageProvider localStorageProvider = (LocalStorageProvider)mRxStorageProvider.getStorageProvider();
+            localStorageProvider.setSdcardUri(uri);
+        }
     }
 
     private boolean isLocalStorage() {

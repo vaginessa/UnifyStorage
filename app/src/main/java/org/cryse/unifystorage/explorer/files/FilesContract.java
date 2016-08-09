@@ -1,5 +1,6 @@
 package org.cryse.unifystorage.explorer.files;
 
+import android.net.Uri;
 import android.support.annotation.Nullable;
 
 import org.cryse.unifystorage.RemoteFile;
@@ -43,6 +44,8 @@ public interface FilesContract {
         boolean showWatchChanges();
 
         StorageProviderInfo getStorageProviderInfo();
+
+        void setDocumentPrivilegeUri(Uri uri);
 
         void result(int requestCode, int resultCode);
 
