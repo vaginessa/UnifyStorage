@@ -56,13 +56,39 @@ public class AndroidOpenFileUtils implements OpenFileUtils {
         openUnknownFile(uri);
     }
 
-    private void openUnknownFile(Uri uri) {
+    private void openUnknownFile(final Uri uri) {
+        final Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         new MaterialDialog.Builder(mContext)
                 .title(R.string.dialog_title_open_as_type)
                 .items(R.array.array_open_as_type)
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        String mime;
+                        switch (which) {
+                            case 0:
+                                mime = "text/*";
+
+                                break;
+                            case 1:
+                                mime = "image/*";
+                                break;
+                            case 2:
+                                mime = "video/*";
+                                break;
+                            case 3:
+                                mime = "audio/*";
+                                break;
+                            default:
+                            case 4:
+                                mime = "*/*";
+                                break;
+                        }
+
+                        intent.setDataAndType(uri, mime);
+                        mContext.startActivity(intent);
                     }
                 })
                 .show();

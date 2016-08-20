@@ -12,7 +12,7 @@ ext {
     materialCabVersion = '0.1.12'
     easyRecyclerViewVersion = '4.0.2'
     easyPermissionVersion = '0.1.0'
-    okhttpVersion = '3.2.0'
+    okhttpVersion = '3.4.1'
     commonsioVersion = '2.4'
     fabVersion = '1.6.2'
     retrofitVersion = '2.0.0'
